@@ -42,5 +42,7 @@ Combate, armas, rede, personagens, animações, arte final, som.
 - **Dash no ar** (um por pulo, recarrega ao aterrissar/wall jump) e **wall jump mais longo e rápido**:
   saída refletida ×1,1, empurrão de 2 m/s ao longo da parede no sentido do movimento, teto de 18 m/s,
   peso da câmera 0,4. A pista depois do corredor ficou 12 m maior e os trechos seguintes foram deslocados.
+- **Corrida no ar** (toque duplo em W no ar): acelera até 10 m/s, gravidade ×1,7, gasta SP.
+  **Sensação de velocidade**: linhas radiais (shader), FOV até +18°, recuo e tremor leve da câmera.
 - **Personagem** procedural (primitivas + animação por código) no lugar da cápsula, mais sombra redonda,
   poeira e tremor leve de câmera. Tudo ajustável em `feedback_config.tres` / `camera_config.tres`.

@@ -76,7 +76,8 @@ func _process(_delta: float) -> void:
 	lines.append("vel vertical  %6.2f m/s" % p.velocity.y)
 	lines.append("altura pés    %6.2f m" % p.global_position.y)
 	lines.append("SP            %6.1f%s" % [p.sp.current, "  EXAUSTO" if p.sp.exhausted else ""])
-	lines.append("no chão       %s" % ("sim" if p.is_on_floor() else "não"))
+	lines.append("no chão       %s   sprint %s%s" % ["sim" if p.is_on_floor() else "não",
+		"SIM" if p.sprint_latched else "não", "   CORRIDA NO AR" if p.air_sprinting else ""])
 	lines.append("na parede     %s" % p.get_wall_debug_text())
 	var block := p.get_wall_jump_block_reason()
 	lines.append("wall jump     %s" % ("LIBERADO" if block == "" else "bloqueado: " + block))

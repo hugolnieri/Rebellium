@@ -117,6 +117,10 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Custa 20 SP, deixa um rastro azul e levanta poeira; o personagem continua de frente para a câmera e se inclina.
   - `invulnerável: SIM` dura 0,15 s.
   - Shift sozinho não faz nada (`dodge_requires_direction`).
+- **Corrida no ar**: no ar, toque W duas vezes rápido (e segure).
+  - Acelera até a velocidade de sprint (10 m/s), mas **cai mais rápido** (gravidade ×1,7) e gasta 12 SP/s.
+  - O HUD de debug mostra `CORRIDA NO AR`; o personagem mergulha para frente pedalando.
+  - Acaba ao aterrissar, ao soltar o W ou com SP zerado. O sprint que vem do chão **não** acelera a queda.
 - **Dash no ar**: depois de pular, Shift + direção dá um dash reto (sem cair durante o dash).
   - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
   - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
@@ -133,6 +137,9 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - No ar: pose de pulo subindo e braços abertos caindo.
   - Wall jump: giro no ar; reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
   - Aterrissagem: agacha proporcional ao impacto. O visor e o corpo brilham na cor da técnica.
+- **Sensação de velocidade**: acima de 8 m/s surgem linhas de velocidade nas bordas da tela, o FOV abre
+  (até +18°), a câmera recua um pouco e treme de leve; tudo cresce até 17 m/s. Ajuste na aba Câmera do F2,
+  grupo "Sensação de velocidade".
 - **Sombra redonda** embaixo do jogador: use para mirar a aterrissagem e medir a altura.
 - **Poeira** ao pular, aterrissar forte e dar dash. **Tremor leve** de câmera no wall jump e em quedas fortes.
 - Ajustes: aba **Visual** do F2 (animação, poeira, sombra) e aba **Câmera** (tremor).
@@ -150,6 +157,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 | Velocidade no chão | `walk_speed`, `sprint_speed`, `ground_acceleration`, `ground_deceleration` |
 | Pulo "flutuante" × "seco" | `jump_height`, `jump_time_to_apex`, `fall_gravity_multiplier` |
 | Controle no ar | `air_acceleration` |
+| Corrida no ar | `air_sprint_enabled`, `air_sprint_acceleration`, `air_sprint_gravity_multiplier`, `air_sprint_sp_cost_per_second` |
+| Sensação de velocidade (aba Câmera) | `speed_fx_start_speed`, `speed_fx_full_speed`, `speed_lines_max_alpha`, `speed_arm_bonus`, `max_speed_fov_bonus`, `speed_shake_trauma` |
 | Dash no ar | `dodge_allow_in_air`, `air_dodge_max_per_air`, `air_dodge_refresh_on_wall_jump`, `air_dodge_suspends_gravity`, `air_dodge_exit_speed` |
 | Sprint por toque duplo | `sprint_double_tap_ticks`, `sprint_forward_threshold` |
 | Força do wall jump (altura 2,6 m; saída ×1,1 + 2 m/s para frente, até 18 m/s) | `wall_jump_forward_boost`, `wall_jump_height`, `wall_jump_horizontal_multiplier`, `wall_jump_min/max_horizontal_speed` |

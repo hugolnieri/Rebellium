@@ -50,6 +50,12 @@ extends Resource
 @export_range(1, 60, 1, "suffix:ticks") var sprint_double_tap_ticks: int = 15
 ## O sprint continua enquanto o input para frente for maior que isto (soltou W = parou).
 @export_range(0.0, 1.0, 0.01) var sprint_forward_threshold: float = 0.3
+## Corrida no ar: toque duplo em W no ar acelera até a velocidade de sprint...
+@export var air_sprint_enabled: bool = true
+@export_range(0.0, 200.0, 0.5, "suffix:m/s²") var air_sprint_acceleration: float = 30.0
+## ...mas a gravidade fica multiplicada por isto enquanto corre no ar (cai mais rápido).
+@export_range(1.0, 5.0, 0.05) var air_sprint_gravity_multiplier: float = 1.7
+@export_range(0.0, 100.0, 0.5, "suffix:SP/s") var air_sprint_sp_cost_per_second: float = 12.0
 ## Com SP zerado, sprint/dodge/wall jump ficam bloqueados até o SP voltar a este valor.
 @export_range(0.0, 500.0, 1.0) var sp_recovery_threshold: float = 20.0
 

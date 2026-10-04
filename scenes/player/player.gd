@@ -32,6 +32,8 @@ var land_impact_speed: float = 0.0
 var pre_slide_velocity: Vector3 = Vector3.ZERO
 ## Sprint ativado por toque duplo em W; dura enquanto W estiver pressionado.
 var sprint_latched: bool = false
+## Corrida no ar ativa (toque duplo em W no ar). Acaba ao aterrissar, soltar W ou zerar SP.
+var air_sprinting: bool = false
 ## Dashes usados no ar desde a última aterrissagem/wall jump.
 var air_dodges_used: int = 0
 ## Flag de invencibilidade (dodge). Consultada pelo combate futuro.
@@ -198,8 +200,12 @@ func _update_sprint_latch(input: PlayerInput) -> void:
 	if input.is_pressed_this_tick(input.forward_pressed_tick) and MovementRules.is_double_tap(
 			input.forward_pressed_tick, input.forward_prev_pressed_tick, config.sprint_double_tap_ticks):
 		sprint_latched = true
+		# Toque duplo no ar = corrida no ar (sprint vindo do chão não acelera a queda).
+		if config.air_sprint_enabled and not is_on_floor() and sp.can_drain():
+			air_sprinting = true
 	if input.move.y <= config.sprint_forward_threshold or sp.exhausted:
 		sprint_latched = false
+		air_sprinting = false
 
 
 ## Estado de chão desejado pelo input atual.
@@ -215,6 +221,8 @@ func ground_target_state(input: PlayerInput) -> StringName:
 
 func apply_gravity(delta: float) -> void:
 	var gravity := config.get_jump_gravity() if velocity.y > 0.0 else config.get_fall_gravity()
+	if air_sprinting:
+		gravity *= config.air_sprint_gravity_multiplier
 	velocity.y = maxf(velocity.y - gravity * delta, -config.terminal_fall_speed)
 
 
@@ -233,11 +241,17 @@ func apply_ground_movement(input: PlayerInput, target_speed: float, delta: float
 
 ## Controle no ar: direciona, mas não acelera além de max(velocidade atual, andar).
 func apply_air_movement(input: PlayerInput, delta: float) -> void:
+	if air_sprinting:
+		sp.drain(config.air_sprint_sp_cost_per_second * delta)
+		if sp.exhausted:
+			air_sprinting = false
 	if input.has_move():
 		var horizontal := get_horizontal_velocity()
-		var target_speed := maxf(config.walk_speed, horizontal.length())
+		var base_speed := config.sprint_speed if air_sprinting else config.walk_speed
+		var target_speed := maxf(base_speed, horizontal.length())
 		var target := input.get_wish_direction() * target_speed
-		horizontal = horizontal.move_toward(target, config.air_acceleration * delta)
+		var accel := config.air_sprint_acceleration if air_sprinting else config.air_acceleration
+		horizontal = horizontal.move_toward(target, accel * delta)
 		velocity.x = horizontal.x
 		velocity.z = horizontal.z
 	apply_gravity(delta)
@@ -356,6 +370,7 @@ func apply_wall_jump_cancel() -> void:
 
 ## Limpa memória de paredes ao tocar o chão.
 func on_landed() -> void:
+	air_sprinting = false
 	air_dodges_used = 0
 	last_wall_jump_collider = 0
 	back_coming_wall = 0
@@ -385,6 +400,7 @@ func respawn(at: Transform3D) -> void:
 	air_origin = MovementRules.AirOrigin.NONE
 	is_invulnerable = false
 	sprint_latched = false
+	air_sprinting = false
 	air_dodges_used = 0
 	last_wall_jump_collider = 0
 	back_coming_wall = 0

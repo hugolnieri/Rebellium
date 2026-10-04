@@ -111,3 +111,40 @@ func test_single_forward_press_walks_and_double_tap_sprints() -> void:
 	d.step(3)  # soltou o W
 	d.step(5, FWD)
 	assert_ne(d.player.get_state_name(), &"Sprint", "soltar o W encerra o sprint")
+
+
+## Pula parado, espera `ticks_before` e (opcional) faz o toque duplo em W no ar.
+func _jump_and_measure_airtime(air_sprint: bool) -> Dictionary:
+	d.press_jump()
+	d.step(1)
+	d.step(6)
+	if air_sprint:
+		d.forward_prev_pressed_tick = d.player.tick - 4
+		d.forward_pressed_tick = d.player.tick + 1
+	var sp_before := d.player.sp.current
+	var max_speed := 0.0
+	var ticks := 0
+	while not d.player.is_on_floor() and ticks < 120:
+		d.step(1, FWD)
+		ticks += 1
+		max_speed = maxf(max_speed, d.player.get_horizontal_speed())
+	return {"ticks": ticks, "speed": max_speed, "sp_used": sp_before - d.player.sp.current}
+
+
+func test_air_sprint_accelerates_but_falls_faster_and_costs_sp() -> void:
+	var normal := _jump_and_measure_airtime(false)
+	d.step(40)
+	var sprint := _jump_and_measure_airtime(true)
+	assert_gt(sprint.speed, normal.speed + 2.0, "corrida no ar acelera (%.1f vs %.1f)" % [sprint.speed, normal.speed])
+	assert_lt(sprint.ticks, normal.ticks - 3, "e cai mais rápido (%d vs %d ticks)" % [sprint.ticks, normal.ticks])
+	assert_gt(sprint.sp_used, 1.0, "gasta SP")
+	assert_false(d.player.air_sprinting, "acaba ao aterrissar")
+
+
+func test_ground_sprint_jump_does_not_speed_up_fall() -> void:
+	d.step(40, FWD, true)
+	assert_true(d.player.sprint_latched)
+	d.press_jump()
+	d.step(1, FWD)
+	d.step(10, FWD)
+	assert_false(d.player.air_sprinting, "sprint do chão não vira corrida no ar sozinho")

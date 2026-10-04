@@ -244,6 +244,8 @@ func _process(delta: float) -> void:
 
 	var pose := _base_pose()
 	match state:
+		&"Jump", &"Fall" when player.air_sprinting:
+			_air_sprint_pose(pose)
 		&"Jump", &"WallJump":
 			_air_pose(pose, true)
 		&"Fall":
@@ -316,6 +318,18 @@ func _air_pose(pose: Dictionary, rising: bool) -> void:
 		pose.shoulder_x = [0.2, 0.2]
 		pose.elbow_x = [0.4, 0.4]
 		pose.spine_x = 0.05
+
+
+## Corrida no ar: corpo mergulhado para frente, pernas pedalando para trás.
+func _air_sprint_pose(pose: Dictionary) -> void:
+	var cycle := sin(_time * 14.0)
+	pose.spine_x = -0.55
+	pose.head_x = 0.4
+	pose.thigh_x = [-0.2 + cycle * 0.6, -0.2 - cycle * 0.6]
+	pose.knee_x = [-0.9 - maxf(cycle, 0.0) * 0.6, -0.9 - maxf(-cycle, 0.0) * 0.6]
+	pose.shoulder_x = [-1.2, -1.2]
+	pose.shoulder_z = [0.35, -0.35]
+	pose.elbow_x = [0.2, 0.2]
 
 
 func _dodge_pose(pose: Dictionary) -> void:
