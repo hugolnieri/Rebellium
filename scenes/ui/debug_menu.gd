@@ -60,6 +60,9 @@ func _build() -> void:
 	_add_tab("Movimento", player.config)
 	_add_tab("Câmera", player.camera_config)
 	_add_tab("Visual", player.feedback_config)
+	_add_tab("Combate", player.combat_config)
+	for weapon in player.weapons:
+		_add_tab(weapon.display_name, weapon)
 	var buttons := HBoxContainer.new()
 	root.add_child(buttons)
 	_add_button(buttons, "Salvar no .tres", _save)
@@ -88,23 +91,48 @@ func _add_tab(tab_name: String, resource: Resource) -> void:
 	var list := VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
+	_add_resource_rows(list, resource, "")
+
+
+## Gera as linhas de um recurso; sub-recursos (ex.: golpes de uma arma) entram em seções próprias.
+func _add_resource_rows(list: VBoxContainer, resource: Resource, prefix: String) -> void:
 	_controls[resource] = {}
 	var pending_header := ""
+	var nested: Array[Resource] = []
 	for property in ConfigIO.get_editable_properties(resource, true):
 		if property.usage & PROPERTY_USAGE_GROUP:
 			pending_header = property.name
+			continue
+		var value: Variant = resource.get(property.name)
+		if value is Resource:
+			nested.append(value)
+			continue
+		if value is Array:
+			for item: Variant in value:
+				if item is Resource:
+					nested.append(item)
 			continue
 		var row := _make_row(resource, property)
 		if row == null:
 			continue
 		if pending_header != "":
 			# Cabeçalho só aparece se o grupo tiver controles (ignora grupos da classe base).
-			var header := Label.new()
-			header.text = "— %s —" % pending_header.to_upper()
-			header.add_theme_color_override("font_color", Color(0.12, 0.62, 1.0))
-			list.add_child(header)
+			_add_header(list, (prefix + " · " if prefix != "" else "") + pending_header,
+				Color(0.12, 0.62, 1.0))
 			pending_header = ""
 		list.add_child(row)
+	for child in nested:
+		var title := String(child.get(&"display_name")) if child.get(&"display_name") != null \
+			else child.resource_path.get_file()
+		_add_header(list, "▶ " + title, Color(0.62, 1.0, 0.12))
+		_add_resource_rows(list, child, title)
+
+
+func _add_header(list: VBoxContainer, text: String, color: Color) -> void:
+	var header := Label.new()
+	header.text = "— %s —" % text.to_upper()
+	header.add_theme_color_override("font_color", color)
+	list.add_child(header)
 
 
 func _make_row(resource: Resource, property: Dictionary) -> Control:
@@ -124,6 +152,34 @@ func _make_row(resource: Resource, property: Dictionary) -> Control:
 		check.toggled.connect(func(on: bool) -> void: _set_value(resource, prop_name, on))
 		row.add_child(check)
 		_controls[resource][prop_name] = [check]
+		return row
+	if property.hint == PROPERTY_HINT_ENUM and (type == TYPE_STRING or type == TYPE_INT):
+		var options := OptionButton.new()
+		var items := String(property.hint_string).split(",")
+		for item in items:
+			options.add_item(item.get_slice(":", 0))
+		var current: Variant = resource.get(prop_name)
+		options.selected = items.find(current) if type == TYPE_STRING else int(current)
+		options.item_selected.connect(func(index: int) -> void:
+			_set_value(resource, prop_name, items[index].get_slice(":", 0) if type == TYPE_STRING else index))
+		row.add_child(options)
+		_controls[resource][prop_name] = [options]
+		return row
+	if type == TYPE_STRING:
+		var line := LineEdit.new()
+		line.text = resource.get(prop_name)
+		line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.text_submitted.connect(func(text: String) -> void: _set_value(resource, prop_name, text))
+		row.add_child(line)
+		_controls[resource][prop_name] = [line]
+		return row
+	if type == TYPE_COLOR:
+		var picker := ColorPickerButton.new()
+		picker.color = resource.get(prop_name)
+		picker.custom_minimum_size = Vector2(120, 0)
+		picker.color_changed.connect(func(color: Color) -> void: _set_value(resource, prop_name, color))
+		row.add_child(picker)
+		_controls[resource][prop_name] = [picker]
 		return row
 	if type != TYPE_FLOAT and type != TYPE_INT:
 		return null
@@ -184,17 +240,23 @@ func _current_resource() -> Resource:
 
 func _save() -> void:
 	var resource := _current_resource()
-	var err := ConfigIO.save_full(resource)
+	var err := ConfigIO.save_tree(resource)
 	_status.text = ("Salvo em %s" % resource.resource_path) if err == OK \
 		else "ERRO ao salvar (%s)" % error_string(err)
 
 
 func _reload() -> void:
 	var resource := _current_resource()
+	_reload_tree(resource)
+	_status.text = "Recarregado de %s" % resource.resource_path
+
+
+func _reload_tree(resource: Resource) -> void:
+	for child in ConfigIO.get_file_subresources(resource):
+		_reload_tree(child)
 	var from_disk := ResourceLoader.load(resource.resource_path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	ConfigIO.copy_properties(from_disk, resource)
 	_refresh(resource)
-	_status.text = "Recarregado de %s" % resource.resource_path
 
 
 func _defaults() -> void:
@@ -212,5 +274,9 @@ func _refresh(resource: Resource) -> void:
 		for control: Control in controls[prop_name]:
 			if control is CheckBox:
 				(control as CheckBox).set_pressed_no_signal(value)
+			elif control is LineEdit:
+				(control as LineEdit).text = value
+			elif control is ColorPickerButton:
+				(control as ColorPickerButton).color = value
 			elif control is Range:
 				(control as Range).set_value_no_signal(value)

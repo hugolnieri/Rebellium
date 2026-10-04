@@ -50,3 +50,14 @@ func test_defaults_button_restores_values() -> void:
 	assert_eq(player.config.walk_speed, 6.0)
 	var spin: SpinBox = menu._controls[player.config]["walk_speed"][1]
 	assert_eq(spin.value, 6.0)
+
+
+func test_weapon_tabs_include_every_attack() -> void:
+	menu.set_open(true)
+	for weapon in player.weapons:
+		assert_true(menu._controls.has(weapon), "aba da arma %s" % weapon.display_name)
+		for attack in weapon.light_combo:
+			assert_true(menu._controls.has(attack), "golpe %s editável" % attack.display_name)
+			assert_true(menu._controls[attack].has("damage"))
+		assert_true(menu._controls.has(weapon.heavy))
+	assert_true(menu._controls.has(player.combat_config))

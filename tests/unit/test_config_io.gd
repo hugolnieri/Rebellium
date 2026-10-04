@@ -44,3 +44,14 @@ func test_copy_properties_restores_defaults() -> void:
 	cfg.walk_speed = 99.0
 	ConfigIO.copy_properties(MovementConfig.new(), cfg)
 	assert_eq(cfg.walk_speed, 6.0)
+
+
+func test_save_tree_writes_weapon_with_attack_references() -> void:
+	var weapon := (load("res://config/weapons/arc_blade/weapon.tres") as WeaponConfig).duplicate() as WeaponConfig
+	assert_eq(ConfigIO.save_full(weapon, PATH), OK)
+	var text := FileAccess.get_file_as_string(PATH)
+	assert_string_contains(text, 'path="res://config/weapons/arc_blade/light_1.tres"')
+	var loaded := ResourceLoader.load(PATH, "", ResourceLoader.CACHE_MODE_IGNORE) as WeaponConfig
+	assert_eq(loaded.light_combo.size(), weapon.light_combo.size())
+	assert_eq(loaded.heavy.damage, weapon.heavy.damage)
+	assert_eq(loaded.display_name, weapon.display_name)

@@ -36,6 +36,31 @@ extends Resource
 @export_range(1.0, 40.0, 0.5, "suffix:m/s") var land_crouch_full_speed: float = 16.0
 @export_range(0.0, 45.0, 0.5, "suffix:°") var dodge_lean_deg: float = 22.0
 
+@export_range(0.0, 45.0, 0.5, "suffix:°") var max_bank_deg: float = 18.0
+## Inclinação nas curvas por (rad/s de giro × m/s).
+@export_range(0.0, 0.2, 0.001) var bank_strength: float = 0.03
+
+@export_group("Molas da animação")
+## Frequência/amortecimento das articulações na locomoção (menor amortecimento = mais balanço).
+@export_range(0.5, 30.0, 0.1, "suffix:Hz") var anim_spring_frequency: float = 6.5
+@export_range(0.05, 2.0, 0.01) var anim_spring_damping: float = 0.6
+## Nos golpes as articulações respondem mais rápido.
+@export_range(0.5, 40.0, 0.1, "suffix:Hz") var attack_spring_frequency: float = 15.0
+@export_range(0.05, 2.0, 0.01) var attack_spring_damping: float = 0.8
+## Cabelo: mola mole para movimento secundário.
+@export_range(0.2, 15.0, 0.1, "suffix:Hz") var hair_spring_frequency: float = 2.8
+@export_range(0.05, 2.0, 0.01) var hair_spring_damping: float = 0.3
+
+@export_group("Personagem")
+@export var suit_color: Color = Color(0.035, 0.035, 0.045)
+@export var armor_color: Color = Color(0.07, 0.07, 0.085)
+## Linhas emissivas do traje.
+@export var suit_line_color: Color = Color(0.48, 0.22, 1.0)
+@export_range(0.0, 10.0, 0.1) var suit_line_energy: float = 1.1
+@export var skin_color: Color = Color(0.96, 0.82, 0.72)
+@export var hair_color: Color = Color(0.92, 0.93, 0.97)
+@export var eye_color: Color = Color(0.35, 1.0, 0.45)
+
 @export_group("Poeira e sombra")
 @export_range(0, 100, 1) var dust_amount: int = 14
 @export_range(0.05, 2.0, 0.01, "suffix:s") var dust_lifetime: float = 0.45
@@ -62,6 +87,8 @@ extends Resource
 @export var color_dodge_cancel: Color = Color(0.4, 0.85, 1.0)
 @export var color_bunny_hop: Color = Color(0.85, 1.0, 0.45)
 @export var color_dodge_trail: Color = Color(0.12, 0.62, 1.0)
+@export var color_swap_cancel: Color = Color(1.0, 0.75, 0.2)
+@export var color_perfect_dodge: Color = Color(0.85, 0.95, 1.0)
 
 @export_group("VFX")
 ## Vida de cada "fantasma" do rastro do dodge.
@@ -85,4 +112,6 @@ func get_technique_color(technique: StringName) -> Color:
 		&"cancel": return color_cancel
 		&"dodge_cancel": return color_dodge_cancel
 		&"bunny_hop": return color_bunny_hop
+		&"swap_cancel": return color_swap_cancel
+		&"perfect_dodge": return color_perfect_dodge
 	return color_wall_jump
