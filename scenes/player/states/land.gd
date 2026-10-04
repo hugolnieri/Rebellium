@@ -22,10 +22,10 @@ func is_recovery() -> bool:
 func physics_update(input: PlayerInput, delta: float) -> void:
 	if _try_bunny_hop(input):
 		return
-	if player.try_dodge(input):
+	if player.try_attack(input) or player.try_dodge(input):
 		return
 	var next := player.ground_target_state(input)
-	var speed := cfg().sprint_speed if next == &"Sprint" else cfg().walk_speed
+	var speed := player.get_sprint_speed() if next == &"Sprint" else player.get_walk_speed()
 	if player.has_buffered_jump(input, cfg().jump_buffer_ticks):
 		# Pulo fora da janela do bunny hop: velocidade volta ao limite do chão.
 		var horizontal := player.get_horizontal_velocity().limit_length(speed)

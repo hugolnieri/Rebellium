@@ -7,6 +7,9 @@ extends CharacterBody3D
 @export var config: MovementConfig
 @export var camera_config: CameraConfig
 @export var feedback_config: FeedbackConfig
+@export var combat_config: CombatConfig
+## Armas nos slots 1, 2... (cada uma com seus golpes).
+@export var weapons: Array[WeaponConfig] = []
 ## Se true, `_physics_process` não amostra input sozinho: quem controla chama `step()`.
 @export var external_control: bool = false
 
@@ -47,13 +50,28 @@ var last_wall_jump_tick: int = PlayerInput.NEVER
 ## Velocidade antes do último wall jump (usada pelo cancel).
 var wall_jump_entry_velocity: Vector3 = Vector3.ZERO
 
+## Vida (HP). Zerou → estado Hurt "caído" e reaparece no spawn.
+var health: HealthPool
+## Índice da arma atual em `weapons`.
+var weapon_slot: int = 0
+var last_swap_tick: int = PlayerInput.NEVER
+## Ticks restantes de congelamento por impacto (hitstop): a simulação do jogador pausa.
+var hitstop_ticks: int = 0
+## Direção forçada do corpo (golpe mirando um alvo). Vector3.ZERO = segue a velocidade.
+var facing_override: Vector3 = Vector3.ZERO
+
 var _consumed_jump_press_tick: int = PlayerInput.NEVER
+var _consumed_light_press_tick: int = PlayerInput.NEVER
+var _consumed_heavy_press_tick: int = PlayerInput.NEVER
 var _consumed_dodge_press_tick: int = PlayerInput.NEVER
 var _consumed_weapon_press_tick: int = PlayerInput.NEVER
 
 
 func _ready() -> void:
 	add_to_group(&"local_player")
+	add_to_group(&"hittable")
+	if combat_config == null:
+		combat_config = CombatConfig.new()
 	if config == null:
 		push_warning("Player sem MovementConfig; usando valores padrão.")
 		config = MovementConfig.new()
@@ -64,6 +82,7 @@ func _ready() -> void:
 	sp = SPPool.new(config)
 	sp.depleted.connect(func() -> void: GameEvents.sp_depleted.emit(self))
 	sp.recovered.connect(func() -> void: GameEvents.sp_recovered.emit(self))
+	health = HealthPool.new(combat_config.max_hp)
 	spawn_transform = global_transform
 	wall_sensor.setup(self)
 	state_machine.setup(self)
@@ -91,8 +110,13 @@ func step(input: PlayerInput, delta: float) -> void:
 	tick += 1
 	input.tick = tick
 	current_input = input
+	if hitstop_ticks > 0:
+		# Congelamento do impacto: nada se move; o input continua guardado no buffer.
+		hitstop_ticks -= 1
+		return
 	if input.is_pressed_this_tick(input.weapon_swap_pressed_tick):
 		GameEvents.weapon_swap_pressed.emit(self, input.weapon_swap_slot)
+		_handle_weapon_swap(input.weapon_swap_slot)
 	sp.update(delta)
 	_update_sprint_latch(input)
 	state_machine.physics_update(input, delta)
@@ -192,6 +216,154 @@ func consume_cancel_press(input: PlayerInput) -> bool:
 	return true
 
 
+# --- Armas e combate ---------------------------------------------------------------
+
+func get_weapon() -> WeaponConfig:
+	if weapons.is_empty():
+		return null
+	return weapons[clampi(weapon_slot, 0, weapons.size() - 1)]
+
+
+func get_walk_speed() -> float:
+	var weapon := get_weapon()
+	return config.walk_speed * (weapon.move_speed_multiplier if weapon != null else 1.0)
+
+
+func get_sprint_speed() -> float:
+	var weapon := get_weapon()
+	return config.sprint_speed * (weapon.move_speed_multiplier if weapon != null else 1.0)
+
+
+func has_buffered_attack(input: PlayerInput, heavy: bool) -> bool:
+	var press := input.attack_heavy_pressed_tick if heavy else input.attack_light_pressed_tick
+	var consumed := _consumed_heavy_press_tick if heavy else _consumed_light_press_tick
+	return press > consumed and tick - press <= combat_config.attack_buffer_ticks
+
+
+func _consume_attack(input: PlayerInput, heavy: bool) -> void:
+	if heavy:
+		_consumed_heavy_press_tick = input.attack_heavy_pressed_tick
+	else:
+		_consumed_light_press_tick = input.attack_light_pressed_tick
+
+
+## Tenta iniciar (ou encadear) um golpe. O tipo sai do contexto:
+## no dash → golpe de dash; no ar → golpe aéreo; no chão → leve (combo) ou pesado.
+func try_attack(input: PlayerInput) -> bool:
+	var heavy := has_buffered_attack(input, true)
+	var light := has_buffered_attack(input, false)
+	var weapon := get_weapon()
+	if weapon == null or not (heavy or light):
+		return false
+	var current := state_machine.current
+	var in_attack := state_machine.is_in(&"Attack")
+	var current_kind: StringName = current.get(&"kind") if in_attack else &""
+	var current_index: int = current.get(&"combo_index") if in_attack else -1
+	var kind: StringName
+	var attack: AttackData
+	var index := 0
+	var use_heavy := false
+	if state_machine.is_in(&"Dodge") and light:
+		kind = CombatRules.KIND_DASH
+		attack = weapon.dash
+	elif not is_on_floor():
+		if not light or current_kind == CombatRules.KIND_AIR:
+			return false
+		kind = CombatRules.KIND_AIR
+		attack = weapon.air
+	elif heavy:
+		if current_kind == CombatRules.KIND_HEAVY:
+			return false
+		kind = CombatRules.KIND_HEAVY
+		attack = weapon.heavy
+		use_heavy = true
+	else:
+		kind = CombatRules.KIND_LIGHT
+		if current_kind == CombatRules.KIND_LIGHT:
+			index = CombatRules.next_combo_index(current_index, weapon.light_combo.size())
+		if index < 0 or weapon.light_combo.is_empty():
+			return false
+		attack = weapon.light_combo[index]
+	if attack == null:
+		return false
+	if attack.sp_cost > 0.0 and not sp.try_spend(attack.sp_cost):
+		return false
+	_consume_attack(input, use_heavy)
+	state_machine.transition_to(&"Attack", "%s: %s" % [kind, attack.display_name], {
+		"attack": attack, "kind": kind, "combo_index": index, "direction": get_aim_direction(input),
+	})
+	return true
+
+
+## Alvos atacáveis (grupo "hittable"), exceto o próprio jogador.
+func get_hittables() -> Array[Node]:
+	var result: Array[Node] = []
+	for node in get_tree().get_nodes_in_group(&"hittable"):
+		if node != self and node.has_method(&"take_hit"):
+			result.append(node)
+	return result
+
+
+## Direção do golpe: a da câmera, ou a do alvo mais alinhado (mira assistida).
+func get_aim_direction(input: PlayerInput) -> Vector3:
+	var forward := input.get_camera_forward()
+	var targets := get_hittables()
+	var centers: Array[Vector3] = []
+	for target in targets:
+		centers.append(target.call(&"get_hit_center"))
+	var best := CombatRules.pick_aim_target(global_position, forward, centers,
+		combat_config.aim_assist_range, combat_config.aim_assist_angle_deg)
+	if best < 0:
+		return forward
+	var flat := centers[best] - global_position
+	flat.y = 0.0
+	return flat.normalized() if flat.length_squared() > 0.0001 else forward
+
+
+## Troca de arma (slot 1, 2... ou 0 = alternar). Na recuperação de um golpe vira swap cancel.
+func _handle_weapon_swap(requested_slot: int) -> void:
+	if weapons.size() < 2:
+		return
+	var target := (weapon_slot + 1) % weapons.size() if requested_slot <= 0 else requested_slot - 1
+	if target == weapon_slot or target >= weapons.size():
+		return
+	if ticks_since(last_swap_tick) < secs_to_ticks(combat_config.swap_cooldown):
+		return
+	weapon_slot = target
+	last_swap_tick = tick
+	GameEvents.weapon_changed.emit(self, get_weapon(), weapon_slot + 1)
+	if state_machine.is_in(&"Attack") and state_machine.current.is_recovery():
+		GameEvents.technique_executed.emit(self, MovementRules.TECH_SWAP_CANCEL,
+			{"position": global_position})
+		state_machine.transition_to(ground_target_state(current_input) if is_on_floor() else &"Fall",
+			"swap cancel")
+
+
+func get_hit_center() -> Vector3:
+	return global_position + Vector3.UP * config.body_height * 0.5
+
+
+func get_hit_radius() -> float:
+	return config.body_radius
+
+
+## Recebe um golpe. Retorna false se não acertou (invencível = esquiva perfeita, ou já caído).
+func take_hit(info: Dictionary) -> bool:
+	if health.is_dead():
+		return false
+	if is_invulnerable:
+		GameEvents.technique_executed.emit(self, MovementRules.TECH_PERFECT_DODGE,
+			{"position": global_position})
+		return false
+	health.damage(info.get("damage", 0.0))
+	hitstop_ticks = maxi(hitstop_ticks, info.get("hitstop_ticks", 0))
+	GameEvents.player_hurt.emit(self, info)
+	if health.is_dead():
+		GameEvents.player_died.emit(self)
+	state_machine.transition_to(&"Hurt", "levou golpe", info)
+	return true
+
+
 func can_sprint(input: PlayerInput) -> bool:
 	return sprint_latched and input.has_move() and sp.can_drain()
 
@@ -259,7 +431,7 @@ func apply_air_movement(input: PlayerInput, delta: float) -> void:
 			redirect_to_wish(input)
 	if input.has_move():
 		var horizontal := get_horizontal_velocity()
-		var base_speed := config.sprint_speed if air_sprinting else config.walk_speed
+		var base_speed := get_sprint_speed() if air_sprinting else get_walk_speed()
 		var target_speed := maxf(base_speed, horizontal.length())
 		var target := input.get_wish_direction() * target_speed
 		var accel := config.air_sprint_acceleration if air_sprinting else config.air_acceleration
@@ -271,6 +443,8 @@ func apply_air_movement(input: PlayerInput, delta: float) -> void:
 
 ## Ações disponíveis em qualquer estado de chão. Retorna true se transicionou.
 func try_ground_actions(input: PlayerInput) -> bool:
+	if try_attack(input):
+		return true
 	if try_dodge(input):
 		return true
 	if consume_jump_press(input, config.jump_buffer_ticks):
@@ -411,6 +585,9 @@ func respawn(at: Transform3D) -> void:
 	velocity = Vector3.ZERO
 	air_origin = MovementRules.AirOrigin.NONE
 	is_invulnerable = false
+	hitstop_ticks = 0
+	facing_override = Vector3.ZERO
+	health.refill()
 	sprint_latched = false
 	air_sprinting = false
 	air_dodges_used = 0
@@ -427,7 +604,13 @@ func respawn(at: Transform3D) -> void:
 func _update_visual(delta: float) -> void:
 	var horizontal := get_horizontal_velocity()
 	var target_yaw: float
-	if state_machine.is_in(&"Dodge"):
+	if facing_override != Vector3.ZERO and state_machine.is_in(&"Attack"):
+		# Golpe: o corpo encara o alvo/câmera rapidamente.
+		target_yaw = atan2(-facing_override.x, -facing_override.z)
+		visual.rotation.y = lerp_angle(visual.rotation.y, target_yaw,
+			clampf(feedback_config.model_turn_speed * 2.0 * delta, 0.0, 1.0))
+		return
+	elif state_machine.is_in(&"Dodge"):
 		# Dash lateral: o corpo continua de frente para a câmera e só se inclina.
 		target_yaw = current_input.look_yaw
 	elif horizontal.length() < 0.5:

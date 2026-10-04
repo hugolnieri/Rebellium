@@ -13,6 +13,8 @@ var dodge_pressed_tick: int = PlayerInput.NEVER
 var weapon_swap_pressed_tick: int = PlayerInput.NEVER
 var weapon_swap_slot: int = 0
 var forward_pressed_tick: int = PlayerInput.NEVER
+var attack_light_pressed_tick: int = PlayerInput.NEVER
+var attack_heavy_pressed_tick: int = PlayerInput.NEVER
 var forward_prev_pressed_tick: int = PlayerInput.NEVER
 ## Técnicas emitidas por GameEvents durante o teste (em ordem).
 var techniques: Array[StringName] = []
@@ -81,6 +83,23 @@ func press_dodge() -> void:
 	dodge_pressed_tick = player.tick + 1
 
 
+func press_attack(heavy: bool = false) -> void:
+	if heavy:
+		attack_heavy_pressed_tick = player.tick + 1
+	else:
+		attack_light_pressed_tick = player.tick + 1
+
+
+## Adiciona um poste de treino em `pos` (modo opcional).
+func add_dummy(pos: Vector3, mode: int = 0) -> TrainingDummy:
+	var dummy := (load("res://scenes/arenas/TrainingDummy.tscn") as PackedScene).instantiate() as TrainingDummy
+	dummy.mode = mode
+	dummy.config = dummy.config.duplicate() as DummyConfig
+	dummy.position = pos
+	world.add_child(dummy)
+	return dummy
+
+
 func press_weapon_swap(slot: int = 1) -> void:
 	weapon_swap_pressed_tick = player.tick + 1
 	weapon_swap_slot = slot
@@ -102,6 +121,8 @@ func make_input(move: Vector2, sprint: bool) -> PlayerInput:
 	input.dodge_pressed_tick = dodge_pressed_tick
 	input.weapon_swap_pressed_tick = weapon_swap_pressed_tick
 	input.weapon_swap_slot = weapon_swap_slot
+	input.attack_light_pressed_tick = attack_light_pressed_tick
+	input.attack_heavy_pressed_tick = attack_heavy_pressed_tick
 	return input
 
 

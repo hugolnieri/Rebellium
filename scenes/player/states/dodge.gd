@@ -31,6 +31,9 @@ func is_recovery() -> bool:
 func physics_update(input: PlayerInput, delta: float) -> void:
 	var t := machine.ticks_in_state()
 	player.is_invulnerable = t < player.secs_to_ticks(cfg().dodge_invulnerability)
+	# Golpe saindo do dash (estocada).
+	if player.try_attack(input):
+		return
 	if _airborne:
 		_air_update(input, delta, t)
 		return

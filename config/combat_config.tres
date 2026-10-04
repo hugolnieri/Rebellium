@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CombatConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/combat_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+max_hp = 100.0
+respawn_delay = 1.5
+attack_buffer_ticks = 10
+swap_cooldown = 0.25
+aim_assist_range = 6.0
+aim_assist_angle_deg = 55.0
+combo_timeout = 1.4
+hitstun = 0.35
+received_knockback_multiplier = 1.0

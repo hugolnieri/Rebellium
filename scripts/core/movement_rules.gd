@@ -12,6 +12,8 @@ const TECH_BACK_COMING: StringName = &"back_coming"
 const TECH_CANCEL: StringName = &"cancel"
 const TECH_DODGE_CANCEL: StringName = &"dodge_cancel"
 const TECH_BUNNY_HOP: StringName = &"bunny_hop"
+const TECH_SWAP_CANCEL: StringName = &"swap_cancel"
+const TECH_PERFECT_DODGE: StringName = &"perfect_dodge"
 
 
 static func seconds_to_ticks(seconds: float) -> int:

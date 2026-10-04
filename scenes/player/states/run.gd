@@ -6,7 +6,7 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	if player.try_ground_actions(input):
 		return
 	var next := player.ground_target_state(input)
-	player.apply_ground_movement(input, cfg().walk_speed, delta)
+	player.apply_ground_movement(input, player.get_walk_speed(), delta)
 	if next != &"Run":
 		machine.transition_to(next, "sprint" if next == &"Sprint" else "sem input")
 

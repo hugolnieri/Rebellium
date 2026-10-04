@@ -17,6 +17,12 @@
 [ext_resource type="Script" path="res://scenes/player/wall_sensor.gd" id="sensor"]
 [ext_resource type="Script" path="res://scenes/player/feedback/feedback_vfx.gd" id="vfx"]
 [ext_resource type="Script" path="res://scenes/player/character_model.gd" id="model"]
+[ext_resource type="Script" path="res://scenes/player/states/attack.gd" id="s_attack"]
+[ext_resource type="Script" path="res://scenes/player/states/hurt.gd" id="s_hurt"]
+[ext_resource type="Resource" path="res://config/combat_config.tres" id="combat"]
+[ext_resource type="Resource" path="res://config/weapons/arc_blade/weapon.tres" id="w_blade"]
+[ext_resource type="Resource" path="res://config/weapons/phase_fang/weapon.tres" id="w_fang"]
+[ext_resource type="Script" path="res://scripts/core/weapon_config.gd" id="weapon_script"]
 [ext_resource type="Script" path="res://scenes/player/feedback/blob_shadow.gd" id="shadow"]
 [ext_resource type="PackedScene" path="res://scenes/player/PlayerCamera.tscn" id="cam"]
 
@@ -29,6 +35,8 @@ script = ExtResource("player")
 config = ExtResource("mcfg")
 camera_config = ExtResource("ccfg")
 feedback_config = ExtResource("fcfg")
+combat_config = ExtResource("combat")
+weapons = Array[ExtResource("weapon_script")]([ExtResource("w_blade"), ExtResource("w_fang")])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -69,6 +77,12 @@ script = ExtResource("s_walljump")
 
 [node name="Dodge" type="Node" parent="StateMachine"]
 script = ExtResource("s_dodge")
+
+[node name="Attack" type="Node" parent="StateMachine"]
+script = ExtResource("s_attack")
+
+[node name="Hurt" type="Node" parent="StateMachine"]
+script = ExtResource("s_hurt")
 
 [node name="WallSensor" type="Node3D" parent="."]
 script = ExtResource("sensor")

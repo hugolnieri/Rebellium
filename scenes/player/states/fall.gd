@@ -9,7 +9,7 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 			and player.consume_jump_press(input, cfg().jump_buffer_ticks):
 		player.do_jump("coyote")
 		return
-	if player.try_wall_jump(input):
+	if player.try_wall_jump(input) or player.try_attack(input):
 		return
 	if cfg().dodge_allow_in_air and player.try_dodge(input):
 		return

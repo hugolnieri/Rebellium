@@ -20,7 +20,10 @@ var forward_prev_pressed_tick: int = NEVER
 var jump_pressed_tick: int = NEVER
 var dodge_pressed_tick: int = NEVER
 var weapon_swap_pressed_tick: int = NEVER
+## Slot pedido na troca de arma: 1, 2... ou 0 = alternar para a outra.
 var weapon_swap_slot: int = 0
+var attack_light_pressed_tick: int = NEVER
+var attack_heavy_pressed_tick: int = NEVER
 var shoulder_swap_pressed: bool = false
 
 
@@ -58,5 +61,7 @@ func copy() -> PlayerInput:
 	c.dodge_pressed_tick = dodge_pressed_tick
 	c.weapon_swap_pressed_tick = weapon_swap_pressed_tick
 	c.weapon_swap_slot = weapon_swap_slot
+	c.attack_light_pressed_tick = attack_light_pressed_tick
+	c.attack_heavy_pressed_tick = attack_heavy_pressed_tick
 	c.shoulder_swap_pressed = shoulder_swap_pressed
 	return c

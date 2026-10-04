@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/weapon_config.gd" id="1"]
+[ext_resource type="Resource" path="res://config/weapons/arc_blade/light_1.tres" id="2"]
+[ext_resource type="Resource" path="res://config/weapons/arc_blade/light_2.tres" id="3"]
+[ext_resource type="Resource" path="res://config/weapons/arc_blade/light_3.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/core/attack_data.gd" id="5"]
+[ext_resource type="Resource" path="res://config/weapons/arc_blade/heavy.tres" id="6"]
+[ext_resource type="Resource" path="res://config/weapons/arc_blade/air.tres" id="7"]
+[ext_resource type="Resource" path="res://config/weapons/arc_blade/dash.tres" id="8"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Lâmina de Arco"
+model = 0
+glow_color = Color(0.25, 0.95, 1, 1)
+light_combo = Array[ExtResource("5")]([ExtResource("2"), ExtResource("3"), ExtResource("4")])
+heavy = ExtResource("6")
+air = ExtResource("7")
+dash = ExtResource("8")
+move_speed_multiplier = 1.0

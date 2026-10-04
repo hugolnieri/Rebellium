@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="WeaponConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/weapon_config.gd" id="1"]
+[ext_resource type="Resource" path="res://config/weapons/phase_fang/light_1.tres" id="2"]
+[ext_resource type="Resource" path="res://config/weapons/phase_fang/light_2.tres" id="3"]
+[ext_resource type="Resource" path="res://config/weapons/phase_fang/light_3.tres" id="4"]
+[ext_resource type="Resource" path="res://config/weapons/phase_fang/light_4.tres" id="5"]
+[ext_resource type="Script" path="res://scripts/core/attack_data.gd" id="6"]
+[ext_resource type="Resource" path="res://config/weapons/phase_fang/heavy.tres" id="7"]
+[ext_resource type="Resource" path="res://config/weapons/phase_fang/air.tres" id="8"]
+[ext_resource type="Resource" path="res://config/weapons/phase_fang/dash.tres" id="9"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Presa de Fase"
+model = 1
+glow_color = Color(1, 0.55, 0.1, 1)
+light_combo = Array[ExtResource("6")]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+heavy = ExtResource("7")
+air = ExtResource("8")
+dash = ExtResource("9")
+move_speed_multiplier = 1.08

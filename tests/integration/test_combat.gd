@@ -1,0 +1,219 @@
+extends GutTest
+## Combate com física real: golpes no poste, combo, pesado, aéreo, dash, cancels,
+## troca de arma, mira assistida, dano recebido e esquiva perfeita.
+
+const Driver = preload("res://tests/helpers/player_driver.gd")
+
+var d: Driver
+
+
+func before_each() -> void:
+	d = Driver.new()
+	d.setup(self, Vector3(0, 0, 0))
+	d.add_block(Vector3(0, -0.5, 0), Vector3(200, 1, 200))
+
+
+func _ready_world() -> void:
+	await d.ready_physics(self)
+	d.step(10)
+
+
+func _blade() -> WeaponConfig:
+	return d.player.weapons[0]
+
+
+func _attack_ticks(attack: AttackData) -> int:
+	# O hitstop pausa o golpe: soma a pausa do impacto.
+	return d.player.secs_to_ticks(attack.total_time() + attack.hitstop) + 2
+
+
+func test_light_attack_hits_dummy_in_front() -> void:
+	var dummy := d.add_dummy(Vector3(0, 0, -1.8))
+	await _ready_world()
+	d.press_attack()
+	d.step(1)
+	assert_eq(d.state(), &"Attack")
+	d.step(_attack_ticks(_blade().light_combo[0]))
+	assert_almost_eq(dummy.total_damage, _blade().light_combo[0].damage, 0.01)
+	assert_ne(d.state(), &"Attack", "golpe terminou")
+
+
+func test_hitstop_freezes_player_on_hit() -> void:
+	d.add_dummy(Vector3(0, 0, -1.8))
+	await _ready_world()
+	d.press_attack()
+	var froze := false
+	for i in 30:
+		d.step(1)
+		froze = froze or d.player.hitstop_ticks > 0
+	assert_true(froze, "acerto congela o atacante por alguns ticks")
+
+
+func test_miss_out_of_reach() -> void:
+	var dummy := d.add_dummy(Vector3(0, 0, -8.0))
+	await _ready_world()
+	d.press_attack()
+	d.step(40)
+	assert_eq(dummy.total_damage, 0.0)
+
+
+func test_three_hit_combo_then_restarts() -> void:
+	var dummy := d.add_dummy(Vector3(0, 0, -1.6))
+	await _ready_world()
+	var hits: Array[String] = []
+	GameEvents.attack_started.connect(func(_p: Node, a: Resource, _w: Resource, _k: StringName) -> void:
+		hits.append((a as AttackData).display_name))
+	for i in 3:
+		d.press_attack()
+		d.step(d.player.secs_to_ticks(_blade().light_combo[i].chain_after) + 1)
+	d.step(60)
+	assert_eq(hits.size(), 3, "três golpes: %s" % [hits])
+	assert_eq(hits[2], _blade().light_combo[2].display_name)
+	var expected := 0.0
+	for attack in _blade().light_combo:
+		expected += attack.damage
+	assert_almost_eq(dummy.total_damage, expected, 0.01)
+	d.press_attack()
+	d.step(1)
+	assert_eq(d.state(), &"Attack")
+	assert_eq(d.player.state_machine.current.combo_index, 0, "depois do fim, o combo recomeça")
+
+
+func test_heavy_hits_all_around_and_costs_sp() -> void:
+	var behind := d.add_dummy(Vector3(0, 0, 1.8))
+	await _ready_world()
+	d.press_attack(true)
+	d.step(1)
+	assert_almost_eq(d.player.sp.current, 100.0 - _blade().heavy.sp_cost, 0.01)
+	d.step(_attack_ticks(_blade().heavy))
+	assert_almost_eq(behind.total_damage, _blade().heavy.damage, 0.01, "giro acerta atrás")
+
+
+func test_air_attack_dives_and_lands() -> void:
+	await _ready_world()
+	d.press_jump()
+	d.step(12)
+	d.press_attack()
+	d.step(1)
+	assert_eq(d.state(), &"Attack")
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_AIR)
+	d.step(d.player.secs_to_ticks(_blade().air.startup) + 3)
+	assert_lt(d.player.velocity.y, -5.0, "mergulha na janela de acerto")
+	var landed := d.step_until(func() -> bool: return d.state() == &"Land", 90)
+	assert_gt(landed, 0)
+
+
+func test_dash_attack_lunges_forward() -> void:
+	await _ready_world()
+	d.press_dodge()
+	d.step(2, Vector2(0, 1))
+	d.press_attack()
+	d.step(2, Vector2(0, 1))
+	assert_eq(d.state(), &"Attack")
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_DASH)
+	assert_lt(d.player.velocity.z, -10.0, "estocada avança rápido")
+
+
+func test_dodge_cancels_attack_recovery() -> void:
+	await _ready_world()
+	var attack := _blade().light_combo[0]
+	d.press_attack()
+	d.step(d.player.secs_to_ticks(attack.startup + attack.active) + 3)
+	assert_true(d.player.state_machine.current.is_recovery())
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge")
+	assert_has(d.techniques, MovementRules.TECH_DODGE_CANCEL)
+
+
+func test_swap_cancels_attack_recovery_and_changes_weapon() -> void:
+	await _ready_world()
+	var attack := _blade().light_combo[0]
+	d.press_attack()
+	d.step(d.player.secs_to_ticks(attack.startup + attack.active) + 3)
+	d.press_weapon_swap(2)
+	d.step(1)
+	assert_eq(d.player.weapon_slot, 1)
+	assert_ne(d.state(), &"Attack")
+	assert_has(d.techniques, MovementRules.TECH_SWAP_CANCEL)
+
+
+func test_swap_during_startup_does_not_cancel() -> void:
+	await _ready_world()
+	d.press_attack()
+	d.step(1)
+	d.press_weapon_swap(2)
+	d.step(1)
+	assert_eq(d.state(), &"Attack", "só a recuperação é cancelável")
+	assert_does_not_have(d.techniques, MovementRules.TECH_SWAP_CANCEL)
+
+
+func test_toggle_swap_and_weapon_speed() -> void:
+	await _ready_world()
+	d.press_weapon_swap(0)
+	d.step(1)
+	assert_eq(d.player.weapon_slot, 1)
+	d.step(60, Vector2(0, 1))
+	assert_almost_eq(d.player.get_horizontal_speed(), 6.0 * d.player.get_weapon().move_speed_multiplier, 0.05,
+		"a adaga é mais leve")
+
+
+func test_aim_assist_turns_attack_toward_target() -> void:
+	var dummy := d.add_dummy(Vector3(1.4, 0, -2.4))  # ~30° à direita da câmera
+	await _ready_world()
+	d.press_attack()
+	d.step(1)
+	var dir: Vector3 = d.player.state_machine.current.direction
+	assert_gt(dir.x, 0.3, "golpe virou para o poste")
+	d.step(40)
+	assert_gt(dummy.total_damage, 0.0)
+
+
+func test_player_takes_damage_and_recovers() -> void:
+	await _ready_world()
+	var hit := d.player.take_hit({"damage": 25.0, "knockback": Vector3(0, 3, 5), "hitstop_ticks": 2})
+	assert_true(hit)
+	assert_eq(d.player.health.current, 75.0)
+	d.step(1)
+	assert_eq(d.state(), &"Hurt")
+	d.step(60)
+	assert_ne(d.state(), &"Hurt")
+
+
+func test_dodge_iframes_cause_perfect_dodge() -> void:
+	await _ready_world()
+	d.press_dodge()
+	d.step(2, Vector2(1, 0))
+	assert_true(d.player.is_invulnerable)
+	var hit := d.player.take_hit({"damage": 25.0, "knockback": Vector3.ZERO})
+	assert_false(hit)
+	assert_eq(d.player.health.current, 100.0)
+	assert_has(d.techniques, MovementRules.TECH_PERFECT_DODGE)
+
+
+func test_death_respawns_with_full_health() -> void:
+	await _ready_world()
+	d.player.take_hit({"damage": 500.0, "knockback": Vector3.ZERO})
+	assert_true(d.player.health.is_dead())
+	d.step(d.player.secs_to_ticks(d.player.combat_config.respawn_delay) + 5)
+	assert_false(d.player.health.is_dead())
+	assert_eq(d.player.health.current, d.player.combat_config.max_hp)
+
+
+func test_aggressive_dummy_hits_player_in_range() -> void:
+	var dummy := d.add_dummy(Vector3(0, 0, -1.5), TrainingDummy.Mode.AGGRESSIVE)
+	dummy.config.attack_interval = 0.3
+	dummy.config.attack_windup = 0.1
+	await _ready_world()
+	await wait_physics_frames(30)
+	assert_lt(d.player.health.current, 100.0, "poste agressivo acertou")
+
+
+func test_dummy_regenerates_after_delay() -> void:
+	var dummy := d.add_dummy(Vector3(0, 0, -5))
+	dummy.config.regen_delay = 0.2
+	await _ready_world()
+	dummy.take_hit({"damage": 50.0})
+	assert_eq(dummy.hp, dummy.config.max_hp - 50.0)
+	await wait_physics_frames(20)
+	assert_eq(dummy.hp, dummy.config.max_hp)

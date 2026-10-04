@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DummyConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/dummy_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+max_hp = 300.0
+regen_delay = 2.5
+broken_time = 1.2
+hit_radius = 0.45
+wobble_frequency = 2.6
+wobble_damping = 0.25
+wobble_per_knockback = 0.035
+patrol_distance = 6.0
+patrol_speed = 2.5
+attack_interval = 2.6
+attack_windup = 0.6
+attack_radius = 2.8
+attack_damage = 10.0
+attack_knockback = 7.0
+attack_hitstop = 0.06

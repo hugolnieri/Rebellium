@@ -16,6 +16,8 @@ var _dodge_pressed_tick: int = PlayerInput.NEVER
 var _weapon_swap_pressed_tick: int = PlayerInput.NEVER
 var _weapon_swap_slot: int = 0
 var _forward_pressed_tick: int = PlayerInput.NEVER
+var _attack_light_pressed_tick: int = PlayerInput.NEVER
+var _attack_heavy_pressed_tick: int = PlayerInput.NEVER
 var _forward_prev_pressed_tick: int = PlayerInput.NEVER
 
 
@@ -70,6 +72,15 @@ func sample(tick: int) -> PlayerInput:
 		elif Input.is_action_just_pressed(&"weapon_slot_2"):
 			_weapon_swap_pressed_tick = tick
 			_weapon_swap_slot = 2
+		elif Input.is_action_just_pressed(&"weapon_toggle"):
+			_weapon_swap_pressed_tick = tick
+			_weapon_swap_slot = 0
+		# O clique que só captura o mouse não ataca.
+		if is_mouse_captured() or DisplayServer.get_name() == "headless":
+			if Input.is_action_just_pressed(&"attack_light"):
+				_attack_light_pressed_tick = tick
+			if Input.is_action_just_pressed(&"attack_heavy"):
+				_attack_heavy_pressed_tick = tick
 		input.move = Input.get_vector(&"move_left", &"move_right", &"move_back", &"move_forward")
 		input.jump_held = Input.is_action_pressed(&"jump")
 		input.shoulder_swap_pressed = Input.is_action_just_pressed(&"shoulder_swap")
@@ -77,6 +88,8 @@ func sample(tick: int) -> PlayerInput:
 	input.dodge_pressed_tick = _dodge_pressed_tick
 	input.weapon_swap_pressed_tick = _weapon_swap_pressed_tick
 	input.weapon_swap_slot = _weapon_swap_slot
+	input.attack_light_pressed_tick = _attack_light_pressed_tick
+	input.attack_heavy_pressed_tick = _attack_heavy_pressed_tick
 	input.forward_pressed_tick = _forward_pressed_tick
 	input.forward_prev_pressed_tick = _forward_prev_pressed_tick
 	return input

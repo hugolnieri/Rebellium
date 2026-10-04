@@ -20,5 +20,18 @@ signal jumped(player: Node)
 signal sp_depleted(player: Node)
 ## SP recuperou o mínimo e as ações voltaram a ser permitidas.
 signal sp_recovered(player: Node)
-## Troca de arma pressionada (ainda sem armas: só o evento). slot começa em 1.
+## Troca de arma pressionada (slot 1, 2... ou 0 = alternar).
 signal weapon_swap_pressed(player: Node, slot: int)
+## Arma efetivamente trocada.
+signal weapon_changed(player: Node, weapon: Resource, slot: int)
+## Golpe iniciado. kind: light, heavy, air, dash.
+signal attack_started(player: Node, attack: Resource, weapon: Resource, kind: StringName)
+## Golpe acertou. info: damage, knockback, point, attack, weapon, kind, hitstop_ticks.
+signal hit_landed(attacker: Node, target: Node, info: Dictionary)
+## Jogador levou dano.
+signal player_hurt(player: Node, info: Dictionary)
+## Vida do jogador zerou / jogador voltou.
+signal player_died(player: Node)
+signal player_respawned(player: Node)
+## Passo no chão (para som). intensity 0–1 (andar → correr).
+signal footstep(player: Node, intensity: float)

@@ -20,7 +20,8 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		player.apply_wall_jump_cancel()
 		return
 	var locked := machine.ticks_in_state() < player.secs_to_ticks(cfg().wall_jump_lock_time)
-	if not locked and (player.try_wall_jump(input) or player.try_dodge(input)):
+	if not locked and (player.try_wall_jump(input) or player.try_dodge(input)
+			or player.try_attack(input)):
 		return
 	var climbing := _hold_until_clear and player.wall_sensor.has_contact and player.velocity.y > 0.0
 	if locked or climbing:
