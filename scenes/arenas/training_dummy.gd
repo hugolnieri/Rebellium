@@ -87,11 +87,13 @@ func _update_aggressive(delta: float) -> void:
 	_attack_timer += delta
 	if not _winding_up and _attack_timer >= config.attack_interval - config.attack_windup:
 		_winding_up = true
+		GameEvents.dummy_warning.emit(self)
 	if _attack_timer < config.attack_interval:
 		return
 	_attack_timer = 0.0
 	_winding_up = false
 	_arm_spin = TAU
+	GameEvents.dummy_attack.emit(self)
 	var player := get_tree().get_first_node_in_group(&"local_player") as Player
 	if player == null or _broken_left > 0.0:
 		return

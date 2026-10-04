@@ -4,8 +4,8 @@
 Ação acrobática em terceira pessoa, competitiva, 100% melee. A movimentação é a habilidade principal:
 quem domina wall jumps, cancels e técnicas avançadas controla o espaço da arena.
 
-## Fora do escopo desta etapa
-Combate, armas, rede, personagens, animações, arte final, som.
+## Fora do escopo (até agora)
+Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 
 ## Fases
 1. **Setup** — projeto Godot 4.7 + Jolt, GUT, InputMap remapeável, arena greybox.
@@ -46,3 +46,22 @@ Combate, armas, rede, personagens, animações, arte final, som.
   **Sensação de velocidade**: linhas radiais (shader), FOV até +18°, recuo e tremor leve da câmera.
 - **Personagem** procedural (primitivas + animação por código) no lugar da cápsula, mais sombra redonda,
   poeira e tremor leve de câmera. Tudo ajustável em `feedback_config.tres` / `camera_config.tres`.
+
+## Fase 5 — Combate melee básico
+- **Personagem base** no estilo anime cyberpunk (referência de arte do usuário): traje preto com linhas
+  roxas emissivas, cabelo branco espetado, olhos verdes, ombreiras/joelheiras, pulseira de energia.
+  Feito de primitivas, animado por código com **molas por articulação** (sem poses rígidas).
+- **Armas** (nomes originais):
+  - **Lâmina de Arco** — espada de plasma ciano, lâmina bifurcada. Combo leve de 3, giro pesado 360°
+    (15 SP), mergulho aéreo, estocada no dash.
+  - **Presa de Fase** — adaga curva laranja, mais leve (+8% de velocidade). Combo leve de 4 rápido,
+    lâmina ascendente pesada (lança para cima, 12 SP), mergulho aéreo, bote no dash.
+- **Controles**: botão esquerdo = leve (combo), direito = pesado, 1/2 = arma, Q = alterna.
+  No ar = golpe aéreo; durante o dash = golpe de dash.
+- **Cancels**: recuperação do golpe cancelável por dash (dodge cancel) e por troca de arma
+  (**swap cancel**). Dash com invencibilidade contra golpe = **esquiva perfeita**.
+- **Sensação de impacto**: hitstop, faísca na cor da arma, tremor de câmera, números de dano, rastro do golpe.
+- **Mira assistida**: o golpe vira para o alvo mais alinhado à câmera (alcance e ângulo configuráveis).
+- **Arena de combate** com postes: parados, móvel, agressivo (contra-ataca com aviso vermelho) e no alto.
+- **Sons** sintetizados (`tools/gen_sfx.py`): golpes, impactos, passos, pulo, wall jump, dash, troca de arma,
+  técnicas, esquiva perfeita, dano, aviso do poste.

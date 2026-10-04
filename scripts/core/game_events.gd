@@ -35,3 +35,6 @@ signal player_died(player: Node)
 signal player_respawned(player: Node)
 ## Passo no chão (para som). intensity 0–1 (andar → correr).
 signal footstep(player: Node, intensity: float)
+## Poste agressivo: aviso antes do golpe e o golpe em si.
+signal dummy_warning(dummy: Node)
+signal dummy_attack(dummy: Node)

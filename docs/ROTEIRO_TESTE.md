@@ -1,7 +1,7 @@
-# REBELLIUM — Roteiro de teste manual (Fases 1–4)
+# REBELLIUM — Roteiro de teste manual (Fases 1–5)
 
-Para rodar: `godot --path .` (abre o percurso de treino) ou abra o projeto no editor e aperte F5.
-A arena livre está em `scenes/arenas/Arena.tscn` (F6 com a cena aberta).
+Para rodar: `godot --path .` ou abra o projeto no editor e aperte F5. Abre a **arena de combate**.
+**F3** alterna entre: arena de combate → percurso de treino → arena livre.
 
 ## Controles
 | Tecla | Ação |
@@ -11,12 +11,15 @@ A arena livre está em `scenes/arenas/Arena.tscn` (F6 com a cena aberta).
 | Space | pular / wall jump |
 | W, W (toque duplo rápido) e segurar | sprint (soltar o W encerra) |
 | Shift + A/D (ou W/S) | dash/dodge na direção (Shift antes ou depois da direção; Ctrl também serve) |
-| 1 / 2 | troca de arma (só o evento; serve para o **cancel**) |
+| Botão esquerdo (ou J) | golpe leve — cliques seguidos fazem o combo |
+| Botão direito (ou K) | golpe pesado (gasta SP) |
+| 1 / 2 / Q | Lâmina de Arco / Presa de Fase / alterna (também faz o **cancel** do wall jump) |
 | V | trocar ombro da câmera |
 | Esc | soltar o mouse |
 | F1 | liga/desliga HUD de debug |
-| F2 | menu de ajustes ao vivo (edita e salva o `movement_config.tres`) |
-| R | reinicia o percurso (volta ao início, zera cronômetro e contador) |
+| F2 | menu de ajustes ao vivo (movimento, câmera, visual, combate, cada arma e golpe, áudio) |
+| F3 | troca de cena |
+| R | reinicia (volta ao início; no percurso zera cronômetro, na arena zera os postes) |
 
 ## HUD de debug (F1): o que cada linha diz
 - **estado**: estado atual da máquina (Idle, Run, Sprint, Jump, Fall, WallJump, Dodge, Land) e há quantos ticks.
@@ -173,3 +176,63 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 - [ ] Completei o percurso usando wall jump (corredor/torre), side jump (vão), reverse (borda) e back-coming (parede lisa).
 - [ ] Todos os números relevantes aparecem no F2 e no `config/movement_config.tres`.
 - [ ] `tools/run_tests.sh` passa.
+
+
+---
+
+# Fase 5 — Combate (arena de combate)
+
+## Parte 5: personagem e animação
+1. Parado: postura de prontidão com a arma baixa à frente, respiração leve e o cabelo se mexendo.
+2. Andando/correndo: quadril e tronco giram em sentidos opostos, o corpo inclina nas curvas, a lâmina vai
+   para trás no sprint, o cabelo é jogado para trás pelo vento.
+3. Pulo: a pose muda de forma contínua entre subindo (encolhido) e caindo (pernas buscando o chão).
+4. Ao aterrissar forte o corpo afunda e volta com leve balanço (molas). Nada deve "estalar" de uma pose para outra.
+- Ajustes: F2 → aba **Visual**, grupo "Molas da animação" (frequência maior = mais seco; amortecimento menor = mais balanço).
+
+## Parte 6: golpes no poste
+Ande até os três postes à frente (POSTE).
+1. **Combo leve** (Lâmina de Arco): clique 3 vezes no ritmo → corte direito, corte de volta, golpe descendente.
+   - Números de dano saem do poste, ele balança, a lâmina deixa rastro ciano, há uma pausa curta no impacto (hitstop)
+     e a câmera treme de leve. O HUD da direita conta os hits, o dano do combo e o DPS.
+   - Clicar rápido demais não pula etapas: o próximo golpe sai quando o atual permite (clique fica guardado ~0,16 s).
+2. **Pesado** (botão direito): giro 360° que acerta em volta (teste com um poste atrás de você). Gasta 15 SP.
+   No meio do combo leve, o botão direito vira finalizador.
+3. **Troca de arma**: 2 (ou Q). Floreio da arma, flash e som de carga. A **Presa de Fase** tem combo de 4
+   golpes rápidos, anda ~8% mais rápido e o pesado (lâmina ascendente) lança para cima.
+4. **Mira assistida**: mire perto do poste (até ~55° de diferença, até 6 m) — o golpe vira sozinho para ele.
+
+## Parte 7: golpes com movimento
+1. **Golpe aéreo**: pule e clique → o personagem sobe um pouco e mergulha cortando. Suba na plataforma alta
+   (rampa à esquerda) e mergulhe no poste lá em cima.
+2. **Estocada no dash**: Shift + direção e clique durante o dash → avanço longo e rápido.
+3. **Wall jump + golpe**: na chaminé (paredes de metal à direita), faça wall jumps e clique no ar.
+4. **Poste móvel**: acompanhe o poste que vai e volta; use a mira assistida e a estocada.
+
+## Parte 8: cancels e defesa
+1. **Dodge cancel**: logo depois de um golpe acertar (na recuperação), Shift + direção → o dash interrompe a
+   recuperação. Aparece `DODGE CANCEL`.
+2. **Swap cancel**: na recuperação de um golpe, aperte 1/2/Q → a arma troca e a recuperação acaba na hora.
+   Aparece `SWAP CANCEL` (dourado). Na preparação do golpe não funciona (é proposital).
+3. **Poste agressivo** (área vermelha à direita): a cada ~2,6 s o anel do poste pisca vermelho com bipes e ele
+   gira o braço acertando quem estiver na área (10 de dano, recuo).
+   - Levando o golpe: a tela treme, o personagem recua (estado `Hurt`), a barra VIDA desce.
+   - **Esquiva perfeita**: dê um dash no instante do golpe (0,15 s de invencibilidade) → nenhum dano,
+     brilho branco e som de "cintilar". Aparece `PERFECT DODGE` no log.
+   - Com a vida zerada: fica caído ~1,5 s e volta ao início com vida cheia.
+
+## Parte 9: sons
+Com som ligado, confira: zumbido de plasma nos cortes da Lâmina, sibilo curto na Presa, impacto elétrico no
+acerto (mais grave no pesado), passos que aceleram com a corrida, pulo, aterrissagem, wall jump, dash,
+carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
+- Volumes: F2 → aba **Áudio**. Para mudar o timbre: edite `tools/gen_sfx.py` e rode `python3 tools/gen_sfx.py`.
+
+## Onde mexer (F2)
+| Sensação | Aba / valores |
+|---|---|
+| Dano, alcance, velocidade de cada golpe | aba da arma → cada golpe: `damage`, `reach`, `arc_deg`, `startup`, `active`, `recovery`, `chain_after` |
+| Peso do impacto | `hitstop` do golpe; aba Câmera → `shake_on_hit` |
+| Avanço do golpe / estocada | `lunge_speed` do golpe |
+| Golpe aéreo (flutuar e mergulhar) | `air_start_vertical_speed`, `air_active_vertical_speed`, `air_gravity_scale` |
+| Mira assistida, buffer do clique, vida | aba Combate |
+| Postes | `config/dummy_config.tres` (vida, recuperação, intervalo e aviso do agressivo) |

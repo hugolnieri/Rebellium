@@ -63,6 +63,9 @@ func _build() -> void:
 	_add_tab("Combate", player.combat_config)
 	for weapon in player.weapons:
 		_add_tab(weapon.display_name, weapon)
+	var sound_manager := get_node_or_null(^"/root/SoundManager")
+	if sound_manager != null:
+		_add_tab("Áudio", sound_manager.get(&"config"))
 	var buttons := HBoxContainer.new()
 	root.add_child(buttons)
 	_add_button(buttons, "Salvar no .tres", _save)
