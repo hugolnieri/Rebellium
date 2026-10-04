@@ -1,0 +1,85 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/player/player.gd" id="player"]
+[ext_resource type="Resource" path="res://config/movement_config.tres" id="mcfg"]
+[ext_resource type="Resource" path="res://config/camera_config.tres" id="ccfg"]
+[ext_resource type="Resource" path="res://config/feedback_config.tres" id="fcfg"]
+[ext_resource type="Script" path="res://scenes/player/input_reader.gd" id="reader"]
+[ext_resource type="Script" path="res://scenes/player/state_machine.gd" id="sm"]
+[ext_resource type="Script" path="res://scenes/player/states/idle.gd" id="s_idle"]
+[ext_resource type="Script" path="res://scenes/player/states/run.gd" id="s_run"]
+[ext_resource type="Script" path="res://scenes/player/states/sprint.gd" id="s_sprint"]
+[ext_resource type="Script" path="res://scenes/player/states/jump.gd" id="s_jump"]
+[ext_resource type="Script" path="res://scenes/player/states/fall.gd" id="s_fall"]
+[ext_resource type="Script" path="res://scenes/player/states/land.gd" id="s_land"]
+[ext_resource type="PackedScene" path="res://scenes/player/PlayerCamera.tscn" id="cam"]
+
+[sub_resource type="CapsuleShape3D" id="shape"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="mat_body"]
+albedo_color = Color(0.86, 0.84, 0.79, 1)
+roughness = 0.8
+
+[sub_resource type="CapsuleMesh" id="mesh_body"]
+material = SubResource("mat_body")
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="mat_nose"]
+albedo_color = Color(0.12, 0.12, 0.13, 1)
+metallic = 0.6
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="mesh_nose"]
+material = SubResource("mat_nose")
+size = Vector3(0.5, 0.18, 0.3)
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("player")
+config = ExtResource("mcfg")
+camera_config = ExtResource("ccfg")
+feedback_config = ExtResource("fcfg")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("shape")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("mesh_body")
+
+[node name="Nose" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, -0.38)
+mesh = SubResource("mesh_nose")
+
+[node name="InputReader" type="Node" parent="."]
+script = ExtResource("reader")
+camera_config = ExtResource("ccfg")
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("sm")
+
+[node name="Idle" type="Node" parent="StateMachine"]
+script = ExtResource("s_idle")
+
+[node name="Run" type="Node" parent="StateMachine"]
+script = ExtResource("s_run")
+
+[node name="Sprint" type="Node" parent="StateMachine"]
+script = ExtResource("s_sprint")
+
+[node name="Jump" type="Node" parent="StateMachine"]
+script = ExtResource("s_jump")
+
+[node name="Fall" type="Node" parent="StateMachine"]
+script = ExtResource("s_fall")
+
+[node name="Land" type="Node" parent="StateMachine"]
+script = ExtResource("s_land")
+
+[node name="PlayerCamera" parent="." instance=ExtResource("cam")]
+camera_config = ExtResource("ccfg")

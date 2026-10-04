@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="FeedbackConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/feedback_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+color_base_black = Color(0.04, 0.04, 0.05, 1)
+color_dark_grey = Color(0.18, 0.18, 0.19, 1)
+color_dirty_white = Color(0.86, 0.84, 0.79, 1)
+color_metal = Color(0.47, 0.49, 0.52, 1)
+accent_red = Color(0.92, 0.12, 0.15, 1)
+accent_violet = Color(0.58, 0.28, 0.98, 1)
+accent_electric_blue = Color(0.12, 0.62, 1.0, 1)
+accent_acid_green = Color(0.62, 1.0, 0.12, 1)
+model_turn_speed = 16.0
+sp_bar_color = Color(0.12, 0.62, 1.0, 1)
+sp_exhausted_color = Color(0.92, 0.12, 0.15, 1)
+hp_bar_color = Color(0.62, 1.0, 0.12, 1)

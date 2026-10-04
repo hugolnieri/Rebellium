@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/player/player_camera.gd" id="1"]
+
+[sub_resource type="SphereShape3D" id="probe"]
+radius = 0.2
+
+[node name="PlayerCamera" type="Node3D"]
+script = ExtResource("1")
+
+[node name="Yaw" type="Node3D" parent="."]
+
+[node name="Pitch" type="Node3D" parent="Yaw"]
+
+[node name="ShoulderArm" type="SpringArm3D" parent="Yaw/Pitch"]
+shape = SubResource("probe")
+spring_length = 0.75
+
+[node name="BackArm" type="SpringArm3D" parent="Yaw/Pitch/ShoulderArm"]
+shape = SubResource("probe")
+spring_length = 3.4
+
+[node name="Camera3D" type="Camera3D" parent="Yaw/Pitch/ShoulderArm/BackArm"]
+fov = 75.0

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CameraConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/camera_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+pivot_height = 1.55
+arm_length = 3.4
+shoulder_offset = 0.75
+shoulder_lerp_speed = 12.0
+spring_margin = 0.2
+mouse_sensitivity = 0.0025
+invert_y = false
+pitch_min_deg = -70.0
+pitch_max_deg = 55.0
+initial_pitch_deg = -12.0
+base_fov = 75.0
+max_speed_fov_bonus = 10.0
+fov_bonus_per_speed = 1.5
+fov_lerp_speed = 8.0

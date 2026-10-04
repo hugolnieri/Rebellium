@@ -1,5 +1,8 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugHUD.tscn" id="dhud"]
 [ext_resource type="Script" path="res://scripts/core/greybox_block.gd" id="greybox"]
 
 [sub_resource type="Environment" id="env"]
@@ -104,6 +107,9 @@ script = ExtResource("greybox")
 size = Vector3(1.5, 4, 1.5)
 surface = 4
 
-[node name="OverviewCamera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 18, 26)
-current = true
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[node name="HUD" parent="." instance=ExtResource("hud")]
+
+[node name="DebugHUD" parent="." instance=ExtResource("dhud")]
