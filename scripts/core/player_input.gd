@@ -25,6 +25,8 @@ var weapon_swap_pressed_tick: int = NEVER
 ## Slot pedido na troca de arma: 1, 2... ou 0 = alternar para a outra.
 var weapon_swap_slot: int = 0
 var attack_light_pressed_tick: int = NEVER
+## Botão de ataque leve ainda pressionado (segurar = golpe pesado).
+var attack_light_held: bool = false
 var attack_heavy_pressed_tick: int = NEVER
 var shoulder_swap_pressed: bool = false
 
@@ -64,6 +66,7 @@ func copy() -> PlayerInput:
 	c.weapon_swap_pressed_tick = weapon_swap_pressed_tick
 	c.weapon_swap_slot = weapon_swap_slot
 	c.attack_light_pressed_tick = attack_light_pressed_tick
+	c.attack_light_held = attack_light_held
 	c.attack_heavy_pressed_tick = attack_heavy_pressed_tick
 	c.shoulder_swap_pressed = shoulder_swap_pressed
 	return c

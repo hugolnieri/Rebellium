@@ -1,6 +1,7 @@
 extends PlayerState
 ## Golpe com a arma atual. Fases: preparação → acerto → recuperação (tempos do AttackData).
-## - Durante preparação/acerto avança na direção do golpe (`lunge_speed`).
+## - O golpe não trava o movimento: no chão continua andando/correndo pelo input (e gasta SP
+##   correndo); no ar mantém o controle aéreo. `lunge_speed` > 0 ainda empurra na direção do golpe.
 ## - Na janela de acerto testa os alvos do grupo "hittable" (cada alvo leva no máximo 1 acerto).
 ## - A partir de `chain_after`, um clique guardado encadeia o próximo golpe do combo (ou o pesado).
 ## - A recuperação é cancelável por dash (dodge cancel) e por troca de arma (swap cancel).
@@ -72,27 +73,31 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		return
 	var phase := get_phase()
 	var airborne := kind == CombatRules.KIND_AIR
-	var horizontal: Vector3
-	if phase != Phase.RECOVERY and attack.lunge_speed > 0.0:
-		horizontal = direction * attack.lunge_speed
-	elif airborne:
-		horizontal = player.get_horizontal_velocity()  # no ar o golpe não muda o embalo
-	else:
-		# No chão o personagem para no lugar ao atacar.
-		horizontal = player.get_horizontal_velocity().move_toward(Vector3.ZERO,
-			player.combat_config.attack_ground_friction * delta)
-	player.velocity.x = horizontal.x
-	player.velocity.z = horizontal.z
 	if airborne:
 		if _t == _startup_ticks + 1 and attack.air_active_vertical_speed != 0.0:
 			player.velocity.y = attack.air_active_vertical_speed
-		player.apply_gravity(delta * attack.air_gravity_scale)
-	else:
+		player.apply_air_movement(input, delta, attack.air_gravity_scale)
+	elif phase != Phase.RECOVERY and attack.lunge_speed > 0.0:
+		player.velocity.x = direction.x * attack.lunge_speed
+		player.velocity.z = direction.z * attack.lunge_speed
 		player.apply_gravity(delta)
+	else:
+		_move_on_ground(input, delta)
 	if phase == Phase.ACTIVE:
 		_check_hits()
 	if _t >= _startup_ticks + _active_ticks + _recovery_ticks:
 		_finish(input)
+
+
+## Golpe no chão sem perder o passo: anda ou corre (sprint ativo) pelo input.
+func _move_on_ground(input: PlayerInput, delta: float) -> void:
+	var multiplier := player.combat_config.attack_move_speed_multiplier
+	if player.can_sprint(input):
+		player.redirect_to_wish(input)
+		player.apply_ground_movement(input, player.get_sprint_speed() * multiplier, delta)
+		player.sp.drain(cfg().sprint_sp_cost_per_second * delta)
+	else:
+		player.apply_ground_movement(input, player.get_walk_speed() * multiplier, delta)
 
 
 func post_move(_input: PlayerInput) -> void:

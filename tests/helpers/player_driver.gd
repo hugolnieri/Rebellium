@@ -15,6 +15,8 @@ var weapon_swap_slot: int = 0
 var forward_pressed_tick: int = PlayerInput.NEVER
 var attack_light_pressed_tick: int = PlayerInput.NEVER
 var attack_heavy_pressed_tick: int = PlayerInput.NEVER
+## Botão esquerdo seguro (segurar = golpe pesado). false = clique rápido.
+var attack_light_held: bool = false
 var forward_prev_pressed_tick: int = PlayerInput.NEVER
 ## Técnicas emitidas por GameEvents durante o teste (em ordem).
 var techniques: Array[StringName] = []
@@ -123,6 +125,7 @@ func make_input(move: Vector2, sprint: bool) -> PlayerInput:
 	input.weapon_swap_slot = weapon_swap_slot
 	input.attack_light_pressed_tick = attack_light_pressed_tick
 	input.attack_heavy_pressed_tick = attack_heavy_pressed_tick
+	input.attack_light_held = attack_light_held
 	return input
 
 

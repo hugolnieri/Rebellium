@@ -10,3 +10,5 @@ export_presets.cfg
 .DS_Store
 Thumbs.db
 *.tmp
+tools/.cache/
+__pycache__/

@@ -1,21 +1,18 @@
 class_name CharacterModel
 extends Node3D
-## Personagem no estilo anime cyberpunk (traje preto com linhas roxas emissivas, cabelo branco,
-## olhos verdes, ombreiras e joelheiras): malha lisa com esqueleto gerada por
-## tools/gen_character.py, toon shading e contorno. Só apresentação: lê o
-## estado do Player e nunca altera gameplay. Frente = -Z, pés em y = 0, altura de referência 1,8 m.
+## Personagem anime (traje preto com linhas roxas emissivas, cabelo branco, olhos verdes).
+## Modelo pronto do VRoid Studio (licença CC0) adaptado por tools/prepare_character.py, com
+## shader toon e contorno. Só apresentação: lê o estado do Player e nunca altera gameplay.
+## Frente = -Z, pés em y = 0.
 ##
 ## Animação: cada articulação persegue uma pose-alvo através de uma MOLA (frequência +
 ## amortecimento), o que dá peso, continuidade e um leve balanço — nada de poses rígidas.
 ## Camadas: locomoção (corrida com quadril/tronco em contra-rotação, inclinação nas curvas,
 ## respiração) → ar (mistura contínua subida/queda) → golpe (poses-chave de AttackPoses).
+## As poses são escritas num esqueleto de referência (repouso = identidade, braços para baixo) e
+## convertidas para os ossos do modelo (repouso em T-pose: os braços ganham uma rotação fixa).
 
 const REFERENCE_HEIGHT: float = 1.8
-const HIP_HEIGHT: float = 0.97
-const THIGH_LENGTH: float = 0.45
-const SHIN_LENGTH: float = 0.44
-const UPPER_ARM_LENGTH: float = 0.29
-const FOREARM_LENGTH: float = 0.26
 const JOINTS: Array[StringName] = [
 	&"lean", &"hips", &"spine", &"chest", &"head", &"shoulder_l", &"shoulder_r", &"elbow_l",
 	&"elbow_r", &"wrist_l", &"wrist_r", &"thigh_l", &"thigh_r", &"knee_l", &"knee_r",
@@ -25,12 +22,34 @@ const JOINTS: Array[StringName] = [
 const HIPS_Y: StringName = &"hips_y"
 ## Canal do cabelo (movimento secundário).
 const HAIR: StringName = &"hair"
-## Altura do pivô do cabelo acima da articulação da cabeça.
-const HAIR_PIVOT_HEIGHT: float = 0.12
-## Malhas geradas por tools/gen_character.py (corpo com esqueleto + cabelo).
-const BODY_SCENE: PackedScene = preload("res://assets/character/body.glb")
-const HAIR_SCENE: PackedScene = preload("res://assets/character/hair.glb")
+
+const MODEL_SCENE: PackedScene = preload("res://assets/character/hero.glb")
+const SUIT_EMISSION: Texture2D = preload("res://assets/character/hero_suit_emission.png")
+const TOON_SHADER: Shader = preload("res://scenes/player/feedback/anime_toon.gdshader")
 const OUTLINE_SHADER: Shader = preload("res://scenes/player/feedback/outline.gdshader")
+## Altura do modelo original (topo do cabelo), para escalar até REFERENCE_HEIGHT.
+const MODEL_HEIGHT: float = 1.92
+## Canal da animação → osso do modelo (nomes do VRoid).
+const BONE_MAP: Dictionary = {
+	&"hips": &"J_Bip_C_Hips", &"spine": &"J_Bip_C_Spine", &"chest": &"J_Bip_C_Chest",
+	&"head": &"J_Bip_C_Head",
+	&"shoulder_l": &"J_Bip_L_UpperArm", &"elbow_l": &"J_Bip_L_LowerArm", &"wrist_l": &"J_Bip_L_Hand",
+	&"shoulder_r": &"J_Bip_R_UpperArm", &"elbow_r": &"J_Bip_R_LowerArm", &"wrist_r": &"J_Bip_R_Hand",
+	&"thigh_l": &"J_Bip_L_UpperLeg", &"knee_l": &"J_Bip_L_LowerLeg", &"foot_l": &"J_Bip_L_Foot",
+	&"thigh_r": &"J_Bip_R_UpperLeg", &"knee_r": &"J_Bip_R_LowerLeg", &"foot_r": &"J_Bip_R_Foot",
+}
+## Cadeia do braço direito até a mão (para posicionar a arma sem esperar o esqueleto atualizar).
+const RIGHT_ARM_CHAIN: Array[StringName] = [
+	&"J_Bip_C_Spine", &"J_Bip_C_Chest", &"J_Bip_C_UpperChest", &"J_Bip_R_Shoulder",
+	&"J_Bip_R_UpperArm", &"J_Bip_R_LowerArm", &"J_Bip_R_Hand",
+]
+## Distância do pulso ao centro da palma (unidades do modelo).
+const PALM_OFFSET: float = 0.06
+const FINGERS: Array[String] = ["Index", "Middle", "Ring", "Little"]
+## Quanto cada falange dobra em relação à base.
+const PHALANX_CURL: Array[float] = [1.0, 1.1, 0.8]
+## Balanço do cabelo aplicado às mechas presas à cabeça.
+const HAIR_SWAY: float = 0.8
 
 var player: Player
 var weapon_visual: WeaponVisual
@@ -38,14 +57,24 @@ var trail: WeaponTrail
 
 var _bones: Dictionary = {}  # canal -> índice do osso
 var _skeleton: Skeleton3D
+var _rig: Node3D
+var _rig_scale: float = 1.0
 var _hips_rest: Vector3 = Vector3.ZERO
+## Rotação fixa que leva o braço da T-pose para "braço abaixado" (repouso da animação).
+var _arm_ref: Dictionary = {}
+var _arm_offsets: Array[Vector3] = []
+var _hair_roots: PackedInt32Array = PackedInt32Array()
+var _face: MeshInstance3D
+var _blink_shape: int = -1
+var _brow_shape: int = -1
+var _blink_timer: float = 2.0
+var _blink_t: float = -1.0
+var _brow: float = 0.0
 var _lean: Node3D
 var _trick: Node3D
-var _hair: Node3D
 var _socket: Node3D
-var _meshes: Array[MeshInstance3D] = []
-var _line_material: StandardMaterial3D
-var _flash_material: StandardMaterial3D
+var _materials: Array[ShaderMaterial] = []
+var _suit_material: ShaderMaterial
 
 # Molas: posição/velocidade por canal.
 var _pos: Dictionary = {}
@@ -69,6 +98,8 @@ var _flash_timer: float = 0.0
 var _flash_duration: float = 0.001
 var _flash_energy: float = 0.0
 var _flash_color: Color = Color.WHITE
+## Rotações globais (espaço do modelo) da animação de referência, por canal.
+var _global: Dictionary = {}
 var _last_step_side: int = 0
 
 
@@ -99,80 +130,130 @@ func apply_body_height(height: float) -> void:
 # --- Montagem do corpo -----------------------------------------------------------
 
 func _build() -> void:
-	var fb := _fb()
-	var lean := Node3D.new()
-	add_child(lean)
-	_lean = lean
+	_lean = Node3D.new()
+	add_child(_lean)
 	_trick = Node3D.new()
-	_trick.position = Vector3(0, HIP_HEIGHT, 0)
-	lean.add_child(_trick)
-	# O quadril (raiz do esqueleto) fica na origem de _trick, então o mortal gira em torno dele.
-	var body := BODY_SCENE.instantiate() as Node3D
-	body.position = Vector3(0, -HIP_HEIGHT, 0)
-	_trick.add_child(body)
-	_skeleton = body.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
-	for joint in JOINTS:
-		if joint != &"lean":
-			_bones[joint] = _skeleton.find_bone(joint)
+	_lean.add_child(_trick)
+	_rig = MODEL_SCENE.instantiate() as Node3D
+	_rig_scale = REFERENCE_HEIGHT / MODEL_HEIGHT
+	_rig.scale = Vector3.ONE * _rig_scale
+	_trick.add_child(_rig)
+	_skeleton = _rig.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	for channel: StringName in BONE_MAP:
+		_bones[channel] = _skeleton.find_bone(BONE_MAP[channel])
 	_hips_rest = _skeleton.get_bone_rest(_bones[&"hips"]).origin
+	# O quadril fica na origem de _trick, então o mortal/cambalhota gira em torno dele.
+	_trick.position = Vector3(0, _hips_rest.y * _rig_scale, 0)
+	_rig.position = -_hips_rest * _rig_scale
+	# T-pose → braço abaixado: esquerdo (-X) gira +90° em Z, direito (+X) gira -90°.
+	_arm_ref[&"l"] = Quaternion(Vector3.BACK, PI * 0.5)
+	_arm_ref[&"r"] = Quaternion(Vector3.BACK, -PI * 0.5)
+	for bone_name in RIGHT_ARM_CHAIN:
+		_arm_offsets.append(_skeleton.get_bone_rest(_skeleton.find_bone(bone_name)).origin)
+	var head := _bones[&"head"] as int
+	for i in _skeleton.get_bone_count():
+		if _skeleton.get_bone_parent(i) == head and _skeleton.get_bone_name(i).begins_with("HairJoint"):
+			_hair_roots.append(i)
+	_pose_fingers()
+	_setup_materials()
+	_face = _rig.find_child("Face", true, false) as MeshInstance3D
+	if _face != null:
+		_blink_shape = _find_blend_shape(_face.mesh, "Fcl_EYE_Close")
+		_brow_shape = _find_blend_shape(_face.mesh, "Fcl_BRW_Angry")
+	# Encaixe da arma: posicionado por código a cada quadro (escala desfeita para a arma).
+	_socket = Node3D.new()
+	_rig.add_child(_socket)
 
+
+func _pose_fingers() -> void:
+	var fb := _fb()
+	for side in ["L", "R"]:
+		# Dedos esticados em T-pose apontam para ±X; dobrar = girar para a palma (-Y) em torno de Z.
+		var curl := fb.relaxed_curl if side == "L" else -fb.grip_curl
+		for finger in FINGERS:
+			for i in 3:
+				var bone := _skeleton.find_bone("J_Bip_%s_%s%d" % [side, finger, i + 1])
+				if bone >= 0:
+					_skeleton.set_bone_pose_rotation(bone, Quaternion(Vector3.BACK, curl * PHALANX_CURL[i]))
+		var thumb := _skeleton.find_bone("J_Bip_%s_Thumb2" % side)
+		if thumb >= 0:
+			_skeleton.set_bone_pose_rotation(thumb, Quaternion(Vector3.UP, curl * 0.5))
+
+
+func _find_blend_shape(mesh: Mesh, suffix: String) -> int:
+	var array_mesh := mesh as ArrayMesh
+	if array_mesh == null:
+		return -1
+	for i in array_mesh.get_blend_shape_count():
+		if String(array_mesh.get_blend_shape_name(i)).ends_with(suffix):
+			return i
+	return -1
+
+
+## Troca os materiais importados por toon (variantes: opaco, dupla face, translúcido).
+func _setup_materials() -> void:
+	var fb := _fb()
+	var cache := {}
+	var shaders := {}
 	var outline := ShaderMaterial.new()
 	outline.shader = OUTLINE_SHADER
 	outline.set_shader_parameter(&"outline_color", fb.outline_color)
-	outline.set_shader_parameter(&"thickness", fb.outline_thickness)
-	_line_material = _toon(fb.suit_line_color, false)
-	_line_material.emission_enabled = true
-	_line_material.emission = fb.suit_line_color
-	_line_material.emission_energy_multiplier = fb.suit_line_energy
-	for mesh: MeshInstance3D in body.find_children("*", "MeshInstance3D", true, false):
-		match mesh.name:
-			&"SuitLines":
-				mesh.material_override = _line_material
-			&"Face":
-				mesh.material_override = _toon(fb.body_tint, true)
-			_:
-				var material := _toon(fb.body_tint, true)
-				material.next_pass = outline
-				mesh.material_override = material
-		_meshes.append(mesh)
-
-	# Cabelo: preso à cabeça, com um pivô próprio para o balanço (movimento secundário).
-	var head_attach := BoneAttachment3D.new()
-	head_attach.bone_name = &"head"
-	_skeleton.add_child(head_attach)
-	_hair = Node3D.new()
-	_hair.position = Vector3(0, HAIR_PIVOT_HEIGHT, 0)
-	head_attach.add_child(_hair)
-	var hair := HAIR_SCENE.instantiate() as Node3D
-	hair.position = Vector3(0, -HAIR_PIVOT_HEIGHT, 0)
-	_hair.add_child(hair)
-	var hair_material := _toon(fb.hair_color, false)
-	hair_material.next_pass = outline
-	for mesh: MeshInstance3D in hair.find_children("*", "MeshInstance3D", true, false):
-		mesh.material_override = hair_material
-		_meshes.append(mesh)
-
-	# Encaixe da arma na mão direita.
-	var hand_attach := BoneAttachment3D.new()
-	hand_attach.bone_name = &"wrist_r"
-	_skeleton.add_child(hand_attach)
-	_socket = Node3D.new()
-	_socket.position = Vector3(0, -0.045, 0)
-	hand_attach.add_child(_socket)
+	outline.set_shader_parameter(&"thickness", fb.outline_thickness / _rig_scale)
+	for mesh: MeshInstance3D in _rig.find_children("*", "MeshInstance3D", true, false):
+		for i in mesh.mesh.get_surface_count():
+			var source := mesh.mesh.surface_get_material(i) as BaseMaterial3D
+			if source == null:
+				continue
+			var key := source.resource_name
+			if not cache.has(key):
+				cache[key] = _make_toon(source, shaders, outline)
+			mesh.set_surface_override_material(i, cache[key])
 
 
-## Material toon (sombra em degraus + luz de borda), como num anime.
-func _toon(color: Color, use_vertex_color: bool) -> StandardMaterial3D:
+func _make_toon(source: BaseMaterial3D, shaders: Dictionary, outline: ShaderMaterial) -> ShaderMaterial:
 	var fb := _fb()
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.vertex_color_use_as_albedo = use_vertex_color
-	material.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-	material.specular_mode = BaseMaterial3D.SPECULAR_TOON
-	material.roughness = 0.45
-	material.rim_enabled = true
-	material.rim = fb.rim_amount
-	material.rim_tint = fb.rim_tint
+	var mat_name := source.resource_name
+	var blend := source.transparency in [BaseMaterial3D.TRANSPARENCY_ALPHA,
+		BaseMaterial3D.TRANSPARENCY_ALPHA_DEPTH_PRE_PASS]
+	var double_sided := source.cull_mode == BaseMaterial3D.CULL_DISABLED
+	var variant := "%s_%s" % [blend, double_sided]
+	if not shaders.has(variant):
+		var shader := Shader.new()
+		var mode := "render_mode %s, %s, specular_disabled;" % [
+			"cull_disabled" if double_sided else "cull_back",
+			"blend_mix, depth_draw_never" if blend else "depth_draw_opaque"]
+		var code := TOON_SHADER.code.replace("render_mode cull_back, specular_disabled;", mode)
+		if blend:
+			code = code.replace("\tALPHA_SCISSOR_THRESHOLD = alpha_cut;\n", "")
+		shader.code = code
+		shaders[variant] = shader
+	var material := ShaderMaterial.new()
+	material.shader = shaders[variant]
+	material.render_priority = 1 if blend else 0
+	material.set_shader_parameter(&"albedo_tex", source.albedo_texture)
+	material.set_shader_parameter(&"shade_color", fb.shade_color)
+	material.set_shader_parameter(&"shade_threshold", fb.shade_threshold)
+	material.set_shader_parameter(&"shade_softness", fb.shade_softness)
+	material.set_shader_parameter(&"rim_color", fb.rim_color)
+	material.set_shader_parameter(&"rim_strength", fb.rim_strength)
+	var is_face := mat_name.contains("FACE") or mat_name.contains("EYE") or mat_name.contains("Face_00")
+	if is_face:
+		material.set_shader_parameter(&"shading_strength", fb.face_shading)
+		material.set_shader_parameter(&"rim_strength", 0.0)
+		if mat_name.contains("Face_00_SKIN"):
+			material.set_shader_parameter(&"tint", fb.face_tint)
+	if mat_name.contains("HAIR"):
+		material.set_shader_parameter(&"tint", fb.hair_color)
+	if mat_name.contains("Body_00_SKIN"):
+		_suit_material = material
+		material.set_shader_parameter(&"emission_tex", SUIT_EMISSION)
+		material.set_shader_parameter(&"emission_tint", fb.suit_glow_tint)
+		material.set_shader_parameter(&"emission_energy", fb.suit_glow_energy)
+	if not blend and not is_face:
+		var pass_material := outline.duplicate() as ShaderMaterial
+		pass_material.set_shader_parameter(&"albedo_tex", source.albedo_texture)
+		material.next_pass = pass_material
+	_materials.append(material)
 	return material
 
 
@@ -208,18 +289,10 @@ func _on_weapon_changed(who: Node, weapon: Resource, _slot: int) -> void:
 
 ## Brilho na cor da técnica (corpo inteiro + linhas do traje).
 func flash(color: Color, duration: float, energy: float) -> void:
-	if _flash_material == null:
-		_flash_material = StandardMaterial3D.new()
-		_flash_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-		_flash_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		_flash_material.albedo_color = Color(0, 0, 0)
-		_flash_material.emission_enabled = true
 	_flash_color = color
 	_flash_duration = maxf(duration, 0.001)
 	_flash_timer = duration
 	_flash_energy = energy
-	for mesh in _meshes:
-		mesh.material_overlay = _flash_material
 
 
 func _on_wall_jump(who: Node, data: Dictionary) -> void:
@@ -326,6 +399,7 @@ func _process(delta: float) -> void:
 	_update_hair(speed, delta)
 	_update_trick(delta)
 	_update_flash(delta)
+	_update_face(state, delta)
 
 
 func _rest_pose() -> Dictionary:
@@ -540,14 +614,55 @@ func _apply_springs(pose: Dictionary, frequency: float, damping: float, delta: f
 			trail.emitting = false
 		if weapon_visual != null:
 			weapon_visual.set_boost(0.0)
+	if player.get_state_name() != &"Attack" and weapon_visual != null:
+		weapon_visual.set_boost(player.get_heavy_charge())
 	for joint in JOINTS:
 		var value := _spring(joint, pose[joint], frequency, damping, delta)
 		if joint == &"lean":
 			_lean.rotation = value
 		else:
-			_skeleton.set_bone_pose_rotation(_bones[joint], Quaternion.from_euler(value))
+			_set_joint(joint, Quaternion.from_euler(value))
 	var hips_y := _spring(HIPS_Y, pose[HIPS_Y], frequency, damping, delta)
-	_skeleton.set_bone_pose_position(_bones[&"hips"], _hips_rest + Vector3(0, hips_y.x, 0))
+	var hips_pos := _hips_rest + Vector3(0, hips_y.x / _rig_scale, 0)
+	_skeleton.set_bone_pose_position(_bones[&"hips"], hips_pos)
+	_update_socket(hips_pos)
+
+
+## Escreve a rotação local de referência no osso do modelo (braços: conversão da T-pose).
+func _set_joint(joint: StringName, local: Quaternion) -> void:
+	var joint_name := String(joint)
+	var parent: StringName = &""
+	match joint_name.get_slice("_", 0):
+		"spine": parent = &"hips"
+		"chest": parent = &"spine"
+		"head", "shoulder": parent = &"chest"
+		"elbow": parent = StringName("shoulder_" + joint_name.right(1))
+		"wrist": parent = StringName("elbow_" + joint_name.right(1))
+		"thigh": parent = &"hips"
+		"knee": parent = StringName("thigh_" + joint_name.right(1))
+		"foot": parent = StringName("knee_" + joint_name.right(1))
+	_global[joint] = (_global[parent] as Quaternion) * local if parent != &"" else local
+	var bone_local := local
+	if joint_name.begins_with("shoulder") or joint_name.begins_with("elbow") or joint_name.begins_with("wrist"):
+		var ref: Quaternion = _arm_ref[StringName(joint_name.right(1))]
+		bone_local = local * ref if joint_name.begins_with("shoulder") else ref.inverse() * local * ref
+	_skeleton.set_bone_pose_rotation(_bones[joint], bone_local)
+
+
+## Arma na palma da mão direita, calculada pela mesma cadeia de rotações dos ossos.
+func _update_socket(hips_pos: Vector3) -> void:
+	var ref: Quaternion = _arm_ref[&"r"]
+	var chest: Quaternion = _global[&"chest"]
+	var rotations: Array[Quaternion] = [
+		_global[&"hips"], _global[&"spine"], chest, chest, chest,
+		(_global[&"shoulder_r"] as Quaternion) * ref, (_global[&"elbow_r"] as Quaternion) * ref,
+	]
+	var pos := hips_pos
+	for i in _arm_offsets.size():
+		pos += rotations[i] * _arm_offsets[i]
+	var wrist: Quaternion = _global[&"wrist_r"]
+	pos += wrist * Vector3(0, -PALM_OFFSET, 0)
+	_socket.transform = Transform3D(Basis(wrist) * Basis.from_scale(Vector3.ONE / _rig_scale), pos)
 
 
 ## Mola implícita (estável com qualquer delta): x persegue o alvo com frequência e amortecimento.
@@ -572,7 +687,11 @@ func _update_hair(speed: float, delta: float) -> void:
 	# Vento: o cabelo vai para trás com a velocidade e para cima/baixo com a queda/subida.
 	var target := Vector3(clampf(speed * 0.045 - player.velocity.y * 0.025, -0.35, 0.7), 0, 0)
 	var hair := _spring(HAIR, target, fb.hair_spring_frequency, fb.hair_spring_damping, delta)
-	_hair.rotation = hair + Vector3(sin(_time * 9.0) * 0.02 * clampf(speed / 10.0, 0.0, 1.0), 0, 0)
+	var sway := hair.x + sin(_time * 9.0) * 0.02 * clampf(speed / 10.0, 0.0, 1.0)
+	# Mechas penduradas: girar para -X em torno de X joga a ponta para trás (+Z).
+	var hair_rotation := Quaternion(Vector3.RIGHT, -sway * HAIR_SWAY)
+	for bone in _hair_roots:
+		_skeleton.set_bone_pose_rotation(bone, hair_rotation)
 
 
 func _emit_footsteps(speed: float, cfg: MovementConfig) -> void:
@@ -614,10 +733,32 @@ func _update_flash(delta: float) -> void:
 		return
 	_flash_timer = maxf(_flash_timer - delta, 0.0)
 	var k := _flash_timer / _flash_duration
-	_flash_material.emission = _flash_color
-	_flash_material.emission_energy_multiplier = _flash_energy * k * 0.5
-	_line_material.emission = fb.suit_line_color.lerp(_flash_color, k)
-	_line_material.emission_energy_multiplier = lerpf(fb.suit_line_energy, fb.suit_line_energy * 2.5, k)
-	if _flash_timer == 0.0:
-		for mesh in _meshes:
-			mesh.material_overlay = null
+	var glow := _flash_color * (_flash_energy * k * 0.25)
+	for material in _materials:
+		material.set_shader_parameter(&"flash_color", Color(glow.r, glow.g, glow.b))
+	if _suit_material != null:
+		_suit_material.set_shader_parameter(&"emission_tint", fb.suit_glow_tint.lerp(_flash_color, k))
+		_suit_material.set_shader_parameter(&"emission_energy", lerpf(fb.suit_glow_energy,
+			fb.suit_glow_energy * 2.0, k))
+
+
+## Piscar de tempos em tempos e sobrancelhas franzidas ao golpear/apanhar.
+func _update_face(state: StringName, delta: float) -> void:
+	if _face == null:
+		return
+	var fb := _fb()
+	if _blink_shape >= 0:
+		if _blink_t >= 0.0:
+			_blink_t += delta / maxf(fb.blink_duration, 0.01)
+			if _blink_t >= 1.0:
+				_blink_t = -1.0
+				_blink_timer = fb.blink_interval * randf_range(0.6, 1.4)
+		else:
+			_blink_timer -= delta
+			if _blink_timer <= 0.0:
+				_blink_t = 0.0
+		_face.set_blend_shape_value(_blink_shape, sin(PI * _blink_t) if _blink_t >= 0.0 else 0.0)
+	if _brow_shape >= 0:
+		var target := 0.8 if state in [&"Attack", &"Hurt"] or player.get_heavy_charge() > 0.0 else 0.0
+		_brow = move_toward(_brow, target, delta * 5.0)
+		_face.set_blend_shape_value(_brow_shape, _brow)

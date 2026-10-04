@@ -76,3 +76,15 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - **Personagem bem modelado**: malha lisa (SDF + marching cubes) com esqueleto e pesos de pele, gerada por
   `tools/gen_character.py` em `assets/character/`. Toon shading, contorno por casco invertido, rosto com
   olhos verdes, cabelo em mechas. A animação por molas agora gira os ossos do esqueleto.
+
+## Revisão: golpe em movimento e personagem anime
+- **Golpe sem travar**: no chão o personagem continua andando ou correndo pelo input enquanto golpeia
+  (`attack_move_speed_multiplier`); no ar mantém o controle aéreo.
+- **Pesado segurando o clique esquerdo** (`heavy_hold_ticks`): toque = leve ao soltar; a arma brilha
+  durante a carga. Botão direito continua como pesado direto.
+- **Personagem**: modelo pronto do VRoid Studio ("Sakurada Fumiriya", **CC0**) adaptado por
+  `tools/prepare_character.py`: roupas removidas, traje preto com linhas roxas emissivas desenhadas em 3D e
+  assadas na textura, cabelo branco, olhos verdes, descalço. Shader toon próprio (sombra colorida com
+  degrau suave, luz de borda, rosto quase sem sombra) e contorno. A animação por molas é convertida para
+  o esqueleto do modelo (braços da T-pose), com dedos fechados na arma, piscar e sobrancelhas no golpe.
+

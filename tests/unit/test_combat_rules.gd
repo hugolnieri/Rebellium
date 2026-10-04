@@ -86,3 +86,29 @@ func test_weapon_files_load_with_all_attacks() -> void:
 		assert_not_null(weapon.dash)
 		for attack in weapon.light_combo:
 			assert_lte(attack.chain_after, attack.total_time(), "%s pode encadear" % attack.display_name)
+
+
+func test_charge_tap_releases_light() -> void:
+	var r := CombatRules.attack_charge_step(PlayerInput.NEVER, 10, true, true, 16, false)
+	assert_eq(r.charge_tick, 10)
+	assert_false(r.light)
+	r = CombatRules.attack_charge_step(r.charge_tick, 13, false, false, 16, false)
+	assert_true(r.light)
+	assert_false(r.heavy)
+	assert_eq(r.charge_tick, PlayerInput.NEVER)
+
+
+func test_charge_hold_releases_heavy_once() -> void:
+	var r := CombatRules.attack_charge_step(PlayerInput.NEVER, 10, true, true, 16, false)
+	r = CombatRules.attack_charge_step(r.charge_tick, 25, false, true, 16, false)
+	assert_false(r.heavy)
+	r = CombatRules.attack_charge_step(r.charge_tick, 26, false, true, 16, false)
+	assert_true(r.heavy)
+	r = CombatRules.attack_charge_step(r.charge_tick, 30, false, false, 16, false)
+	assert_false(r.light, "soltar depois do pesado não gera leve")
+
+
+func test_charge_instant_in_air() -> void:
+	var r := CombatRules.attack_charge_step(PlayerInput.NEVER, 5, true, true, 16, true)
+	assert_true(r.light)
+	assert_eq(r.charge_tick, PlayerInput.NEVER)

@@ -10,6 +10,8 @@ extends Resource
 @export_group("Entrada")
 ## Ticks que um clique de ataque fica guardado (permite apertar um pouco antes).
 @export_range(0, 30, 1, "suffix:ticks") var attack_buffer_ticks: int = 10
+## Segurar o botão esquerdo por este tempo solta o golpe pesado (toque = leve, ao soltar).
+@export_range(1, 60, 1, "suffix:ticks") var heavy_hold_ticks: int = 16
 ## Tempo mínimo entre trocas de arma.
 @export_range(0.0, 2.0, 0.01, "suffix:s") var swap_cooldown: float = 0.25
 
@@ -22,8 +24,8 @@ extends Resource
 @export_range(0.0, 180.0, 1.0, "suffix:°") var aim_assist_angle_deg: float = 55.0
 
 @export_group("Golpes")
-## Atrito no chão durante o golpe: o personagem para no lugar ao atacar.
-@export_range(0.0, 300.0, 1.0, "suffix:m/s²") var attack_ground_friction: float = 80.0
+## Velocidade de movimento durante o golpe (× andar/correr). 1 = golpeia sem perder o passo.
+@export_range(0.0, 1.5, 0.05) var attack_move_speed_multiplier: float = 1.0
 
 @export_group("Combo")
 ## Sem acertar por este tempo, o contador de combo zera.

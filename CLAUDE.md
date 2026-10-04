@@ -16,7 +16,7 @@ tools/run_tests.sh              # importa o projeto e roda TODOS os testes (sai 
 tools/run_tests.sh -gselect=test_sp_pool.gd   # um arquivo só
 godot --path .                  # roda o jogo (cena principal = arena de combate; F3 alterna cenas)
 python3 tools/gen_sfx.py        # regera os sons em assets/sfx (requer numpy)
-python3 tools/gen_character.py  # regera o personagem em assets/character (requer numpy + scikit-image)
+python3 tools/prepare_character.py  # regera assets/character/hero.glb a partir do VRM CC0 (numpy + Pillow)
 ```
 Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`.
 
@@ -56,9 +56,9 @@ Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`.
 ```
 config/            Resources .tres com TODOS os números de gameplay
 scenes/player/     Player.tscn, câmera, input, estados, sensor de parede, VFX, `character_model.gd`
-                   (só apresentação: anima os ossos de `assets/character/body.glb` por molas, lê o
+                   (só apresentação: anima os ossos de `assets/character/hero.glb` por molas, lê o
                    Player e nunca altera gameplay)
-assets/character/  malha do personagem (body.glb com esqueleto, hair.glb) gerada por tools/gen_character.py
+assets/character/  personagem (modelo VRoid CC0 adaptado por tools/prepare_character.py; ver CREDITS.md)
 scenes/arenas/     arena de combate, postes de treino, percurso de treino, arena livre
 scenes/ui/         HUD, HUD de debug (F1), menu de debug (F2)
 scripts/core/      eventos, configs, regras puras, utilitários

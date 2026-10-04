@@ -52,19 +52,30 @@ extends Resource
 @export_range(0.05, 2.0, 0.01) var hair_spring_damping: float = 0.3
 
 @export_group("Personagem")
-## Malha gerada por tools/gen_character.py; as cores do traje/pele vêm nos vértices e são
-## multiplicadas por esta tonalidade.
-@export var body_tint: Color = Color(1, 1, 1)
-## Linhas emissivas do traje.
-@export var suit_line_color: Color = Color(0.48, 0.22, 1.0)
-@export_range(0.0, 10.0, 0.1) var suit_line_energy: float = 1.1
-@export var hair_color: Color = Color(0.93, 0.94, 0.98)
-## Luz de borda do toon shading.
-@export_range(0.0, 1.0, 0.01) var rim_amount: float = 0.5
-@export_range(0.0, 1.0, 0.01) var rim_tint: float = 0.3
+## Modelo em assets/character/hero.glb (tools/prepare_character.py). Linhas do traje: textura de
+## emissão × tonalidade × energia.
+@export var suit_glow_tint: Color = Color(1, 1, 1)
+@export_range(0.0, 10.0, 0.1) var suit_glow_energy: float = 1.1
+@export var hair_color: Color = Color(0.84, 0.85, 0.92)
+## Toon: cor multiplicada na sombra, limiar e suavidade do degrau de luz.
+@export var shade_color: Color = Color(0.62, 0.58, 0.72)
+@export_range(-1.0, 1.0, 0.01) var shade_threshold: float = 0.05
+@export_range(0.0, 0.5, 0.005) var shade_softness: float = 0.06
+## Quanto o rosto recebe de sombra (0 = rosto sempre iluminado, como em anime).
+@export_range(0.0, 1.0, 0.01) var face_shading: float = 0.25
+## Tonalidade da pele do rosto (o rosto quase não recebe sombra; isto evita que estoure).
+@export var face_tint: Color = Color(0.93, 0.89, 0.87)
+@export var rim_color: Color = Color(0.75, 0.78, 1.0)
+@export_range(0.0, 2.0, 0.01) var rim_strength: float = 0.35
 ## Contorno (casco invertido) estilo anime.
-@export var outline_color: Color = Color(0.02, 0.02, 0.035)
-@export_range(0.0, 0.03, 0.0005, "suffix:m") var outline_thickness: float = 0.0045
+@export var outline_color: Color = Color(0.03, 0.025, 0.05)
+@export_range(0.0, 0.03, 0.0005, "suffix:m") var outline_thickness: float = 0.004
+## Dedos: mão direita fechada na arma, mão esquerda relaxada.
+@export_range(0.0, 2.0, 0.01, "suffix:rad") var grip_curl: float = 1.25
+@export_range(0.0, 2.0, 0.01, "suffix:rad") var relaxed_curl: float = 0.4
+## Piscar.
+@export_range(0.5, 10.0, 0.1, "suffix:s") var blink_interval: float = 3.6
+@export_range(0.05, 0.5, 0.01, "suffix:s") var blink_duration: float = 0.14
 
 @export_group("Poeira e sombra")
 @export_range(0, 100, 1) var dust_amount: int = 14

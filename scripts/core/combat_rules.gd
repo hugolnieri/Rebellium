@@ -53,6 +53,30 @@ static func pick_aim_target(origin: Vector3, forward: Vector3, centers: Array[Ve
 
 
 ## Próximo golpe do combo leve: índice seguinte ou -1 se o combo acabou.
+## Um tick do clique de ataque com "segurar = pesado".
+## Toque: o leve sai ao soltar. Segurando `hold_ticks`: sai o pesado (e o soltar é ignorado).
+## `instant` (no ar / no dash): o leve sai já no aperto, sem carga.
+## Retorna {charge_tick, light, heavy}; charge_tick = NEVER quando não há carga em andamento.
+static func attack_charge_step(charge_tick: int, tick: int, pressed_now: bool, held: bool,
+		hold_ticks: int, instant: bool) -> Dictionary:
+	var result := {"charge_tick": charge_tick, "light": false, "heavy": false}
+	if pressed_now:
+		if instant:
+			result.charge_tick = PlayerInput.NEVER
+			result.light = true
+			return result
+		result.charge_tick = tick
+	if result.charge_tick == PlayerInput.NEVER:
+		return result
+	if not held:
+		result.light = true
+		result.charge_tick = PlayerInput.NEVER
+	elif tick - result.charge_tick >= hold_ticks:
+		result.heavy = true
+		result.charge_tick = PlayerInput.NEVER
+	return result
+
+
 static func next_combo_index(current_index: int, combo_size: int) -> int:
 	var next := current_index + 1
 	return next if next < combo_size else -1

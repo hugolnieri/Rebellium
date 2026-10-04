@@ -77,6 +77,7 @@ func sample(tick: int) -> PlayerInput:
 				_attack_light_pressed_tick = tick
 			if Input.is_action_just_pressed(&"attack_heavy"):
 				_attack_heavy_pressed_tick = tick
+			input.attack_light_held = Input.is_action_pressed(&"attack_light")
 		input.move = Input.get_vector(&"move_left", &"move_right", &"move_back", &"move_forward")
 		input.jump_held = Input.is_action_pressed(&"jump")
 		input.shoulder_swap_pressed = Input.is_action_just_pressed(&"shoulder_swap")

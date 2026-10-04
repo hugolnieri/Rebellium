@@ -113,12 +113,59 @@ func test_attack_during_dash_is_dash_attack() -> void:
 	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_DASH)
 
 
-func test_ground_attack_stops_the_player_in_place() -> void:
+func test_attack_without_input_stays_in_place() -> void:
+	await _ready_world()
+	d.press_attack()
+	d.step(10)
+	assert_eq(d.state(), &"Attack")
+	assert_almost_eq(d.player.get_horizontal_speed(), 0.0, 0.05, "o golpe não empurra o personagem")
+
+
+func test_ground_attack_keeps_walking() -> void:
+	await _ready_world()
+	d.step(40, Vector2(0, 1))
+	d.press_attack()
+	d.step(10, Vector2(0, 1))
+	assert_eq(d.state(), &"Attack")
+	assert_almost_eq(d.player.get_horizontal_speed(), d.player.get_walk_speed(), 0.05, "anda golpeando")
+
+
+func test_sprint_attack_keeps_running_and_drains_sp() -> void:
 	await _ready_world()
 	d.step(40, Vector2(0, 1), true)
+	assert_eq(d.state(), &"Sprint")
 	d.press_attack()
-	d.step(20)
-	assert_almost_eq(d.player.get_horizontal_speed(), 0.0, 0.05, "golpe não faz o personagem sair do lugar")
+	d.step(1, Vector2(0, 1), true)
+	var sp_before := d.player.sp.current
+	d.step(10, Vector2(0, 1), true)
+	assert_eq(d.state(), &"Attack")
+	assert_almost_eq(d.player.get_horizontal_speed(), d.player.get_sprint_speed(), 0.05, "corre golpeando")
+	assert_lt(d.player.sp.current, sp_before, "correr golpeando gasta SP")
+
+
+func test_tap_fires_light_on_release() -> void:
+	await _ready_world()
+	d.press_attack()
+	d.attack_light_held = true
+	d.step(4)
+	assert_ne(d.state(), &"Attack", "segurando: ainda carregando")
+	assert_gt(d.player.get_heavy_charge(), 0.0)
+	d.attack_light_held = false
+	d.step(1)
+	assert_eq(d.state(), &"Attack")
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_LIGHT)
+
+
+func test_holding_left_click_fires_heavy() -> void:
+	await _ready_world()
+	d.press_attack()
+	d.attack_light_held = true
+	d.step(d.player.combat_config.heavy_hold_ticks + 1)
+	assert_eq(d.state(), &"Attack")
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_HEAVY)
+	d.attack_light_held = false
+	d.step(2)
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_HEAVY, "soltar depois não vira leve")
 
 
 func test_dodge_cancels_attack_recovery() -> void:

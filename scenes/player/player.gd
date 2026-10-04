@@ -63,6 +63,10 @@ var facing_override: Vector3 = Vector3.ZERO
 var _consumed_jump_press_tick: int = PlayerInput.NEVER
 var _consumed_light_press_tick: int = PlayerInput.NEVER
 var _consumed_heavy_press_tick: int = PlayerInput.NEVER
+## Clique esquerdo: carga em andamento e os "apertos" resultantes (leve ao soltar, pesado segurando).
+var _attack_charge_tick: int = PlayerInput.NEVER
+var _light_ready_tick: int = PlayerInput.NEVER
+var _heavy_ready_tick: int = PlayerInput.NEVER
 var _consumed_dodge_press_tick: int = PlayerInput.NEVER
 var _consumed_weapon_press_tick: int = PlayerInput.NEVER
 
@@ -119,6 +123,7 @@ func step(input: PlayerInput, delta: float) -> void:
 		_handle_weapon_swap(input.weapon_swap_slot)
 	sp.update(delta)
 	_update_sprint_latch(input)
+	_update_attack_charge(input)
 	state_machine.physics_update(input, delta)
 	pre_slide_velocity = velocity
 	move_and_slide()
@@ -234,17 +239,40 @@ func get_sprint_speed() -> float:
 	return config.sprint_speed * (weapon.move_speed_multiplier if weapon != null else 1.0)
 
 
+func _update_attack_charge(input: PlayerInput) -> void:
+	var instant := not is_on_floor() or state_machine.is_in(&"Dodge")
+	var step_result := CombatRules.attack_charge_step(_attack_charge_tick, tick,
+		input.is_pressed_this_tick(input.attack_light_pressed_tick), input.attack_light_held,
+		combat_config.heavy_hold_ticks, instant)
+	_attack_charge_tick = step_result.charge_tick
+	if step_result.light:
+		_light_ready_tick = tick
+	if step_result.heavy:
+		_heavy_ready_tick = tick
+
+
+## Carga do golpe pesado (0–1) enquanto o botão esquerdo está seguro; para o visual.
+func get_heavy_charge() -> float:
+	if _attack_charge_tick == PlayerInput.NEVER:
+		return 0.0
+	return clampf(float(tick - _attack_charge_tick) / maxf(combat_config.heavy_hold_ticks, 1), 0.0, 1.0)
+
+
+func _attack_press_tick(input: PlayerInput, heavy: bool) -> int:
+	return maxi(input.attack_heavy_pressed_tick, _heavy_ready_tick) if heavy else _light_ready_tick
+
+
 func has_buffered_attack(input: PlayerInput, heavy: bool) -> bool:
-	var press := input.attack_heavy_pressed_tick if heavy else input.attack_light_pressed_tick
+	var press := _attack_press_tick(input, heavy)
 	var consumed := _consumed_heavy_press_tick if heavy else _consumed_light_press_tick
 	return press > consumed and tick - press <= combat_config.attack_buffer_ticks
 
 
 func _consume_attack(input: PlayerInput, heavy: bool) -> void:
 	if heavy:
-		_consumed_heavy_press_tick = input.attack_heavy_pressed_tick
+		_consumed_heavy_press_tick = _attack_press_tick(input, true)
 	else:
-		_consumed_light_press_tick = input.attack_light_pressed_tick
+		_consumed_light_press_tick = _attack_press_tick(input, false)
 
 
 ## Tenta iniciar (ou encadear) um golpe. O tipo sai do contexto:
@@ -431,7 +459,7 @@ func redirect_to_wish(input: PlayerInput) -> void:
 
 
 ## Controle no ar: direciona, mas não acelera além de max(velocidade atual, andar).
-func apply_air_movement(input: PlayerInput, delta: float) -> void:
+func apply_air_movement(input: PlayerInput, delta: float, gravity_scale: float = 1.0) -> void:
 	if air_sprinting:
 		sp.drain(config.air_sprint_sp_cost_per_second * delta)
 		if sp.exhausted:
@@ -447,7 +475,7 @@ func apply_air_movement(input: PlayerInput, delta: float) -> void:
 		horizontal = horizontal.move_toward(target, accel * delta)
 		velocity.x = horizontal.x
 		velocity.z = horizontal.z
-	apply_gravity(delta)
+	apply_gravity(delta * gravity_scale)
 
 
 ## Ações disponíveis em qualquer estado de chão. Retorna true se transicionou.

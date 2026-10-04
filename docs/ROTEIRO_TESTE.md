@@ -11,8 +11,8 @@ Para rodar: `godot --path .` ou abra o projeto no editor e aperte F5. Abre a **a
 | Space | pular / wall jump |
 | W, W (toque duplo rápido) e segurar | sprint (soltar o W encerra) |
 | Space + A/D | dash lateral (segure A ou D e aperte Space; Space de novo durante o dash = cancela e pula) |
-| Botão esquerdo (ou J) | golpe leve — cliques seguidos fazem o combo |
-| Botão direito (ou K) | golpe pesado (gasta SP) |
+| Botão esquerdo (ou J) | toque = golpe leve (sai ao soltar; cliques seguidos fazem o combo); **segurar = golpe pesado** |
+| Botão direito (ou K) | golpe pesado direto (gasta SP) |
 | 1 / 2 / Q | Lâmina de Arco / Presa de Fase / alterna (também faz o **cancel** do wall jump) |
 | V | trocar ombro da câmera |
 | Esc | soltar o mouse |
@@ -139,7 +139,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - O banner mostra `DODGE CANCEL`.
 
 ## Parte 3b: personagem e polimento (observar)
-- **Personagem**: malha lisa com esqueleto (gerada por `tools/gen_character.py`), toon shading e contorno.
+- **Personagem**: modelo anime (base VRoid, licença CC0) com traje preto e linhas roxas, cabelo branco,
+  olhos verdes, toon shading e contorno. Pisca sozinho e franze a testa ao golpear.
   - Passada acompanha a velocidade (mais longa e inclinada no sprint); o cabelo balança com o vento.
   - No ar: pose de pulo subindo e braços abertos caindo.
   - Wall jump: **mortal para trás** — pisa na parede de frente para ela e gira de costas para longe.
@@ -201,17 +202,19 @@ Ande até os três postes à frente (POSTE).
    - Números de dano saem do poste, ele balança, a lâmina deixa rastro ciano, há uma pausa curta no impacto (hitstop)
      e a câmera treme de leve. O HUD da direita conta os hits, o dano do combo e o DPS.
    - Clicar rápido demais não pula etapas: o próximo golpe sai quando o atual permite (clique fica guardado ~0,16 s).
-2. **Pesado** (botão direito): giro 360° que acerta em volta (teste com um poste atrás de você). Gasta 15 SP.
-   No meio do combo leve, o botão direito vira finalizador.
+2. **Pesado** (segure o botão esquerdo ~0,27 s, ou botão direito): a arma brilha enquanto carrega e sai um
+   giro 360° que acerta em volta (teste com um poste atrás de você). Gasta 15 SP. No meio do combo leve,
+   segurar vira finalizador. Tempo de carga: F2 → Combate → `heavy_hold_ticks`.
 3. **Troca de arma**: 2 (ou Q). Floreio da arma, flash e som de carga. A **Presa de Fase** tem combo de 4
    golpes rápidos, anda ~8% mais rápido e o pesado (lâmina ascendente) lança para cima.
-4. Os golpes **não** deslocam o personagem e **não** viram sozinhos para o poste: o golpe sai para onde a câmera
-   aponta. (A mira assistida ainda existe: F2 → Combate → `aim_assist_enabled`.)
+4. **Golpear andando/correndo**: o golpe não trava o personagem nem o empurra sozinho. Segurando WASD ele
+   continua andando enquanto golpeia; em sprint (W, W) continua correndo (gasta SP). Parado, golpeia no lugar.
+   O golpe sai para onde a câmera aponta (mira assistida opcional: F2 → Combate → `aim_assist_enabled`).
 
 ## Parte 7: golpes com movimento
 1. **Golpe aéreo**: pule e clique → corte no ar mantendo o embalo do pulo. Suba na plataforma alta
    (rampa à esquerda) e golpeie o poste lá em cima.
-2. **Golpe no dash**: A/D + Space e clique durante o dash → o personagem freia e golpeia no lugar.
+2. **Golpe no dash**: A/D + Space e clique durante o dash → golpe de dash.
 3. **Wall jump + golpe**: na chaminé (paredes de metal à direita), faça wall jumps e clique no ar.
 4. **Poste móvel**: acompanhe o poste que vai e volta; posicione-se com dash e corrida antes de golpear.
 
