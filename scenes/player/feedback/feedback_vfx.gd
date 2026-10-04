@@ -1,13 +1,10 @@
 extends Node3D
 ## Feedback visual greybox (só ouve GameEvents; não altera gameplay):
-## rastro no dodge, faísca no wall jump e brilho da cápsula na cor de cada técnica.
+## rastro no dodge, faísca no wall jump, poeira nos pés e brilho do corpo na cor de cada técnica.
 
 var player: Player
 var _trail_ticks_left: int = 0
 var _trail_counter: int = 0
-var _flash_material: StandardMaterial3D
-var _flash_time_left: float = 0.0
-var _flash_color: Color = Color.WHITE
 
 
 func _ready() -> void:
@@ -16,6 +13,8 @@ func _ready() -> void:
 	GameEvents.dodged.connect(_on_dodged)
 	GameEvents.wall_jump_executed.connect(_on_wall_jump)
 	GameEvents.technique_executed.connect(_on_technique)
+	GameEvents.landed.connect(_on_landed)
+	GameEvents.jumped.connect(_on_jumped)
 
 
 func _fb() -> FeedbackConfig:
@@ -28,6 +27,7 @@ func _on_dodged(who: Node, _direction: Vector3) -> void:
 	_trail_ticks_left = player.secs_to_ticks(player.config.dodge_duration)
 	_trail_counter = 0
 	_spawn_ghost()
+	_spawn_dust(0.7)
 
 
 func _on_wall_jump(who: Node, data: Dictionary) -> void:
@@ -47,7 +47,7 @@ func _on_technique(who: Node, technique: StringName, data: Dictionary) -> void:
 		_spawn_spark(data.get("position", player.global_position), Vector3.UP, color)
 
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	if player == null:
 		return
 	if _trail_ticks_left > 0:
@@ -55,20 +55,13 @@ func _physics_process(delta: float) -> void:
 		_trail_counter += 1
 		if _trail_counter % _fb().trail_spawn_interval_ticks == 0:
 			_spawn_ghost()
-	if _flash_time_left > 0.0:
-		_flash_time_left = maxf(_flash_time_left - delta, 0.0)
-		var k := _flash_time_left / maxf(_fb().body_flash_time, 0.001)
-		_flash_material.emission = _flash_color
-		_flash_material.emission_energy_multiplier = _fb().body_flash_energy * k
-		if _flash_time_left == 0.0:
-			player.body_mesh.material_overlay = null
 
 
 func _spawn_ghost() -> void:
 	var fb := _fb()
 	var ghost := MeshInstance3D.new()
 	var mesh := CapsuleMesh.new()
-	mesh.radius = player.config.body_radius
+	mesh.radius = player.config.body_radius * 0.7
 	mesh.height = player.config.body_height
 	ghost.mesh = mesh
 	var material := StandardMaterial3D.new()
@@ -113,15 +106,56 @@ func _spawn_spark(at: Vector3, normal: Vector3, color: Color) -> void:
 
 
 func _flash(color: Color) -> void:
-	if _flash_material == null:
-		_flash_material = StandardMaterial3D.new()
-		_flash_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-		_flash_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		_flash_material.albedo_color = Color(0, 0, 0)
-		_flash_material.emission_enabled = true
-	_flash_color = color
-	_flash_time_left = _fb().body_flash_time
-	player.body_mesh.material_overlay = _flash_material
+	player.model.flash(color, _fb().body_flash_time, _fb().body_flash_energy)
+
+
+func _on_landed(who: Node, impact_speed: float) -> void:
+	if who == player and impact_speed >= _fb().dust_min_land_speed:
+		_spawn_dust(1.0)
+
+
+func _on_jumped(who: Node) -> void:
+	if who == player:
+		_spawn_dust(0.5)
+
+
+## Poeira nos pés (pulo, aterrissagem, dash).
+func _spawn_dust(strength: float) -> void:
+	var fb := _fb()
+	var particles := CPUParticles3D.new()
+	particles.one_shot = true
+	particles.explosiveness = 0.9
+	particles.amount = maxi(roundi(fb.dust_amount * strength), 1)
+	particles.lifetime = fb.dust_lifetime
+	particles.direction = Vector3.UP
+	particles.spread = 85.0
+	particles.flatness = 0.7
+	particles.initial_velocity_min = fb.dust_speed * 0.4 * strength
+	particles.initial_velocity_max = fb.dust_speed * strength
+	particles.gravity = Vector3.ZERO
+	particles.damping_min = fb.dust_speed
+	particles.damping_max = fb.dust_speed * 2.0
+	particles.scale_amount_min = 0.6
+	particles.scale_amount_max = 1.4
+	var curve := Curve.new()
+	curve.add_point(Vector2(0.0, 1.0))
+	curve.add_point(Vector2(1.0, 0.0))
+	particles.scale_amount_curve = curve
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.07
+	mesh.height = 0.14
+	mesh.radial_segments = 6
+	mesh.rings = 3
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.albedo_color = fb.dust_color
+	mesh.material = material
+	particles.mesh = mesh
+	_add_to_world(particles)
+	particles.global_position = player.global_position + Vector3.UP * 0.05
+	particles.emitting = true
+	particles.finished.connect(particles.queue_free)
 
 
 func _add_to_world(node: Node3D) -> void:

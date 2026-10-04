@@ -9,8 +9,8 @@ A arena livre está em `scenes/arenas/Arena.tscn` (F6 com a cena aberta).
 | WASD | mover (relativo à câmera) |
 | Mouse | olhar (clique para capturar o mouse) |
 | Space | pular / wall jump |
-| Shift (segurar) | sprint |
-| Ctrl | dodge |
+| W, W (toque duplo rápido) e segurar | sprint (soltar o W encerra) |
+| Shift + A/D (ou W/S) | dash/dodge na direção (Shift antes ou depois da direção; Ctrl também serve) |
 | 1 / 2 | troca de arma (só o evento; serve para o **cancel**) |
 | V | trocar ombro da câmera |
 | Esc | soltar o mouse |
@@ -33,11 +33,12 @@ A arena livre está em `scenes/arenas/Arena.tscn` (F6 com a cena aberta).
 
 ## Parte 1: controller base (arena livre ou largada do percurso)
 1. **Andar**: segure W. A velocidade horizontal estabiliza em **6,00 m/s**, no estado `Run`.
-2. **Sprint**: segure W+Shift. Deve chegar a **10,00 m/s** (`Sprint`), com o SP caindo **12 por segundo**.
-3. **Regeneração**: solte o Shift. O SP fica parado por **0,6 s** e depois sobe **25 por segundo** até 100.
+2. **Sprint**: toque W duas vezes rápido (até 0,25 s) e segure. Deve chegar a **10,00 m/s** (`Sprint`), com o SP caindo **12 por segundo**.
+   - Um toque só = anda. Soltar o W encerra o sprint.
+3. **Regeneração**: solte o W. O SP fica parado por **0,6 s** e depois sobe **25 por segundo** até 100.
 4. **Exaustão**: faça sprint até zerar o SP.
    - A barra fica vermelha, aparece `EXAUSTO` e o estado volta para `Run`.
-   - Shift, Ctrl e wall jump não funcionam até o SP voltar a **20**.
+   - Sprint, dash e wall jump não funcionam até o SP voltar a **20**.
    - O evento `SP ZERADO` aparece no log, e depois `SP recuperado`.
 5. **Pulo**: aperte Space parado. A "altura pés" máxima fica em **≈ 2,20 m**. Space no ar não faz nada (não existe pulo duplo).
 6. **Coyote**: ande para fora de uma borda e aperte Space logo em seguida (até 5 ticks). O pulo sai, e a origem vira `JUMP`.
@@ -52,7 +53,7 @@ Cair no fosso devolve você ao último checkpoint e soma uma queda; o cronômetr
 O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas nesta tentativa.
 
 ### Trecho 1: corredor de paredes paralelas (fosso de 16 m)
-- **Como passar**: corra em sprint e entre no corredor em **diagonal** em direção a uma das paredes. Pule na
+- **Como passar**: corra em sprint (W, W) e entre no corredor em **diagonal** em direção a uma das paredes. Pule na
   linha vermelha e aperte Space a cada parede tocada (zigue-zague).
 - **O que observar**:
   - Cada salto sai **espelhado**: o ângulo de entrada é igual ao de saída. Cada um custa **18 SP**.
@@ -112,15 +113,25 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 - **Bunny hop**: corra em sprint, pule e aperte Space de novo **até 3 ticks depois de aterrissar**.
   - A velocidade horizontal se mantém (ex.: 10 m/s mesmo sem segurar Shift).
   - Apertar um pouco antes de tocar o chão ou tarde demais dá um pulo normal, limitado à velocidade do chão.
-- **Dodge**: Ctrl + direção dá um passo rápido em 8 direções relativas à câmera.
-  - Custa 20 SP e deixa um rastro azul.
+- **Dash (dodge)**: Shift + A ou D dá um passo rápido para o lado (W/S também funcionam: 8 direções relativas à câmera).
+  - Custa 20 SP, deixa um rastro azul e levanta poeira; o personagem continua de frente para a câmera e se inclina.
   - `invulnerável: SIM` dura 0,15 s.
-  - Sem direção, o passo é para trás.
+  - Shift sozinho não faz nada (`dodge_requires_direction`).
 - **Dodge cancel**:
-  - Ctrl logo ao aterrissar interrompe a recuperação do `Land`.
-  - Ctrl durante a recuperação de outro dodge emenda um segundo dodge.
-  - Durante o deslocamento do dodge, Ctrl não faz nada.
+  - Shift + direção logo ao aterrissar interrompe a recuperação do `Land`.
+  - Shift + direção durante a recuperação de outro dash emenda um segundo dash.
+  - Durante o deslocamento do dash, um novo Shift não faz nada.
   - O banner mostra `DODGE CANCEL`.
+
+## Parte 3b: personagem e polimento (observar)
+- **Personagem**: corredor de armadura com animação procedural.
+  - Passada acompanha a velocidade (mais longa e inclinada no sprint); a faixa nas costas levanta com a velocidade.
+  - No ar: pose de pulo subindo e braços abertos caindo.
+  - Wall jump: giro no ar; reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
+  - Aterrissagem: agacha proporcional ao impacto. O visor e o corpo brilham na cor da técnica.
+- **Sombra redonda** embaixo do jogador: use para mirar a aterrissagem e medir a altura.
+- **Poeira** ao pular, aterrissar forte e dar dash. **Tremor leve** de câmera no wall jump e em quedas fortes.
+- Ajustes: grupo "Animação procedural" e "Poeira e sombra" em `config/feedback_config.tres`; "Tremor" na aba Câmera do F2.
 
 ## Parte 4: ajustes ao vivo (F2)
 1. Aperte **F2**: o mouse é solto e o personagem para de receber input.
@@ -135,7 +146,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 | Velocidade no chão | `walk_speed`, `sprint_speed`, `ground_acceleration`, `ground_deceleration` |
 | Pulo "flutuante" × "seco" | `jump_height`, `jump_time_to_apex`, `fall_gravity_multiplier` |
 | Controle no ar | `air_acceleration` |
-| Força do wall jump | `wall_jump_height`, `wall_jump_horizontal_multiplier`, `wall_jump_min/max_horizontal_speed` |
+| Sprint por toque duplo | `sprint_double_tap_ticks`, `sprint_forward_threshold` |
+| Força do wall jump (altura padrão 2,6 m) | `wall_jump_height`, `wall_jump_horizontal_multiplier`, `wall_jump_min/max_horizontal_speed` |
 | Quanto a câmera influencia o side jump | `wall_jump_camera_weight` |
 | Facilidade das técnicas | `technique_window_ticks`, `cancel_window_ticks`, `bunny_hop_window_ticks` |
 | Altura do reverse / back-coming | `reverse_probe_height`, `reverse_jump_height`, `back_coming_height`, `back_coming_max_feet_height` |

@@ -17,6 +17,9 @@ var player: Player
 var shoulder_side: float = 1.0
 var _shoulder_blend: float = 1.0
 var _last_swap_tick: int = PlayerInput.NEVER
+## Trauma do tremor (0–1); o deslocamento cresce com trauma².
+var _trauma: float = 0.0
+var _shake_time: float = 0.0
 
 
 func _ready() -> void:
@@ -31,10 +34,31 @@ func _ready() -> void:
 	camera.fov = camera_config.base_fov
 	# O Player (pai) termina o _ready depois dos filhos: posiciona no primeiro frame.
 	_follow.call_deferred(0.0)
+	GameEvents.wall_jump_executed.connect(func(who: Node, _data: Dictionary) -> void:
+		if who == player:
+			add_trauma(camera_config.shake_on_wall_jump))
+	GameEvents.landed.connect(func(who: Node, impact: float) -> void:
+		if who == player and impact > camera_config.shake_land_min_speed:
+			add_trauma((impact - camera_config.shake_land_min_speed) * camera_config.shake_land_per_speed))
+
+
+func add_trauma(amount: float) -> void:
+	_trauma = clampf(_trauma + amount, 0.0, 1.0)
 
 
 func _process(delta: float) -> void:
 	_follow(delta)
+	_update_shake(delta)
+
+
+func _update_shake(delta: float) -> void:
+	var cfg := camera_config
+	_trauma = maxf(_trauma - cfg.shake_decay * delta, 0.0)
+	_shake_time += delta
+	var amount := _trauma * _trauma * cfg.shake_max_offset
+	var t := _shake_time * cfg.shake_frequency
+	camera.h_offset = amount * (sin(t * 1.0) + sin(t * 2.31) * 0.5)
+	camera.v_offset = amount * (sin(t * 1.37 + 1.7) + sin(t * 2.89) * 0.5)
 
 
 func _follow(delta: float) -> void:

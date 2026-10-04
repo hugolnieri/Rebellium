@@ -16,29 +16,13 @@
 [ext_resource type="Script" path="res://scenes/player/states/dodge.gd" id="s_dodge"]
 [ext_resource type="Script" path="res://scenes/player/wall_sensor.gd" id="sensor"]
 [ext_resource type="Script" path="res://scenes/player/feedback/feedback_vfx.gd" id="vfx"]
+[ext_resource type="Script" path="res://scenes/player/character_model.gd" id="model"]
+[ext_resource type="Script" path="res://scenes/player/feedback/blob_shadow.gd" id="shadow"]
 [ext_resource type="PackedScene" path="res://scenes/player/PlayerCamera.tscn" id="cam"]
 
 [sub_resource type="CapsuleShape3D" id="shape"]
 radius = 0.4
 height = 1.8
-
-[sub_resource type="StandardMaterial3D" id="mat_body"]
-albedo_color = Color(0.86, 0.84, 0.79, 1)
-roughness = 0.8
-
-[sub_resource type="CapsuleMesh" id="mesh_body"]
-material = SubResource("mat_body")
-radius = 0.4
-height = 1.8
-
-[sub_resource type="StandardMaterial3D" id="mat_nose"]
-albedo_color = Color(0.12, 0.12, 0.13, 1)
-metallic = 0.6
-roughness = 0.4
-
-[sub_resource type="BoxMesh" id="mesh_nose"]
-material = SubResource("mat_nose")
-size = Vector3(0.5, 0.18, 0.3)
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("player")
@@ -52,13 +36,8 @@ shape = SubResource("shape")
 
 [node name="Visual" type="Node3D" parent="."]
 
-[node name="Body" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("mesh_body")
-
-[node name="Nose" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, -0.38)
-mesh = SubResource("mesh_nose")
+[node name="Model" type="Node3D" parent="Visual"]
+script = ExtResource("model")
 
 [node name="InputReader" type="Node" parent="."]
 script = ExtResource("reader")
@@ -93,6 +72,9 @@ script = ExtResource("s_dodge")
 
 [node name="WallSensor" type="Node3D" parent="."]
 script = ExtResource("sensor")
+
+[node name="BlobShadow" type="Node3D" parent="."]
+script = ExtResource("shadow")
 
 [node name="FeedbackVFX" type="Node3D" parent="."]
 script = ExtResource("vfx")

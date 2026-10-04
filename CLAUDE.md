@@ -44,7 +44,8 @@ Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`.
 ## Estrutura
 ```
 config/            Resources .tres com TODOS os números de gameplay
-scenes/player/     Player.tscn, câmera, input, estados, sensor de parede, VFX
+scenes/player/     Player.tscn, câmera, input, estados, sensor de parede, VFX, `character_model.gd`
+                   (personagem procedural: só apresentação, lê o Player e nunca altera gameplay)
 scenes/arenas/     arena greybox + percurso de treino
 scenes/ui/         HUD, HUD de debug (F1), menu de debug (F2)
 scripts/core/      eventos, configs, regras puras, utilitários

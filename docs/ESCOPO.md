@@ -34,3 +34,10 @@ Combate, armas, rede, personagens, animações, arte final, som.
   de entrada. O SP gasto não volta.
 - **Bunny hop:** pulo pressionado nos primeiros 3 ticks após aterrissar preserva a velocidade horizontal.
 - **Dodge cancel:** dodge interrompe a recuperação do Land e do próprio Dodge.
+
+## Revisão após o primeiro teste jogável
+- **Controles:** dash = Shift + direção (A/D para os lados; Ctrl alternativo). Sprint = toque duplo em W
+  e segurar.
+- **Wall jump** mais alto (2,6 m); corredor e torre do percurso ficaram mais altos para manter o desafio.
+- **Personagem** procedural (primitivas + animação por código) no lugar da cápsula, mais sombra redonda,
+  poeira e tremor leve de câmera. Tudo ajustável em `feedback_config.tres` / `camera_config.tres`.

@@ -14,7 +14,7 @@ extends CharacterBody3D
 @onready var state_machine: StateMachine = $StateMachine
 @onready var visual: Node3D = $Visual
 @onready var body_shape: CollisionShape3D = $CollisionShape3D
-@onready var body_mesh: MeshInstance3D = $Visual/Body
+@onready var model: CharacterModel = $Visual/Model
 @onready var wall_sensor: WallSensor = $WallSensor
 
 var sp: SPPool
@@ -71,11 +71,7 @@ func apply_body_config() -> void:
 	capsule.radius = config.body_radius
 	capsule.height = config.body_height
 	body_shape.position = Vector3(0.0, config.body_height * 0.5, 0.0)
-	var mesh := body_mesh.mesh as CapsuleMesh
-	if mesh != null:
-		mesh.radius = config.body_radius
-		mesh.height = config.body_height
-		body_mesh.position = body_shape.position
+	model.apply_body_height(config.body_height)
 	floor_max_angle = deg_to_rad(config.floor_max_angle_deg)
 	floor_snap_length = config.floor_snap_length
 
@@ -391,8 +387,13 @@ func respawn(at: Transform3D) -> void:
 
 func _update_visual(delta: float) -> void:
 	var horizontal := get_horizontal_velocity()
-	if horizontal.length() < 0.5:
+	var target_yaw: float
+	if state_machine.is_in(&"Dodge"):
+		# Dash lateral: o corpo continua de frente para a câmera e só se inclina.
+		target_yaw = current_input.look_yaw
+	elif horizontal.length() < 0.5:
 		return
-	var target_yaw := atan2(-horizontal.x, -horizontal.z)
+	else:
+		target_yaw = atan2(-horizontal.x, -horizontal.z)
 	var weight := clampf(feedback_config.model_turn_speed * delta, 0.0, 1.0)
 	visual.rotation.y = lerp_angle(visual.rotation.y, target_yaw, weight)

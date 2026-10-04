@@ -29,3 +29,13 @@ extends Resource
 ## FOV extra por m/s acima da velocidade de andar.
 @export_range(0.0, 10.0, 0.05, "suffix:°/(m/s)") var fov_bonus_per_speed: float = 1.5
 @export_range(0.5, 40.0, 0.5) var fov_lerp_speed: float = 8.0
+
+@export_group("Tremor")
+## Intensidade (0–1) somada ao trauma em cada wall jump.
+@export_range(0.0, 1.0, 0.01) var shake_on_wall_jump: float = 0.18
+## Trauma por m/s de impacto acima do mínimo ao aterrissar.
+@export_range(0.0, 0.2, 0.005) var shake_land_per_speed: float = 0.03
+@export_range(0.0, 40.0, 0.5, "suffix:m/s") var shake_land_min_speed: float = 12.0
+@export_range(0.0, 0.5, 0.005, "suffix:m") var shake_max_offset: float = 0.08
+@export_range(0.1, 10.0, 0.1, "suffix:/s") var shake_decay: float = 2.5
+@export_range(1.0, 60.0, 0.5, "suffix:Hz") var shake_frequency: float = 22.0

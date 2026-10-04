@@ -16,6 +16,38 @@ extends Resource
 ## Velocidade com que a cápsula vira para a direção do movimento.
 @export_range(0.5, 60.0, 0.5) var model_turn_speed: float = 16.0
 
+@export_group("Animação procedural")
+## Comprimento de um ciclo completo de passada (dois passos) andando / correndo.
+@export_range(0.5, 6.0, 0.05, "suffix:m") var stride_length_walk: float = 2.2
+@export_range(0.5, 8.0, 0.05, "suffix:m") var stride_length_sprint: float = 3.0
+@export_range(0.0, 90.0, 1.0, "suffix:°") var leg_swing_deg: float = 42.0
+@export_range(0.0, 120.0, 1.0, "suffix:°") var knee_bend_deg: float = 70.0
+@export_range(0.0, 90.0, 1.0, "suffix:°") var arm_swing_deg: float = 38.0
+@export_range(0.0, 45.0, 0.5, "suffix:°") var run_lean_deg: float = 9.0
+@export_range(0.0, 45.0, 0.5, "suffix:°") var sprint_extra_lean_deg: float = 9.0
+@export_range(0.0, 0.3, 0.005, "suffix:m") var run_bob_height: float = 0.05
+## Velocidade de mistura entre poses (maior = mais seco).
+@export_range(1.0, 60.0, 0.5) var pose_blend_speed: float = 16.0
+## Duração do mortal/giro do wall jump.
+@export_range(0.05, 2.0, 0.01, "suffix:s") var flip_duration: float = 0.42
+@export_range(0.0, 1.0, 0.01, "suffix:s") var land_crouch_time: float = 0.22
+@export_range(0.0, 0.6, 0.01, "suffix:m") var land_crouch_depth: float = 0.2
+## Velocidade de impacto que gera o agachamento máximo.
+@export_range(1.0, 40.0, 0.5, "suffix:m/s") var land_crouch_full_speed: float = 16.0
+@export_range(0.0, 45.0, 0.5, "suffix:°") var dodge_lean_deg: float = 22.0
+
+@export_group("Poeira e sombra")
+@export_range(0, 100, 1) var dust_amount: int = 14
+@export_range(0.05, 2.0, 0.01, "suffix:s") var dust_lifetime: float = 0.45
+@export_range(0.1, 10.0, 0.1, "suffix:m/s") var dust_speed: float = 2.5
+## Impacto mínimo para levantar poeira ao aterrissar.
+@export_range(0.0, 30.0, 0.5, "suffix:m/s") var dust_min_land_speed: float = 6.0
+@export var dust_color: Color = Color(0.55, 0.54, 0.52, 0.8)
+@export_range(0.05, 2.0, 0.01, "suffix:m") var shadow_radius: float = 0.45
+@export_range(0.0, 1.0, 0.01) var shadow_max_alpha: float = 0.55
+## Altura em que a sombra some (ajuda a medir a altura no ar).
+@export_range(1.0, 60.0, 0.5, "suffix:m") var shadow_max_distance: float = 20.0
+
 @export_group("HUD")
 @export var sp_bar_color: Color = Color(0.12, 0.62, 1.0)
 @export var sp_exhausted_color: Color = Color(0.92, 0.12, 0.15)
