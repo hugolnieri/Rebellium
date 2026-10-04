@@ -1,0 +1,109 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/core/greybox_block.gd" id="greybox"]
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.04, 0.04, 0.05, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.55, 0.6, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 2
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.06, 0.06, 0.08, 1)
+fog_density = 0.004
+
+[node name="Arena" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.819152, -0.469846, 0.32899, 0, 0.573576, 0.819152, -0.573576, -0.67101, 0.469846, 0, 20, 0)
+light_color = Color(0.95, 0.93, 0.9, 1)
+shadow_enabled = true
+
+[node name="Geometry" type="Node3D" parent="."]
+
+[node name="Floor" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+script = ExtResource("greybox")
+size = Vector3(60, 1, 60)
+surface = 0
+
+[node name="WallNorth" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -30.5)
+script = ExtResource("greybox")
+size = Vector3(62, 6, 1)
+surface = 1
+
+[node name="WallSouth" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 30.5)
+script = ExtResource("greybox")
+size = Vector3(62, 6, 1)
+surface = 1
+
+[node name="WallEast" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.5, 3, 0)
+script = ExtResource("greybox")
+size = Vector3(1, 6, 60)
+surface = 1
+
+[node name="WallWest" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 3, 0)
+script = ExtResource("greybox")
+size = Vector3(1, 6, 60)
+surface = 1
+
+[node name="ParallelA" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4, -8)
+script = ExtResource("greybox")
+size = Vector3(1, 8, 14)
+surface = 1
+
+[node name="ParallelB" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 4, -8)
+script = ExtResource("greybox")
+size = Vector3(1, 8, 14)
+surface = 1
+
+[node name="Step1" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.75, -10)
+script = ExtResource("greybox")
+size = Vector3(4, 1.5, 4)
+surface = 2
+
+[node name="Step2" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1.5, -10)
+script = ExtResource("greybox")
+size = Vector3(4, 3, 4)
+surface = 2
+
+[node name="Step3" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2.25, -10)
+script = ExtResource("greybox")
+size = Vector3(4, 4.5, 4)
+surface = 2
+
+[node name="Ledge" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1.8, 10)
+script = ExtResource("greybox")
+size = Vector3(8, 3.6, 4)
+surface = 3
+
+[node name="SmoothWall" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 3, 12)
+script = ExtResource("greybox")
+size = Vector3(10, 6, 1)
+surface = 1
+
+[node name="Pillar" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -18)
+script = ExtResource("greybox")
+size = Vector3(1.5, 4, 1.5)
+surface = 4
+
+[node name="OverviewCamera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 18, 26)
+current = true
