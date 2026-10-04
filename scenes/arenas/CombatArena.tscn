@@ -1,0 +1,214 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/core/greybox_block.gd" id="greybox"]
+[ext_resource type="Script" path="res://scenes/arenas/combat_arena.gd" id="arena"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://scenes/arenas/TrainingDummy.tscn" id="dummy"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugHUD.tscn" id="dhud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CombatHUD.tscn" id="chud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugMenu.tscn" id="dmenu"]
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.04, 0.04, 0.05, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.55, 0.6, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 2
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.06, 0.06, 0.08, 1)
+fog_density = 0.002
+
+[node name="CombatArena" type="Node3D"]
+script = ExtResource("arena")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.819152, -0.469846, 0.32899, 0, 0.573576, 0.819152, -0.573576, -0.67101, 0.469846, 0, 20, 0)
+light_color = Color(0.95, 0.93, 0.9, 1)
+shadow_enabled = true
+
+[node name="Geometry" type="Node3D" parent="."]
+
+[node name="Floor" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+script = ExtResource("greybox")
+size = Vector3(44, 1, 44)
+surface = 0
+
+[node name="WallN" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -22.5)
+script = ExtResource("greybox")
+size = Vector3(46, 3, 1)
+surface = 1
+
+[node name="WallS" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 22.5)
+script = ExtResource("greybox")
+size = Vector3(46, 3, 1)
+surface = 1
+
+[node name="WallE" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 1.5, 0)
+script = ExtResource("greybox")
+size = Vector3(1, 3, 44)
+surface = 1
+
+[node name="WallW" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 1.5, 0)
+script = ExtResource("greybox")
+size = Vector3(1, 3, 44)
+surface = 1
+
+[node name="ChimneyA" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 4, 10)
+script = ExtResource("greybox")
+size = Vector3(1, 8, 8)
+surface = 3
+
+[node name="ChimneyB" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 4, 10)
+script = ExtResource("greybox")
+size = Vector3(1, 8, 8)
+surface = 3
+
+[node name="HighPlatform" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.25, -10)
+script = ExtResource("greybox")
+size = Vector3(6, 2.5, 6)
+surface = 2
+
+[node name="Ramp" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.6, -4.5)
+script = ExtResource("greybox")
+size = Vector3(3, 0.2, 5)
+surface = 2
+
+[node name="DangerRing" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0.01, -6)
+script = ExtResource("greybox")
+size = Vector3(5.6, 0.02, 5.6)
+surface = 4
+
+[node name="SpawnMark" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 8)
+script = ExtResource("greybox")
+size = Vector3(1, 0.02, 1)
+surface = 6
+
+[node name="Dummies" type="Node3D" parent="."]
+
+[node name="DummyLeft" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -4)
+mode = 0
+
+[node name="DummyCenter" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+mode = 0
+
+[node name="DummyRight" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -4)
+mode = 0
+
+[node name="DummyPatrol" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12)
+mode = 1
+
+[node name="DummyAggressive" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, -6)
+mode = 2
+
+[node name="DummyHigh" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.5, -10)
+mode = 0
+
+[node name="Spawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
+
+[node name="Signs" type="Node3D" parent="."]
+
+[node name="Sign0" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.6, -6.5)
+billboard = 1
+pixel_size = 0.005
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "ARENA DE COMBATE\nesq: leve (combo)  ·  dir: pesado  ·  1 / 2 / Q: arma"
+font_size = 56
+outline_size = 12
+
+[node name="Sign1" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.9, -6.5)
+billboard = 1
+pixel_size = 0.005
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "no ar: golpe aéreo  ·  no dash: estocada  ·  recuperação: Shift+dir ou 1/2 cancela"
+font_size = 56
+outline_size = 12
+
+[node name="Sign2" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 3.6, -6)
+billboard = 1
+pixel_size = 0.005
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "POSTE AGRESSIVO\ndash no brilho vermelho = esquiva perfeita"
+font_size = 56
+outline_size = 12
+
+[node name="Sign3" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, -12)
+billboard = 1
+pixel_size = 0.005
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "POSTE MÓVEL"
+font_size = 56
+outline_size = 12
+
+[node name="Sign4" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 5.5, -10)
+billboard = 1
+pixel_size = 0.005
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "GOLPE AÉREO\npule de cima e mergulhe"
+font_size = 56
+outline_size = 12
+
+[node name="Sign5" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 9, 10)
+billboard = 1
+pixel_size = 0.005
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "WALL JUMP + GOLPE"
+font_size = 56
+outline_size = 12
+
+[node name="Sign6" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 21)
+billboard = 1
+pixel_size = 0.005
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "R volta ao início  ·  F3 troca de cena (percurso / arena livre)"
+font_size = 56
+outline_size = 12
+
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
+
+[node name="HUD" parent="." instance=ExtResource("hud")]
+
+[node name="DebugHUD" parent="." instance=ExtResource("dhud")]
+
+[node name="CombatHUD" parent="." instance=ExtResource("chud")]
+
+[node name="DebugMenu" parent="." instance=ExtResource("dmenu")]
+

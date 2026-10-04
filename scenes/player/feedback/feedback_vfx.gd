@@ -14,6 +14,10 @@ func _ready() -> void:
 	GameEvents.wall_jump_executed.connect(_on_wall_jump)
 	GameEvents.technique_executed.connect(_on_technique)
 	GameEvents.landed.connect(_on_landed)
+	GameEvents.hit_landed.connect(_on_hit_landed)
+	GameEvents.player_hurt.connect(func(who: Node, _info: Dictionary) -> void:
+		if who == player:
+			_flash(_fb().accent_red))
 	GameEvents.jumped.connect(_on_jumped)
 
 
@@ -112,6 +116,20 @@ func _flash(color: Color) -> void:
 func _on_landed(who: Node, impact_speed: float) -> void:
 	if who == player and impact_speed >= _fb().dust_min_land_speed:
 		_spawn_dust(1.0)
+
+
+## Faísca no ponto de impacto, na cor da arma (maior no golpe pesado).
+func _on_hit_landed(attacker: Node, _target: Node, info: Dictionary) -> void:
+	if attacker != player:
+		return
+	var weapon := info.get("weapon") as WeaponConfig
+	var color := weapon.glow_color if weapon != null else _fb().color_wall_jump
+	var heavy: bool = info.get("kind", &"") == CombatRules.KIND_HEAVY
+	var knockback: Vector3 = info.get("knockback", Vector3.UP)
+	_spawn_spark(info.get("point", player.global_position), knockback.normalized() if knockback.length() > 0.1 \
+		else Vector3.UP, color)
+	if heavy:
+		_spawn_spark(info.get("point", player.global_position), Vector3.UP, color.lerp(Color.WHITE, 0.5))
 
 
 func _on_jumped(who: Node) -> void:

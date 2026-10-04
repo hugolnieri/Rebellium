@@ -44,6 +44,13 @@ func _ready() -> void:
 	GameEvents.wall_jump_executed.connect(func(who: Node, _data: Dictionary) -> void:
 		if who == player:
 			add_trauma(camera_config.shake_on_wall_jump))
+	GameEvents.hit_landed.connect(func(attacker: Node, _target: Node, info: Dictionary) -> void:
+		if attacker == player:
+			var heavy: bool = info.get("kind", &"") == CombatRules.KIND_HEAVY
+			add_trauma(camera_config.shake_on_hit * (2.0 if heavy else 1.0)))
+	GameEvents.player_hurt.connect(func(who: Node, _info: Dictionary) -> void:
+		if who == player:
+			add_trauma(camera_config.shake_on_hurt))
 	GameEvents.landed.connect(func(who: Node, impact: float) -> void:
 		if who == player and impact > camera_config.shake_land_min_speed:
 			add_trauma((impact - camera_config.shake_land_min_speed) * camera_config.shake_land_per_speed))

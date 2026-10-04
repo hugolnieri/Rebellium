@@ -35,6 +35,9 @@ extends Resource
 @export_range(0.0, 1.0, 0.01) var shake_on_wall_jump: float = 0.18
 ## Trauma por m/s de impacto acima do mínimo ao aterrissar.
 @export_range(0.0, 0.2, 0.005) var shake_land_per_speed: float = 0.03
+## Tremor ao acertar um golpe (pesado vale o dobro) e ao levar dano.
+@export_range(0.0, 1.0, 0.01) var shake_on_hit: float = 0.2
+@export_range(0.0, 1.0, 0.01) var shake_on_hurt: float = 0.5
 @export_range(0.0, 40.0, 0.5, "suffix:m/s") var shake_land_min_speed: float = 12.0
 @export_range(0.0, 0.5, 0.005, "suffix:m") var shake_max_offset: float = 0.08
 @export_range(0.1, 10.0, 0.1, "suffix:/s") var shake_decay: float = 2.5

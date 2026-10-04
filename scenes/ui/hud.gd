@@ -56,6 +56,8 @@ func _process(_delta: float) -> void:
 			return
 		_hp_bar.get_theme_stylebox("fill").bg_color = player.feedback_config.hp_bar_color
 	var fb := player.feedback_config
+	_hp_bar.max_value = player.health.maximum
+	_hp_bar.value = player.health.current
 	_sp_bar.max_value = player.config.sp_max
 	_sp_bar.value = player.sp.current
 	_sp_fill.bg_color = fb.sp_exhausted_color if player.sp.exhausted else fb.sp_bar_color
