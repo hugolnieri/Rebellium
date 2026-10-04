@@ -215,7 +215,33 @@ def dummy_swing():
     return mix(whoosh(0.4, 200, 1800, 0.5), thump(0.2, 90, 50) * 0.5)
 
 
+# --- Voz -----------------------------------------------------------------------------
+
+def voice_grunt(f0_start, f0_end, dur, formants, breath=0.15):
+    """Gritinho curto ("hah!"): trem de pulsos glóticos com tom caindo, filtrado por formantes."""
+    n = int(SR * dur)
+    f0 = np.linspace(f0_start, f0_end, n) * (1.0 + 0.02 * np.sin(2 * np.pi * 6 * t_axis(dur)))
+    phase = np.cumsum(f0) / SR
+    pulse = (phase - np.floor(phase)) ** 3  # pulso glótico assimétrico
+    pulse = np.diff(pulse, prepend=0.0) * SR / np.maximum(f0, 1.0)
+    source = pulse + noise(n) * breath
+    out = np.zeros(n)
+    for freq, bw, gain in formants:
+        out += bandpass(source, freq - bw * 0.5, freq + bw * 0.5) * gain
+    shape = env(n, 0.08, 0.92, 1.6)
+    return out * shape
+
+
+def voice_sprint_1():
+    return voice_grunt(330, 250, 0.22, [(800, 160, 1.0), (1250, 200, 0.7), (2600, 300, 0.25)])
+
+
+def voice_sprint_2():
+    return voice_grunt(300, 230, 0.2, [(720, 150, 1.0), (1150, 200, 0.6), (2500, 300, 0.25)], 0.2)
+
+
 SOUNDS = {
+    "voice_sprint_1": voice_sprint_1, "voice_sprint_2": voice_sprint_2,
     "blade_swing": blade_swing, "blade_swing_heavy": blade_swing_heavy, "fang_swing": fang_swing,
     "hit_blade": hit_blade, "hit_fang": hit_fang, "hit_heavy": hit_heavy,
     "footstep_1": lambda: footstep(1), "footstep_2": lambda: footstep(2), "footstep_3": lambda: footstep(3),

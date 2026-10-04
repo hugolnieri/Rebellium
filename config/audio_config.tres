@@ -9,6 +9,7 @@ combat_db = 0.0
 movement_db = -6.0
 footsteps_db = -16.0
 interface_db = -6.0
+voice_db = -4.0
 pitch_variation = 0.08
 footstep_pitch_by_speed = 0.15
 max_distance = 60.0

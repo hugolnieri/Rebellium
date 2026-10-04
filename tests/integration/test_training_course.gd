@@ -147,7 +147,7 @@ func test_tower_is_climbed_with_chained_wall_jumps() -> void:
 	course.running = true
 	d.step(3, Vector2(-1, 0), true)
 	d.press_jump()
-	d.step(1, Vector2(-1, 0), true)
+	d.step(1, Vector2(-0.7, 0), true)  # A puro + Espaço seria dash
 	var jumps := _auto_wall_jump_until_landed(400)
 	assert_gte(jumps, 3, "wall jumps encadeados: %d" % jumps)
 	assert_almost_eq(d.player.global_position.y, 17.0, 0.05, "chegou no topo da torre")

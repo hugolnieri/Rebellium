@@ -59,10 +59,6 @@ func sample(tick: int) -> PlayerInput:
 	if enabled:
 		if Input.is_action_just_pressed(&"jump"):
 			_jump_pressed_tick = tick
-		# Dash: Shift + direção, em qualquer ordem (Shift primeiro e depois A/D também vale).
-		if Input.is_action_just_pressed(&"dodge") or (Input.is_action_pressed(&"dodge") \
-				and _any_direction_just_pressed()):
-			_dodge_pressed_tick = tick
 		if Input.is_action_just_pressed(&"move_forward"):
 			_forward_prev_pressed_tick = _forward_pressed_tick
 			_forward_pressed_tick = tick
@@ -94,7 +90,3 @@ func sample(tick: int) -> PlayerInput:
 	input.forward_prev_pressed_tick = _forward_prev_pressed_tick
 	return input
 
-
-func _any_direction_just_pressed() -> bool:
-	return Input.is_action_just_pressed(&"move_left") or Input.is_action_just_pressed(&"move_right") \
-		or Input.is_action_just_pressed(&"move_forward") or Input.is_action_just_pressed(&"move_back")

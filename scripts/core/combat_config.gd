@@ -14,10 +14,16 @@ extends Resource
 @export_range(0.0, 2.0, 0.01, "suffix:s") var swap_cooldown: float = 0.25
 
 @export_group("Mira assistida")
+## Desligado: o golpe sai sempre na direção da câmera.
+@export var aim_assist_enabled: bool = false
 ## Distância máxima para o golpe virar sozinho para um alvo.
 @export_range(0.0, 20.0, 0.1, "suffix:m") var aim_assist_range: float = 6.0
 ## Ângulo máximo entre a câmera e o alvo para a mira assistida.
 @export_range(0.0, 180.0, 1.0, "suffix:°") var aim_assist_angle_deg: float = 55.0
+
+@export_group("Golpes")
+## Atrito no chão durante o golpe: o personagem para no lugar ao atacar.
+@export_range(0.0, 300.0, 1.0, "suffix:m/s²") var attack_ground_friction: float = 80.0
 
 @export_group("Combo")
 ## Sem acertar por este tempo, o contador de combo zera.

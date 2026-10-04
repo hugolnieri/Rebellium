@@ -37,7 +37,7 @@ extends Resource
 
 @export_group("Movimento")
 ## Avanço durante preparação + acerto (0 = parado).
-@export_range(0.0, 40.0, 0.5, "suffix:m/s") var lunge_speed: float = 4.0
+@export_range(0.0, 40.0, 0.5, "suffix:m/s") var lunge_speed: float = 0.0
 ## No ar: velocidade vertical ao começar o golpe (0 = mantém).
 @export_range(-40.0, 20.0, 0.5, "suffix:m/s") var air_start_vertical_speed: float = 0.0
 ## No ar: velocidade vertical ao entrar na janela de acerto (0 = mantém). Negativo = desce.

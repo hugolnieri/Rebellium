@@ -52,6 +52,8 @@ var _land_strength: float = 0.0
 var _trick_timer: float = 0.0
 var _trick_axis: Vector3 = Vector3.RIGHT
 var _trick_angle: float = 0.0
+## No mortal do wall jump o corpo começa de frente para a parede e termina olhando o caminho.
+var _trick_face_wall: bool = false
 var _spin_angle: float = 0.0
 var _flash_timer: float = 0.0
 var _flash_duration: float = 0.001
@@ -346,8 +348,13 @@ func _on_wall_jump(who: Node, data: Dictionary) -> void:
 			_trick_axis = Vector3.RIGHT
 			_trick_angle = -TAU
 		_:
-			_trick_axis = Vector3.UP
-			_trick_angle = TAU * (1.0 if randf() < 0.5 else -1.0)
+			# Mortal para trás: pisa na parede (de frente para ela) e gira de costas para longe.
+			_trick_axis = Vector3.RIGHT
+			_trick_angle = TAU
+			_trick_face_wall = true
+			_trick_timer = _fb().flip_duration
+			return
+	_trick_face_wall = false
 	_trick_timer = _fb().flip_duration
 
 
@@ -403,8 +410,12 @@ func _process(delta: float) -> void:
 			attack_weight = _attack_pose(pose)
 		&"Jump", &"Fall" when player.air_sprinting:
 			_air_sprint_pose(pose)
+		&"WallJump" when _trick_face_wall and _trick_timer > _fb().flip_duration * 0.6:
+			_wall_kick_pose(pose)
 		&"Jump", &"Fall", &"WallJump":
 			_air_pose(pose)
+		&"Land" when _is_rolling():
+			_roll_pose(pose)
 		&"Dodge":
 			_dodge_pose(pose)
 		&"Hurt":
@@ -413,6 +424,8 @@ func _process(delta: float) -> void:
 			_ground_pose(pose, sprinting, accel)
 	pose[&"lean"] = pose.get(&"lean", Vector3.ZERO) + Vector3(0, 0, _bank)
 
+	if _is_rolling():
+		_land_timer = 0.0  # a cambalhota já absorve o impacto
 	if _land_timer > 0.0:
 		_land_timer = maxf(_land_timer - delta, 0.0)
 		var k := _land_strength * (_land_timer / maxf(fb.land_crouch_time, 0.001))
@@ -513,6 +526,36 @@ func _air_sprint_pose(pose: Dictionary) -> void:
 	pose[&"elbow_l"] = Vector3(0.2, 0, 0)
 	pose[&"elbow_r"] = Vector3(0.2, 0, 0)
 	pose[&"wrist_r"] = Vector3(-1.4, 0, 0)
+
+
+## Pés plantados na parede, joelhos dobrados empurrando, braços abrindo para o mortal.
+func _wall_kick_pose(pose: Dictionary) -> void:
+	pose[&"thigh_l"] = Vector3(1.3, 0, 0.1)
+	pose[&"thigh_r"] = Vector3(1.1, 0, -0.1)
+	pose[&"knee_l"] = Vector3(-1.7, 0, 0)
+	pose[&"knee_r"] = Vector3(-1.5, 0, 0)
+	pose[&"spine"] = Vector3(0.35, 0, 0)
+	pose[&"head"] = Vector3(0.3, 0, 0)
+	pose[&"shoulder_l"] = Vector3(1.6, 0, -0.6)
+	pose[&"shoulder_r"] = Vector3(1.4, 0, 0.6)
+	pose[&"elbow_l"] = Vector3(0.5, 0, 0)
+	pose[&"elbow_r"] = Vector3(0.5, 0, 0)
+
+
+## Cambalhota: corpo encolhido (joelhos no peito, cabeça baixa, braços abraçando as pernas).
+func _roll_pose(pose: Dictionary) -> void:
+	pose[HIPS_Y] = Vector3(-0.42, 0, 0)
+	pose[&"spine"] = Vector3(-0.7, 0, 0)
+	pose[&"chest"] = Vector3(-0.35, 0, 0)
+	pose[&"head"] = Vector3(-0.4, 0, 0)
+	pose[&"thigh_l"] = Vector3(1.9, 0, 0.12)
+	pose[&"thigh_r"] = Vector3(1.9, 0, -0.12)
+	pose[&"knee_l"] = Vector3(-2.3, 0, 0)
+	pose[&"knee_r"] = Vector3(-2.3, 0, 0)
+	pose[&"shoulder_l"] = Vector3(1.2, 0, 0.1)
+	pose[&"shoulder_r"] = Vector3(1.0, 0, -0.1)
+	pose[&"elbow_l"] = Vector3(1.4, 0, 0)
+	pose[&"elbow_r"] = Vector3(1.2, 0, 0)
 
 
 func _dodge_pose(pose: Dictionary) -> void:
@@ -659,8 +702,22 @@ func _update_trick(delta: float) -> void:
 		_trick_timer = maxf(_trick_timer - delta, 0.0)
 		var t := 1.0 - _trick_timer / maxf(_fb().flip_duration, 0.001)
 		var eased := t * t * (3.0 - 2.0 * t)
+		if _trick_face_wall:
+			basis = basis * Basis(Vector3.UP, PI * (1.0 - eased))
 		basis = basis * Basis(_trick_axis, _trick_angle * eased)
+	elif _is_rolling():
+		# Cambalhota para frente ao aterrissar.
+		var roll: float = player.state_machine.current.call(&"get_roll_progress")
+		basis = basis * Basis(Vector3.RIGHT, -TAU * _ease_in_out(roll))
 	_trick.basis = basis
+
+
+func _is_rolling() -> bool:
+	return player.state_machine.is_in(&"Land") and player.state_machine.current.get(&"rolling") == true
+
+
+func _ease_in_out(t: float) -> float:
+	return t * t * (3.0 - 2.0 * t)
 
 
 func _update_flash(delta: float) -> void:

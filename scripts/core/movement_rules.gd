@@ -14,6 +14,7 @@ const TECH_DODGE_CANCEL: StringName = &"dodge_cancel"
 const TECH_BUNNY_HOP: StringName = &"bunny_hop"
 const TECH_SWAP_CANCEL: StringName = &"swap_cancel"
 const TECH_PERFECT_DODGE: StringName = &"perfect_dodge"
+const TECH_DASH_JUMP: StringName = &"dash_jump"
 
 
 static func seconds_to_ticks(seconds: float) -> int:
@@ -59,6 +60,17 @@ static func classify_wall_jump(in_technique_window: bool, near_top: bool, near_b
 	if incidence_deg >= side_min_deg:
 		return TECH_SIDE_JUMP
 	return TECH_NORMAL
+
+
+## Direção do dash lateral (só esquerda/direita relativas à câmera) pelo sinal de `move_x`.
+static func side_dash_direction(move_x: float, look_yaw: float) -> Vector3:
+	var right := Vector3(cos(look_yaw), 0.0, -sin(look_yaw))
+	return right * signf(move_x)
+
+
+## Velocidade do dash no instante `t` (0–1): começa em `start`, cai até `end` com curva `power`.
+static func dash_speed(t: float, start: float, end: float, power: float) -> float:
+	return lerpf(end, start, pow(1.0 - clampf(t, 0.0, 1.0), power))
 
 
 ## Direção do dodge em 8 direções relativas à câmera (plano XZ, unitária).

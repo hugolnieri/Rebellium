@@ -73,13 +73,14 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	var phase := get_phase()
 	var airborne := kind == CombatRules.KIND_AIR
 	var horizontal: Vector3
-	if phase != Phase.RECOVERY:
+	if phase != Phase.RECOVERY and attack.lunge_speed > 0.0:
 		horizontal = direction * attack.lunge_speed
 	elif airborne:
-		horizontal = player.get_horizontal_velocity()
+		horizontal = player.get_horizontal_velocity()  # no ar o golpe não muda o embalo
 	else:
+		# No chão o personagem para no lugar ao atacar.
 		horizontal = player.get_horizontal_velocity().move_toward(Vector3.ZERO,
-			cfg().ground_deceleration * delta)
+			player.combat_config.attack_ground_friction * delta)
 	player.velocity.x = horizontal.x
 	player.velocity.z = horizontal.z
 	if airborne:

@@ -55,6 +55,7 @@ func test_shift_then_direction_inside_buffer_dashes() -> void:
 
 func test_neutral_dodge_goes_backward_relative_to_camera() -> void:
 	d.player.config.dodge_requires_direction = false
+	d.player.config.dodge_side_only = false
 	d.press_dodge()
 	d.step(5)
 	assert_gt(d.player.velocity.z, 10.0, "sem direção: passo para trás (+Z com câmera olhando -Z)")
@@ -112,7 +113,7 @@ func test_air_dash_once_per_jump_flat_and_refilled_on_landing() -> void:
 	assert_almost_eq(d.player.sp.current, 80.0, 0.01)
 	d.step(5, Vector2(1, 0))
 	assert_almost_eq(d.player.global_position.y, y_before, 0.05, "não caiu durante o dash")
-	d.step(6)
+	d.step(d.player.secs_to_ticks(d.player.config.dodge_duration) - 4)
 	assert_ne(d.state(), &"Dodge")
 	assert_false(d.player.is_on_floor())
 	d.press_dodge()
@@ -131,7 +132,7 @@ func test_air_dash_keeps_momentum_and_returns_to_fall() -> void:
 	d.press_jump()
 	d.step(20)
 	d.press_dodge()
-	d.step(1, Vector2(0, 1))
+	d.step(1, Vector2(1, 0))
 	d.step(d.player.secs_to_ticks(d.player.config.dodge_duration) + 1)
 	assert_true(d.state() == &"Fall" or d.state() == &"Jump")
 	assert_almost_eq(d.player.get_horizontal_speed(), d.player.config.air_dodge_exit_speed, 0.5)
@@ -144,3 +145,61 @@ func test_air_dash_can_be_disabled() -> void:
 	d.press_dodge()
 	d.step(1, Vector2(1, 0))
 	assert_ne(d.state(), &"Dodge")
+
+
+func test_space_plus_side_key_dashes_instead_of_jumping() -> void:
+	d.press_jump()
+	d.step(1, Vector2(1, 0))  # Espaço + D
+	assert_eq(d.state(), &"Dodge")
+	assert_gt(d.player.velocity.x, 15.0, "dash para a direita")
+	assert_lte(d.player.velocity.y, 0.0, "não pulou")
+
+
+func test_space_with_forward_diagonal_still_jumps() -> void:
+	d.press_jump()
+	d.step(1, Vector2(0.707, 0.707))  # W + D + Espaço
+	assert_eq(d.state(), &"Jump")
+
+
+func test_dash_only_goes_sideways() -> void:
+	d.press_dodge()
+	d.step(1, Vector2(0, 1))
+	assert_ne(d.state(), &"Dodge", "dash não vai para frente")
+
+
+func test_dash_decelerates_and_goes_farther() -> void:
+	var start := d.player.global_position
+	d.press_jump()
+	d.step(1, Vector2(1, 0))
+	var first := d.player.get_horizontal_speed()
+	d.step(10)
+	var middle := d.player.get_horizontal_speed()
+	d.step(10)
+	var late := d.player.get_horizontal_speed()
+	assert_gt(first, middle, "desacelera")
+	assert_gt(middle, late)
+	d.step(30)
+	assert_gt(d.player.global_position.x - start.x, 4.0, "distância maior que o passo antigo")
+
+
+func test_space_during_dash_cancels_and_jumps() -> void:
+	d.press_jump()
+	d.step(1, Vector2(1, 0))
+	d.step(5)
+	var dash_speed := d.player.get_horizontal_speed()
+	d.press_jump()
+	d.step(1)
+	assert_eq(d.state(), &"Jump", "cancelou o dash com pulo")
+	assert_gt(d.player.velocity.y, 5.0)
+	assert_lt(d.player.get_horizontal_speed(), dash_speed, "parte do embalo mantida")
+	assert_gt(d.player.get_horizontal_speed(), 3.0)
+	assert_has(d.techniques, MovementRules.TECH_DASH_JUMP)
+
+
+func test_air_dash_with_space_and_side_key() -> void:
+	d.press_jump()
+	d.step(8)
+	d.press_jump()
+	d.step(1, Vector2(-1, 0))
+	assert_eq(d.state(), &"Dodge")
+	assert_lt(d.player.velocity.x, -15.0)

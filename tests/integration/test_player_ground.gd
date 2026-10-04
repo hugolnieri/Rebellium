@@ -81,8 +81,8 @@ func test_full_jump_cycle_states() -> void:
 	assert_gt(ticks, 0)
 	ticks = d.step_until(func() -> bool: return d.player.get_state_name() == &"Land", 60)
 	assert_gt(ticks, 0)
-	d.step(d.player.config.land_recovery_ticks + 1)
-	assert_eq(d.player.get_state_name(), &"Idle")
+	ticks = d.step_until(func() -> bool: return d.player.get_state_name() == &"Idle", 90)
+	assert_gt(ticks, 0, "depois da cambalhota volta ao Idle")
 
 
 func test_walking_off_ledge_enters_fall_with_fall_origin() -> void:
@@ -182,3 +182,56 @@ func test_walking_still_turns_with_acceleration() -> void:
 	var dir := d.player.get_horizontal_velocity().normalized()
 	assert_lt(dir.z, -0.9, "andando não vira instantâneo: ainda vai quase todo para a frente antiga")
 	assert_lt(dir.x, -0.05, "mas já começou a virar")
+
+
+func test_landing_rolls_forward_keeping_momentum() -> void:
+	d.step(30, FWD)
+	d.press_jump()
+	d.step(1, FWD)
+	d.step_until(func() -> bool: return d.player.get_state_name() == &"Land", 90, FWD)
+	assert_true(d.player.state_machine.current.rolling, "cambalhota ao aterrissar")
+	var z_before := d.player.global_position.z
+	d.step(10)
+	assert_lt(d.player.global_position.z, z_before - 0.5, "rola para frente mesmo sem input")
+
+
+func test_roll_can_be_cancelled_by_dash() -> void:
+	d.press_jump()
+	d.step(1)
+	d.step_until(func() -> bool: return d.player.get_state_name() == &"Land", 90)
+	d.step(5)
+	d.press_jump()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.player.get_state_name(), &"Dodge")
+	assert_has(d.techniques, MovementRules.TECH_DODGE_CANCEL)
+
+
+func test_roll_can_be_cancelled_by_sprint_double_tap() -> void:
+	d.press_jump()
+	d.step(1)
+	d.step_until(func() -> bool: return d.player.get_state_name() == &"Land", 90)
+	d.step(5)
+	d.forward_prev_pressed_tick = d.player.tick - 4
+	d.forward_pressed_tick = d.player.tick + 1
+	d.step(1, FWD)
+	assert_eq(d.player.get_state_name(), &"Sprint")
+
+
+func test_landing_while_air_sprinting_does_not_roll() -> void:
+	d.press_jump()
+	d.step(5)
+	d.forward_prev_pressed_tick = d.player.tick - 4
+	d.forward_pressed_tick = d.player.tick + 1
+	d.step(1, FWD)
+	assert_true(d.player.air_sprinting)
+	d.step_until(func() -> bool: return d.player.get_state_name() == &"Land", 90, FWD)
+	assert_false(d.player.state_machine.current.rolling)
+
+
+func test_sprint_start_emits_event_once() -> void:
+	var count := [0]
+	var handler := func(_p: Node) -> void: count[0] += 1
+	GameEvents.sprint_started.connect(handler)
+	d.step(40, FWD, true)
+	GameEvents.sprint_started.disconnect(handler)
+	assert_eq(count[0], 1, "um gritinho ao começar a correr")

@@ -307,6 +307,8 @@ func get_hittables() -> Array[Node]:
 ## Direção do golpe: a da câmera, ou a do alvo mais alinhado (mira assistida).
 func get_aim_direction(input: PlayerInput) -> Vector3:
 	var forward := input.get_camera_forward()
+	if not combat_config.aim_assist_enabled:
+		return forward
 	var targets := get_hittables()
 	var centers: Array[Vector3] = []
 	for target in targets:
@@ -369,6 +371,13 @@ func can_sprint(input: PlayerInput) -> bool:
 
 
 func _update_sprint_latch(input: PlayerInput) -> void:
+	var was_running := sprint_latched or air_sprinting
+	_apply_sprint_latch(input)
+	if not was_running and (air_sprinting or (sprint_latched and sp.can_drain())):
+		GameEvents.sprint_started.emit(self)
+
+
+func _apply_sprint_latch(input: PlayerInput) -> void:
 	if input.is_pressed_this_tick(input.forward_pressed_tick) and MovementRules.is_double_tap(
 			input.forward_pressed_tick, input.forward_prev_pressed_tick, config.sprint_double_tap_ticks):
 		sprint_latched = true
@@ -462,11 +471,20 @@ func do_jump(reason: String) -> void:
 	state_machine.transition_to(&"Jump", reason)
 
 
-## Dodge se houver aperto e SP. Em estado de recuperação vira dodge cancel.
+## Espaço + A/D (lateral puro) pede um dash em vez de pulo.
+func wants_side_dash(input: PlayerInput) -> bool:
+	return has_buffered_jump(input, config.jump_buffer_ticks) \
+		and absf(input.move.x) >= config.dodge_side_input_threshold
+
+
+## Dash se houver pedido (Espaço + A/D ou dash explícito) e SP. Em recuperação vira dodge cancel.
 func try_dodge(input: PlayerInput) -> bool:
-	if not has_buffered_dodge(input):
+	var side_request := wants_side_dash(input)
+	if not side_request and not has_buffered_dodge(input):
 		return false
 	if config.dodge_requires_direction and not input.has_move():
+		return false
+	if config.dodge_side_only and input.has_move() and absf(input.move.x) < 0.01:
 		return false
 	var cancelling := is_in_recovery()
 	if cancelling and not config.dodge_cancel_enabled:
@@ -478,9 +496,16 @@ func try_dodge(input: PlayerInput) -> bool:
 		return false
 	if airborne:
 		air_dodges_used += 1
-	_consumed_dodge_press_tick = input.dodge_pressed_tick
-	var direction := MovementRules.dodge_direction(input.move, input.look_yaw,
-		config.dodge_neutral_backward)
+	if side_request:
+		consume_jump_press(input, config.jump_buffer_ticks)
+	else:
+		_consumed_dodge_press_tick = input.dodge_pressed_tick
+	var direction: Vector3
+	if config.dodge_side_only and absf(input.move.x) >= 0.01:
+		direction = MovementRules.side_dash_direction(input.move.x, input.look_yaw)
+	else:
+		direction = MovementRules.dodge_direction(input.move, input.look_yaw,
+			config.dodge_neutral_backward)
 	if cancelling:
 		GameEvents.technique_executed.emit(self, MovementRules.TECH_DODGE_CANCEL,
 			{"from_state": get_state_name(), "position": global_position})

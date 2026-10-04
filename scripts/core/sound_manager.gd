@@ -6,12 +6,13 @@ const SFX_DIR: String = "res://assets/sfx/"
 const POOL_SIZE: int = 24
 const CONFIG_PATH: String = "res://config/audio_config.tres"
 
-enum Category { COMBAT, MOVEMENT, FOOTSTEPS, INTERFACE }
+enum Category { COMBAT, MOVEMENT, FOOTSTEPS, INTERFACE, VOICE }
 
 var config: AudioConfig
 var _streams: Dictionary = {}
 var _pool: Array[AudioStreamPlayer3D] = []
 var _next: int = 0
+var _voice_variant: int = 0
 
 
 func _ready() -> void:
@@ -37,6 +38,9 @@ func _ready() -> void:
 	GameEvents.player_hurt.connect(func(who: Node, _i: Dictionary) -> void: play(&"hurt", _pos(who), Category.COMBAT))
 	GameEvents.sp_depleted.connect(func(who: Node) -> void: play(&"sp_empty", _pos(who), Category.INTERFACE))
 	GameEvents.footstep.connect(_on_footstep)
+	GameEvents.sprint_started.connect(func(who: Node) -> void:
+		_voice_variant = (_voice_variant + 1) % 2
+		play(StringName("voice_sprint_%d" % (_voice_variant + 1)), _pos(who), Category.VOICE))
 	GameEvents.dummy_warning.connect(func(who: Node) -> void: play(&"dummy_warning", _pos(who), Category.COMBAT))
 	GameEvents.dummy_attack.connect(func(who: Node) -> void: play(&"dummy_swing", _pos(who), Category.COMBAT))
 
@@ -99,6 +103,8 @@ func _category_db(category: Category) -> float:
 			return config.movement_db
 		Category.FOOTSTEPS:
 			return config.footsteps_db
+		Category.VOICE:
+			return config.voice_db
 	return config.interface_db
 
 

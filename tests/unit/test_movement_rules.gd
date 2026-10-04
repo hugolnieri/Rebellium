@@ -90,3 +90,11 @@ func test_double_tap_window() -> void:
 	assert_false(MovementRules.is_double_tap(116, 100, 15), "intervalo longo demais")
 	assert_false(MovementRules.is_double_tap(100, 100, 15), "mesmo toque")
 	assert_false(MovementRules.is_double_tap(100, PlayerInput.NEVER, 15), "primeiro toque")
+
+
+func test_side_dash_direction_and_speed_curve() -> void:
+	assert_almost_eq(MovementRules.side_dash_direction(1.0, 0.0).distance_to(Vector3(1, 0, 0)), 0.0, 0.0001)
+	assert_almost_eq(MovementRules.side_dash_direction(-1.0, 0.0).distance_to(Vector3(-1, 0, 0)), 0.0, 0.0001)
+	assert_almost_eq(MovementRules.dash_speed(0.0, 24.0, 4.0, 1.8), 24.0, 0.001)
+	assert_almost_eq(MovementRules.dash_speed(1.0, 24.0, 4.0, 1.8), 4.0, 0.001)
+	assert_lt(MovementRules.dash_speed(0.5, 24.0, 4.0, 1.8), 14.0, "freia mais no começo")

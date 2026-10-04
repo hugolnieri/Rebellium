@@ -103,15 +103,22 @@ func test_air_attack_dives_and_lands() -> void:
 	assert_gt(landed, 0)
 
 
-func test_dash_attack_lunges_forward() -> void:
+func test_attack_during_dash_is_dash_attack() -> void:
 	await _ready_world()
 	d.press_dodge()
-	d.step(2, Vector2(0, 1))
+	d.step(2, Vector2(1, 0))
 	d.press_attack()
-	d.step(2, Vector2(0, 1))
+	d.step(2, Vector2(1, 0))
 	assert_eq(d.state(), &"Attack")
 	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_DASH)
-	assert_lt(d.player.velocity.z, -10.0, "estocada avança rápido")
+
+
+func test_ground_attack_stops_the_player_in_place() -> void:
+	await _ready_world()
+	d.step(40, Vector2(0, 1), true)
+	d.press_attack()
+	d.step(20)
+	assert_almost_eq(d.player.get_horizontal_speed(), 0.0, 0.05, "golpe não faz o personagem sair do lugar")
 
 
 func test_dodge_cancels_attack_recovery() -> void:
@@ -158,8 +165,19 @@ func test_toggle_swap_and_weapon_speed() -> void:
 		"a adaga é mais leve")
 
 
-func test_aim_assist_turns_attack_toward_target() -> void:
+func test_attack_goes_where_camera_looks_without_aim_assist() -> void:
+	d.add_dummy(Vector3(1.4, 0, -2.4))
+	await _ready_world()
+	d.press_attack()
+	d.step(1)
+	var dir: Vector3 = d.player.state_machine.current.direction
+	assert_almost_eq(dir.x, 0.0, 0.001, "mira assistida desligada por padrão")
+
+
+func test_aim_assist_turns_attack_toward_target_when_enabled() -> void:
 	var dummy := d.add_dummy(Vector3(1.4, 0, -2.4))  # ~30° à direita da câmera
+	d.player.combat_config = d.player.combat_config.duplicate() as CombatConfig
+	d.player.combat_config.aim_assist_enabled = true
 	await _ready_world()
 	d.press_attack()
 	d.step(1)

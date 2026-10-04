@@ -18,6 +18,8 @@ var forward_pressed_tick: int = NEVER
 var forward_prev_pressed_tick: int = NEVER
 ## Tick do último aperto de cada botão (NEVER se nunca apertado).
 var jump_pressed_tick: int = NEVER
+## Dash explícito (testes / controles alternativos). No teclado o dash é Espaço + A/D,
+## decidido pela lógica a partir de `jump_pressed_tick` + `move.x`.
 var dodge_pressed_tick: int = NEVER
 var weapon_swap_pressed_tick: int = NEVER
 ## Slot pedido na troca de arma: 1, 2... ou 0 = alternar para a outra.

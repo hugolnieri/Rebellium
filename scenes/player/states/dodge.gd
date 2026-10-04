@@ -1,8 +1,9 @@
 extends PlayerState
-## Passo rápido (dash) em 8 direções relativas à câmera, no chão ou no ar.
-## Chão: deslocamento (`dodge_duration`) → recuperação (`dodge_recovery`, cancelável por dodge).
-## Ar: deslocamento reto (gravidade suspensa, se configurado) → volta a cair mantendo
-## `air_dodge_exit_speed`; dá para emendar wall jump durante o dash.
+## Dash lateral (Espaço + A/D), no chão ou no ar. A velocidade começa alta e DESACELERA
+## (`dodge_speed` → `dodge_exit_speed`, curva `dodge_ease_power`) ao longo de `dodge_duration`.
+## Chão: deslocamento → recuperação (`dodge_recovery`). Espaço no meio do dash cancela e pula
+## (dash jump); na recuperação, Espaço + A/D emenda outro dash (dodge cancel).
+## Ar: gravidade suspensa durante o dash (se configurado) → volta a cair com `air_dodge_exit_speed`.
 ## `player.is_invulnerable` fica true durante `dodge_invulnerability` desde o início.
 
 var _direction: Vector3 = Vector3.FORWARD
@@ -13,8 +14,7 @@ func enter(_from: StringName, data: Dictionary) -> void:
 	_direction = data.get("direction", -player.visual.global_basis.z)
 	_airborne = data.get("airborne", false)
 	player.is_invulnerable = cfg().dodge_invulnerability > 0.0
-	player.velocity.x = _direction.x * cfg().dodge_speed
-	player.velocity.z = _direction.z * cfg().dodge_speed
+	_set_dash_velocity(0)
 	if _airborne and cfg().air_dodge_suspends_gravity:
 		player.velocity.y = 0.0
 	GameEvents.dodged.emit(player, _direction)
@@ -39,17 +39,16 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		return
 	if is_recovery() and player.try_dodge(input):
 		return
+	if _try_dash_jump(input):
+		return
 	var dash := _dash_ticks()
-	var horizontal: Vector3
 	if t < dash:
-		horizontal = _direction * cfg().dodge_speed
-	elif t == dash:
-		horizontal = _direction * cfg().dodge_exit_speed
+		_set_dash_velocity(t)
 	else:
-		horizontal = player.get_horizontal_velocity().move_toward(Vector3.ZERO,
+		var horizontal := player.get_horizontal_velocity().move_toward(Vector3.ZERO,
 			cfg().ground_deceleration * delta)
-	player.velocity.x = horizontal.x
-	player.velocity.z = horizontal.z
+		player.velocity.x = horizontal.x
+		player.velocity.z = horizontal.z
 	player.apply_gravity(delta)
 	if t >= dash + player.secs_to_ticks(cfg().dodge_recovery):
 		if player.is_on_floor():
@@ -60,22 +59,43 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 			machine.transition_to(&"Fall", "fim do dodge no ar")
 
 
+## Espaço durante o dash: cancela o movimento e pula, mantendo parte do embalo.
+func _try_dash_jump(input: PlayerInput) -> bool:
+	if not cfg().dash_jump_enabled or not player.is_on_floor():
+		return false
+	if not player.consume_jump_press(input, cfg().jump_buffer_ticks):
+		return false
+	var keep := player.get_horizontal_velocity() * cfg().dash_jump_speed_retained
+	player.velocity.x = keep.x
+	player.velocity.z = keep.z
+	GameEvents.technique_executed.emit(player, MovementRules.TECH_DASH_JUMP,
+		{"position": player.global_position, "speed": keep.length()})
+	player.do_jump("dash jump")
+	return true
+
+
 func _air_update(input: PlayerInput, delta: float, t: int) -> void:
 	if player.try_wall_jump(input):
 		return
 	if t < _dash_ticks():
-		player.velocity.x = _direction.x * cfg().dodge_speed
-		player.velocity.z = _direction.z * cfg().dodge_speed
+		_set_dash_velocity(t)
 		if cfg().air_dodge_suspends_gravity:
 			player.velocity.y = 0.0
 		else:
 			player.apply_gravity(delta)
 		return
-	var exit := _direction * cfg().air_dodge_exit_speed
+	var exit := _direction * maxf(cfg().air_dodge_exit_speed, cfg().dodge_exit_speed)
 	player.velocity.x = exit.x
 	player.velocity.z = exit.z
 	player.apply_gravity(delta)
 	machine.transition_to(&"Jump" if player.velocity.y > 0.0 else &"Fall", "fim do dash no ar")
+
+
+func _set_dash_velocity(t: int) -> void:
+	var speed := MovementRules.dash_speed(float(t) / _dash_ticks(), cfg().dodge_speed,
+		cfg().dodge_exit_speed, cfg().dodge_ease_power)
+	player.velocity.x = _direction.x * speed
+	player.velocity.z = _direction.z * speed
 
 
 func post_move(_input: PlayerInput) -> void:

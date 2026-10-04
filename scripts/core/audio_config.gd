@@ -8,6 +8,8 @@ extends Resource
 @export_range(-60.0, 12.0, 0.5, "suffix:dB") var movement_db: float = -6.0
 @export_range(-60.0, 12.0, 0.5, "suffix:dB") var footsteps_db: float = -16.0
 @export_range(-60.0, 12.0, 0.5, "suffix:dB") var interface_db: float = -6.0
+## Voz do personagem (gritinho ao começar a correr).
+@export_range(-60.0, 12.0, 0.5, "suffix:dB") var voice_db: float = -4.0
 
 @export_group("Variação")
 ## Variação aleatória de tom (± fração) para não soar repetitivo.

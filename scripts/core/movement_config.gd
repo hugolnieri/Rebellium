@@ -37,8 +37,16 @@ extends Resource
 @export_range(0, 20, 1, "suffix:ticks") var jump_buffer_ticks: int = 4
 
 @export_group("Aterrissagem")
-## Duração do estado Land (recuperação curta).
+## Duração do estado Land (recuperação curta, sem cambalhota).
 @export_range(0, 30, 1, "suffix:ticks") var land_recovery_ticks: int = 5
+## Cambalhota ao aterrissar para absorver o impacto (cancelável por dash, corrida e pulo).
+@export var roll_enabled: bool = true
+## Impacto mínimo (velocidade de queda) para rolar.
+@export_range(0.0, 40.0, 0.5, "suffix:m/s") var roll_min_impact_speed: float = 7.0
+@export_range(0.1, 1.5, 0.01, "suffix:s") var roll_duration: float = 0.42
+## Velocidade mínima para frente durante a cambalhota.
+@export_range(0.0, 15.0, 0.1, "suffix:m/s") var roll_min_speed: float = 4.0
+@export_range(0.0, 60.0, 0.5, "suffix:m/s²") var roll_deceleration: float = 8.0
 
 @export_group("SP")
 @export_range(1.0, 500.0, 1.0) var sp_max: float = 100.0
@@ -64,17 +72,27 @@ extends Resource
 
 @export_group("Dodge")
 @export_range(0.0, 100.0, 1.0) var dodge_sp_cost: float = 20.0
-## Velocidade do passo rápido.
-@export_range(1.0, 60.0, 0.5, "suffix:m/s") var dodge_speed: float = 16.0
-## Duração do deslocamento (distância ≈ velocidade × duração).
-@export_range(0.02, 1.0, 0.01, "suffix:s") var dodge_duration: float = 0.18
+## Dash = Espaço + A/D (só para os lados, relativo à câmera).
+@export var dodge_side_only: bool = true
+## |input lateral| mínimo para Espaço virar dash (1 = só A/D puros; W+A continua sendo pulo).
+@export_range(0.1, 1.0, 0.01) var dodge_side_input_threshold: float = 0.75
+## Velocidade no INÍCIO do dash; ela cai até `dodge_exit_speed` ao longo de `dodge_duration`.
+@export_range(1.0, 60.0, 0.5, "suffix:m/s") var dodge_speed: float = 24.0
+## Duração do deslocamento.
+@export_range(0.02, 1.0, 0.01, "suffix:s") var dodge_duration: float = 0.4
+## Curva da desaceleração (1 = linear; maior = freia mais cedo).
+@export_range(0.5, 5.0, 0.05) var dodge_ease_power: float = 1.8
 ## Janela de invencibilidade desde o início do dodge (`is_invulnerable`).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var dodge_invulnerability: float = 0.15
 ## Recuperação após o deslocamento (cancelável por outro dodge).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var dodge_recovery: float = 0.12
-## Velocidade horizontal ao entrar na recuperação.
-@export_range(0.0, 30.0, 0.5, "suffix:m/s") var dodge_exit_speed: float = 5.0
-## Dash exige uma direção (Shift + A/D/W/S). Se false, Shift sozinho usa a direção neutra.
+## Velocidade no fim do dash (entrando na recuperação).
+@export_range(0.0, 30.0, 0.5, "suffix:m/s") var dodge_exit_speed: float = 4.0
+## Espaço durante o dash cancela o movimento e pula (dash jump).
+@export var dash_jump_enabled: bool = true
+## Fração da velocidade do dash mantida no pulo do cancelamento.
+@export_range(0.0, 1.5, 0.01) var dash_jump_speed_retained: float = 0.7
+## Dash explícito exige direção. Se false, sem direção usa a direção neutra.
 @export var dodge_requires_direction: bool = true
 ## Sem direção pressionada (só se não exigir direção): true = para trás, false = para frente.
 @export var dodge_neutral_backward: bool = true

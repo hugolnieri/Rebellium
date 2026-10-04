@@ -3,7 +3,7 @@ extends GutTest
 
 const REQUIRED_ACTIONS: Array[StringName] = [
 	&"move_forward", &"move_back", &"move_left", &"move_right",
-	&"jump", &"dodge", &"shoulder_swap", &"release_mouse",
+	&"jump", &"shoulder_swap", &"release_mouse",
 	&"toggle_debug_hud", &"toggle_debug_menu", &"reset_course",
 	&"weapon_slot_1", &"weapon_slot_2",
 ]
