@@ -13,7 +13,8 @@ func before_each() -> void:
 	d.add_block(Vector3(0, -0.5, 0), Vector3(400, 1, 400))
 	await d.ready_physics(self)
 	d.step(10)
-	# Ganha 10 m/s com sprint, pula e solta o sprint no ar (no chão o alvo volta a 6 m/s).
+	# Ganha 10 m/s com sprint (toque duplo em W), pula e solta o W no ar:
+	# sem input, no chão a velocidade cai, então só o bunny hop preserva os 10 m/s.
 	d.step(40, FWD, true)
 	d.press_jump()
 	d.step(1, FWD, true)
@@ -21,7 +22,7 @@ func before_each() -> void:
 
 ## Avança até aterrissar e devolve a velocidade horizontal no impacto.
 func _land() -> float:
-	var ticks := d.step_until(func() -> bool: return d.state() == &"Land", 120, FWD)
+	var ticks := d.step_until(func() -> bool: return d.state() == &"Land", 120)
 	assert_gt(ticks, 0, "aterrissou")
 	return WallJumpMath.horizontal(d.player.pre_slide_velocity).length()
 
@@ -29,9 +30,9 @@ func _land() -> float:
 func _jump_speed_when_pressing_at(ticks_after_land: int) -> float:
 	var landing_speed := _land()
 	assert_almost_eq(landing_speed, 10.0, 0.1)
-	d.step(ticks_after_land, FWD)
+	d.step(ticks_after_land)
 	d.press_jump()
-	d.step(1, FWD)
+	d.step(1)
 	assert_eq(d.state(), &"Jump")
 	return d.player.get_horizontal_speed()
 
@@ -57,11 +58,11 @@ func test_jump_after_window_loses_speed() -> void:
 
 func test_press_before_landing_is_not_a_bunny_hop() -> void:
 	d.step_until(func() -> bool:
-		return d.player.velocity.y < 0.0 and d.player.global_position.y < 0.5, 120, FWD)
+		return d.player.velocity.y < 0.0 and d.player.global_position.y < 0.5, 120)
 	d.press_jump()  # buffer: apertou ~3 ticks antes de tocar o chão
 	_land()
 	assert_lt(d.player.current_input.jump_pressed_tick, d.player.land_tick)
-	d.step(2, FWD)
+	d.step(2)
 	assert_eq(d.state(), &"Jump", "o buffer ainda gera um pulo normal")
 	assert_does_not_have(d.techniques, MovementRules.TECH_BUNNY_HOP)
 	assert_lte(d.player.get_horizontal_speed(), 6.0 + 0.01)

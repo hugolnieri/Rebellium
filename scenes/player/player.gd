@@ -30,6 +30,8 @@ var land_tick: int = PlayerInput.NEVER
 var land_impact_speed: float = 0.0
 ## Velocidade antes do move_and_slide deste tick (a colisão "come" a componente contra a parede).
 var pre_slide_velocity: Vector3 = Vector3.ZERO
+## Sprint ativado por toque duplo em W; dura enquanto W estiver pressionado.
+var sprint_latched: bool = false
 ## Flag de invencibilidade (dodge). Consultada pelo combate futuro.
 var is_invulnerable: bool = false
 var spawn_transform: Transform3D
@@ -92,6 +94,7 @@ func step(input: PlayerInput, delta: float) -> void:
 	if input.is_pressed_this_tick(input.weapon_swap_pressed_tick):
 		GameEvents.weapon_swap_pressed.emit(self, input.weapon_swap_slot)
 	sp.update(delta)
+	_update_sprint_latch(input)
 	state_machine.physics_update(input, delta)
 	pre_slide_velocity = velocity
 	move_and_slide()
@@ -190,7 +193,15 @@ func consume_cancel_press(input: PlayerInput) -> bool:
 
 
 func can_sprint(input: PlayerInput) -> bool:
-	return input.sprint_held and input.has_move() and sp.can_drain()
+	return sprint_latched and input.has_move() and sp.can_drain()
+
+
+func _update_sprint_latch(input: PlayerInput) -> void:
+	if input.is_pressed_this_tick(input.forward_pressed_tick) and MovementRules.is_double_tap(
+			input.forward_pressed_tick, input.forward_prev_pressed_tick, config.sprint_double_tap_ticks):
+		sprint_latched = true
+	if input.move.y <= config.sprint_forward_threshold or sp.exhausted:
+		sprint_latched = false
 
 
 ## Estado de chão desejado pelo input atual.
@@ -256,6 +267,8 @@ func do_jump(reason: String) -> void:
 ## Dodge se houver aperto e SP. Em estado de recuperação vira dodge cancel.
 func try_dodge(input: PlayerInput) -> bool:
 	if not has_buffered_dodge(input):
+		return false
+	if config.dodge_requires_direction and not input.has_move():
 		return false
 	var cancelling := is_in_recovery()
 	if cancelling and not config.dodge_cancel_enabled:
@@ -365,6 +378,7 @@ func respawn(at: Transform3D) -> void:
 	velocity = Vector3.ZERO
 	air_origin = MovementRules.AirOrigin.NONE
 	is_invulnerable = false
+	sprint_latched = false
 	last_wall_jump_collider = 0
 	back_coming_wall = 0
 	wall_sensor.clear()

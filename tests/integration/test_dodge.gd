@@ -28,7 +28,7 @@ func test_dodge_costs_20_sp_and_moves_in_input_direction() -> void:
 
 func test_invulnerability_lasts_0_15_s() -> void:
 	d.press_dodge()
-	d.step(1)
+	d.step(1, Vector2(1, 0))
 	var invulnerable_ticks := 1 if d.player.is_invulnerable else 0
 	for i in 30:
 		d.step(1)
@@ -38,7 +38,23 @@ func test_invulnerability_lasts_0_15_s() -> void:
 	assert_false(d.player.is_invulnerable)
 
 
+func test_dash_without_direction_does_nothing_by_default() -> void:
+	d.press_dodge()
+	d.step(5)
+	assert_ne(d.state(), &"Dodge", "Shift sozinho não dá dash")
+	assert_eq(d.player.sp.current, 100.0)
+
+
+func test_shift_then_direction_inside_buffer_dashes() -> void:
+	d.press_dodge()
+	d.step(2)
+	d.step(1, Vector2(-1, 0))
+	assert_eq(d.state(), &"Dodge")
+	assert_lt(d.player.velocity.x, -10.0, "dash para a esquerda (Shift + A)")
+
+
 func test_neutral_dodge_goes_backward_relative_to_camera() -> void:
+	d.player.config.dodge_requires_direction = false
 	d.press_dodge()
 	d.step(5)
 	assert_gt(d.player.velocity.z, 10.0, "sem direção: passo para trás (+Z com câmera olhando -Z)")
@@ -80,5 +96,6 @@ func test_dodge_cancels_its_own_recovery_but_not_the_dash() -> void:
 
 func test_dodge_returns_to_ground_state() -> void:
 	d.press_dodge()
+	d.step(1, Vector2(1, 0))
 	d.step(40)
 	assert_eq(d.state(), &"Idle")

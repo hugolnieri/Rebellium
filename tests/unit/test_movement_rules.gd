@@ -82,3 +82,11 @@ func test_dodge_follows_camera_yaw_and_neutral_direction() -> void:
 func test_seconds_to_ticks_at_60hz() -> void:
 	assert_eq(MovementRules.seconds_to_ticks(0.15), 9)
 	assert_eq(MovementRules.seconds_to_ticks(0.6), 36)
+
+
+func test_double_tap_window() -> void:
+	assert_true(MovementRules.is_double_tap(110, 100, 15))
+	assert_true(MovementRules.is_double_tap(115, 100, 15))
+	assert_false(MovementRules.is_double_tap(116, 100, 15), "intervalo longo demais")
+	assert_false(MovementRules.is_double_tap(100, 100, 15), "mesmo toque")
+	assert_false(MovementRules.is_double_tap(100, PlayerInput.NEVER, 15), "primeiro toque")

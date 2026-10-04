@@ -12,6 +12,8 @@ var jump_pressed_tick: int = PlayerInput.NEVER
 var dodge_pressed_tick: int = PlayerInput.NEVER
 var weapon_swap_pressed_tick: int = PlayerInput.NEVER
 var weapon_swap_slot: int = 0
+var forward_pressed_tick: int = PlayerInput.NEVER
+var forward_prev_pressed_tick: int = PlayerInput.NEVER
 ## Técnicas emitidas por GameEvents durante o teste (em ordem).
 var techniques: Array[StringName] = []
 var wall_jumps: Array[Dictionary] = []
@@ -88,7 +90,12 @@ func make_input(move: Vector2, sprint: bool) -> PlayerInput:
 	var input := PlayerInput.new()
 	input.tick = player.tick + 1
 	input.move = move
-	input.sprint_held = sprint
+	if sprint and move.y > 0.0 and not player.sprint_latched:
+		# Simula o toque duplo em W que ativa o sprint.
+		forward_prev_pressed_tick = input.tick - 3
+		forward_pressed_tick = input.tick
+	input.forward_pressed_tick = forward_pressed_tick
+	input.forward_prev_pressed_tick = forward_prev_pressed_tick
 	input.look_yaw = look_yaw
 	input.jump_held = jump_pressed_tick == input.tick
 	input.jump_pressed_tick = jump_pressed_tick

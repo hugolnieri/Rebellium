@@ -46,6 +46,10 @@ extends Resource
 ## Tempo sem gastar SP até a regeneração começar.
 @export_range(0.0, 5.0, 0.05, "suffix:s") var sp_regen_delay: float = 0.6
 @export_range(0.0, 100.0, 0.5, "suffix:SP/s") var sprint_sp_cost_per_second: float = 12.0
+## Sprint = toque duplo para frente (W): intervalo máximo entre os dois toques.
+@export_range(1, 60, 1, "suffix:ticks") var sprint_double_tap_ticks: int = 15
+## O sprint continua enquanto o input para frente for maior que isto (soltou W = parou).
+@export_range(0.0, 1.0, 0.01) var sprint_forward_threshold: float = 0.3
 ## Com SP zerado, sprint/dodge/wall jump ficam bloqueados até o SP voltar a este valor.
 @export_range(0.0, 500.0, 1.0) var sp_recovery_threshold: float = 20.0
 
@@ -61,7 +65,9 @@ extends Resource
 @export_range(0.0, 1.0, 0.01, "suffix:s") var dodge_recovery: float = 0.12
 ## Velocidade horizontal ao entrar na recuperação.
 @export_range(0.0, 30.0, 0.5, "suffix:m/s") var dodge_exit_speed: float = 5.0
-## Sem direção pressionada: true = passo para trás, false = para frente.
+## Dash exige uma direção (Shift + A/D/W/S). Se false, Shift sozinho usa a direção neutra.
+@export var dodge_requires_direction: bool = true
+## Sem direção pressionada (só se não exigir direção): true = para trás, false = para frente.
 @export var dodge_neutral_backward: bool = true
 @export var dodge_allow_in_air: bool = false
 ## Dodge pode interromper estados de recuperação (Land, recuperação do dodge).
@@ -73,7 +79,7 @@ extends Resource
 ## Depois de um pulo (ou wall jump), por quanto tempo o wall jump continua liberado mesmo caindo.
 @export_range(0.0, 3.0, 0.01, "suffix:s") var wall_jump_window_after_jump: float = 0.6
 ## Altura ganha pelo impulso vertical do wall jump.
-@export_range(0.0, 10.0, 0.05, "suffix:m") var wall_jump_height: float = 1.8
+@export_range(0.0, 10.0, 0.05, "suffix:m") var wall_jump_height: float = 2.6
 ## Multiplicador da velocidade horizontal refletida.
 @export_range(0.1, 3.0, 0.01) var wall_jump_horizontal_multiplier: float = 1.0
 @export_range(0.0, 30.0, 0.1, "suffix:m/s") var wall_jump_min_horizontal_speed: float = 6.0

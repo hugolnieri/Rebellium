@@ -47,7 +47,7 @@ func test_sprint_ends_when_sp_depleted() -> void:
 	assert_true(d.player.sp.exhausted)
 	assert_eq(d.player.get_state_name(), &"Run")
 	d.step(30, FWD, true)
-	assert_eq(d.player.get_state_name(), &"Run", "exausto: Shift não volta a dar sprint")
+	assert_eq(d.player.get_state_name(), &"Run", "exausto: toque duplo não volta a dar sprint")
 	assert_almost_eq(d.player.get_horizontal_speed(), 6.0, 0.1)
 
 
@@ -94,3 +94,20 @@ func test_walking_off_ledge_enters_fall_with_fall_origin() -> void:
 	var ticks := d.step_until(func() -> bool: return d.player.get_state_name() == &"Fall", 120, FWD)
 	assert_gt(ticks, 0)
 	assert_eq(d.player.air_origin, MovementRules.AirOrigin.FALL)
+
+
+func test_single_forward_press_walks_and_double_tap_sprints() -> void:
+	var input_tick := d.player.tick + 1
+	var walk := d.make_input(FWD, false)
+	walk.forward_pressed_tick = input_tick
+	d.player.step(walk, Driver.DT)
+	d.step(30, FWD)
+	assert_eq(d.player.get_state_name(), &"Run", "um toque só: anda")
+	d.step(5)  # solta o W
+	d.forward_prev_pressed_tick = d.player.tick - 10
+	d.forward_pressed_tick = d.player.tick + 1
+	d.step(30, FWD)
+	assert_eq(d.player.get_state_name(), &"Sprint", "toque duplo em W: corre")
+	d.step(3)  # soltou o W
+	d.step(5, FWD)
+	assert_ne(d.player.get_state_name(), &"Sprint", "soltar o W encerra o sprint")

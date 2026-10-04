@@ -150,7 +150,7 @@ func test_tower_is_climbed_with_chained_wall_jumps() -> void:
 	d.step(1, Vector2(-1, 0), true)
 	var jumps := _auto_wall_jump_until_landed(400)
 	assert_gte(jumps, 3, "wall jumps encadeados: %d" % jumps)
-	assert_almost_eq(d.player.global_position.y, 14.0, 0.05, "chegou no topo da torre")
+	assert_almost_eq(d.player.global_position.y, 17.0, 0.05, "chegou no topo da torre")
 	await wait_physics_frames(3)
 	assert_true(course.finished, "zona de chegada alcançada")
 

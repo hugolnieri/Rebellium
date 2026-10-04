@@ -34,6 +34,14 @@ static func is_bunny_hop(press_tick: int, land_tick: int, window_ticks: int) -> 
 	return delta >= 0 and delta < window_ticks
 
 
+## Toque duplo: o segundo toque veio até `window` ticks depois do primeiro.
+static func is_double_tap(press_tick: int, previous_press_tick: int, window_ticks: int) -> bool:
+	if previous_press_tick <= PlayerInput.NEVER:
+		return false
+	var delta := press_tick - previous_press_tick
+	return delta > 0 and delta <= window_ticks
+
+
 ## Janela justa relativa a um evento (contato com parede, wall jump): |aperto − evento| ≤ janela.
 static func is_within_window(press_tick: int, event_tick: int, window_ticks: int) -> bool:
 	return absi(press_tick - event_tick) <= window_ticks

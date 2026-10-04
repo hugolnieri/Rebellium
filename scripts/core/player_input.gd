@@ -13,7 +13,9 @@ var move: Vector2 = Vector2.ZERO
 var look_yaw: float = 0.0
 var look_pitch: float = 0.0
 var jump_held: bool = false
-var sprint_held: bool = false
+## Toque atual e anterior da tecla "frente" (sprint por toque duplo).
+var forward_pressed_tick: int = NEVER
+var forward_prev_pressed_tick: int = NEVER
 ## Tick do último aperto de cada botão (NEVER se nunca apertado).
 var jump_pressed_tick: int = NEVER
 var dodge_pressed_tick: int = NEVER
@@ -50,7 +52,8 @@ func copy() -> PlayerInput:
 	c.look_yaw = look_yaw
 	c.look_pitch = look_pitch
 	c.jump_held = jump_held
-	c.sprint_held = sprint_held
+	c.forward_pressed_tick = forward_pressed_tick
+	c.forward_prev_pressed_tick = forward_prev_pressed_tick
 	c.jump_pressed_tick = jump_pressed_tick
 	c.dodge_pressed_tick = dodge_pressed_tick
 	c.weapon_swap_pressed_tick = weapon_swap_pressed_tick

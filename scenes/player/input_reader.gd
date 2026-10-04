@@ -15,6 +15,8 @@ var _jump_pressed_tick: int = PlayerInput.NEVER
 var _dodge_pressed_tick: int = PlayerInput.NEVER
 var _weapon_swap_pressed_tick: int = PlayerInput.NEVER
 var _weapon_swap_slot: int = 0
+var _forward_pressed_tick: int = PlayerInput.NEVER
+var _forward_prev_pressed_tick: int = PlayerInput.NEVER
 
 
 func _ready() -> void:
@@ -55,8 +57,13 @@ func sample(tick: int) -> PlayerInput:
 	if enabled:
 		if Input.is_action_just_pressed(&"jump"):
 			_jump_pressed_tick = tick
-		if Input.is_action_just_pressed(&"dodge"):
+		# Dash: Shift + direção, em qualquer ordem (Shift primeiro e depois A/D também vale).
+		if Input.is_action_just_pressed(&"dodge") or (Input.is_action_pressed(&"dodge") \
+				and _any_direction_just_pressed()):
 			_dodge_pressed_tick = tick
+		if Input.is_action_just_pressed(&"move_forward"):
+			_forward_prev_pressed_tick = _forward_pressed_tick
+			_forward_pressed_tick = tick
 		if Input.is_action_just_pressed(&"weapon_slot_1"):
 			_weapon_swap_pressed_tick = tick
 			_weapon_swap_slot = 1
@@ -65,10 +72,16 @@ func sample(tick: int) -> PlayerInput:
 			_weapon_swap_slot = 2
 		input.move = Input.get_vector(&"move_left", &"move_right", &"move_back", &"move_forward")
 		input.jump_held = Input.is_action_pressed(&"jump")
-		input.sprint_held = Input.is_action_pressed(&"sprint")
 		input.shoulder_swap_pressed = Input.is_action_just_pressed(&"shoulder_swap")
 	input.jump_pressed_tick = _jump_pressed_tick
 	input.dodge_pressed_tick = _dodge_pressed_tick
 	input.weapon_swap_pressed_tick = _weapon_swap_pressed_tick
 	input.weapon_swap_slot = _weapon_swap_slot
+	input.forward_pressed_tick = _forward_pressed_tick
+	input.forward_prev_pressed_tick = _forward_prev_pressed_tick
 	return input
+
+
+func _any_direction_just_pressed() -> bool:
+	return Input.is_action_just_pressed(&"move_left") or Input.is_action_just_pressed(&"move_right") \
+		or Input.is_action_just_pressed(&"move_forward") or Input.is_action_just_pressed(&"move_back")
