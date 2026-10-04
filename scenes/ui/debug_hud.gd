@@ -78,7 +78,9 @@ func _process(_delta: float) -> void:
 	lines.append("SP            %6.1f%s" % [p.sp.current, "  EXAUSTO" if p.sp.exhausted else ""])
 	lines.append("no chão       %s" % ("sim" if p.is_on_floor() else "não"))
 	lines.append("na parede     %s" % p.get_wall_debug_text())
-	lines.append("origem do ar  %s   ticks desde pulo %s" % [Player.AirOrigin.keys()[p.air_origin],
+	var block := p.get_wall_jump_block_reason()
+	lines.append("wall jump     %s" % ("LIBERADO" if block == "" else "bloqueado: " + block))
+	lines.append("origem do ar  %s   ticks desde pulo %s" % [MovementRules.AirOrigin.keys()[p.air_origin],
 		str(p.ticks_since(p.last_jump_tick)) if p.last_jump_tick > PlayerInput.NEVER else "-"])
 	lines.append("invulnerável  %s" % ("SIM" if p.is_invulnerable else "não"))
 	lines.append("último evento %s" % _last_event)

@@ -93,4 +93,4 @@ func test_walking_off_ledge_enters_fall_with_fall_origin() -> void:
 	assert_true(d.player.is_on_floor())
 	var ticks := d.step_until(func() -> bool: return d.player.get_state_name() == &"Fall", 120, FWD)
 	assert_gt(ticks, 0)
-	assert_eq(d.player.air_origin, Player.AirOrigin.FALL)
+	assert_eq(d.player.air_origin, MovementRules.AirOrigin.FALL)

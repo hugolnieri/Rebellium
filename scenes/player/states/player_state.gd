@@ -25,6 +25,12 @@ func post_move(_input: PlayerInput) -> void:
 	pass
 
 
+## Estados de recuperação podem ser interrompidos por dodge (dodge cancel).
+## Ataques futuros: sobrescrever para true durante a recuperação do golpe.
+func is_recovery() -> bool:
+	return false
+
+
 ## Conveniência: acesso à config de movimento.
 func cfg() -> MovementConfig:
 	return player.config

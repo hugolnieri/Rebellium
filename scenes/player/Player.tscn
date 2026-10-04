@@ -12,6 +12,10 @@
 [ext_resource type="Script" path="res://scenes/player/states/jump.gd" id="s_jump"]
 [ext_resource type="Script" path="res://scenes/player/states/fall.gd" id="s_fall"]
 [ext_resource type="Script" path="res://scenes/player/states/land.gd" id="s_land"]
+[ext_resource type="Script" path="res://scenes/player/states/wall_jump.gd" id="s_walljump"]
+[ext_resource type="Script" path="res://scenes/player/states/dodge.gd" id="s_dodge"]
+[ext_resource type="Script" path="res://scenes/player/wall_sensor.gd" id="sensor"]
+[ext_resource type="Script" path="res://scenes/player/feedback/feedback_vfx.gd" id="vfx"]
 [ext_resource type="PackedScene" path="res://scenes/player/PlayerCamera.tscn" id="cam"]
 
 [sub_resource type="CapsuleShape3D" id="shape"]
@@ -80,6 +84,18 @@ script = ExtResource("s_fall")
 
 [node name="Land" type="Node" parent="StateMachine"]
 script = ExtResource("s_land")
+
+[node name="WallJump" type="Node" parent="StateMachine"]
+script = ExtResource("s_walljump")
+
+[node name="Dodge" type="Node" parent="StateMachine"]
+script = ExtResource("s_dodge")
+
+[node name="WallSensor" type="Node3D" parent="."]
+script = ExtResource("sensor")
+
+[node name="FeedbackVFX" type="Node3D" parent="."]
+script = ExtResource("vfx")
 
 [node name="PlayerCamera" parent="." instance=ExtResource("cam")]
 camera_config = ExtResource("ccfg")

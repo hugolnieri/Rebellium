@@ -12,6 +12,9 @@ var jump_pressed_tick: int = PlayerInput.NEVER
 var dodge_pressed_tick: int = PlayerInput.NEVER
 var weapon_swap_pressed_tick: int = PlayerInput.NEVER
 var weapon_swap_slot: int = 0
+## Técnicas emitidas por GameEvents durante o teste (em ordem).
+var techniques: Array[StringName] = []
+var wall_jumps: Array[Dictionary] = []
 
 
 ## Cria o mundo como filho de `test` (liberado automaticamente). Chame `await ready_physics()` depois.
@@ -25,6 +28,24 @@ func setup(test: GutTest, spawn: Vector3, config_overrides: Dictionary = {}) -> 
 		player.config.set(key, config_overrides[key])
 	player.position = spawn
 	world.add_child(player)
+	GameEvents.technique_executed.connect(_on_technique)
+	GameEvents.wall_jump_executed.connect(_on_wall_jump)
+	world.tree_exiting.connect(_disconnect)
+
+
+func _on_technique(who: Node, technique: StringName, _data: Dictionary) -> void:
+	if who == player:
+		techniques.append(technique)
+
+
+func _on_wall_jump(who: Node, data: Dictionary) -> void:
+	if who == player:
+		wall_jumps.append(data)
+
+
+func _disconnect() -> void:
+	GameEvents.technique_executed.disconnect(_on_technique)
+	GameEvents.wall_jump_executed.disconnect(_on_wall_jump)
 
 
 ## Adiciona um bloco estático (centro, tamanho).
@@ -82,3 +103,15 @@ func step_until(predicate: Callable, max_ticks: int, move: Vector2 = Vector2.ZER
 		if predicate.call():
 			return i + 1
 	return -1
+
+
+func state() -> StringName:
+	return player.get_state_name()
+
+
+## Avança até tocar a parede `block` (retorna ticks, -1 se não tocou).
+func step_until_wall(block: Node, max_ticks: int, move: Vector2 = Vector2.ZERO) -> int:
+	var id := block.get_instance_id()
+	return step_until(func() -> bool:
+		return player.wall_sensor.has_contact and player.wall_sensor.collider_id == id \
+			and player.wall_sensor.last_contact_tick == player.tick, max_ticks, move)

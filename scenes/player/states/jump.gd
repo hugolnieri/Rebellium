@@ -3,6 +3,10 @@ extends PlayerState
 
 
 func physics_update(input: PlayerInput, delta: float) -> void:
+	if player.try_wall_jump(input):
+		return
+	if cfg().dodge_allow_in_air and player.try_dodge(input):
+		return
 	player.apply_air_movement(input, delta)
 
 
