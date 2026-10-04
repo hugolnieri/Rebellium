@@ -1,7 +1,8 @@
 class_name CharacterModel
 extends Node3D
-## Personagem procedural no estilo anime cyberpunk (traje preto com linhas roxas emissivas,
-## cabelo branco espetado, olhos verdes, ombreiras e joelheiras). Só apresentação: lê o
+## Personagem no estilo anime cyberpunk (traje preto com linhas roxas emissivas, cabelo branco,
+## olhos verdes, ombreiras e joelheiras): malha lisa com esqueleto gerada por
+## tools/gen_character.py, toon shading e contorno. Só apresentação: lê o
 ## estado do Player e nunca altera gameplay. Frente = -Z, pés em y = 0, altura de referência 1,8 m.
 ##
 ## Animação: cada articulação persegue uma pose-alvo através de uma MOLA (frequência +
@@ -24,12 +25,21 @@ const JOINTS: Array[StringName] = [
 const HIPS_Y: StringName = &"hips_y"
 ## Canal do cabelo (movimento secundário).
 const HAIR: StringName = &"hair"
+## Altura do pivô do cabelo acima da articulação da cabeça.
+const HAIR_PIVOT_HEIGHT: float = 0.12
+## Malhas geradas por tools/gen_character.py (corpo com esqueleto + cabelo).
+const BODY_SCENE: PackedScene = preload("res://assets/character/body.glb")
+const HAIR_SCENE: PackedScene = preload("res://assets/character/hair.glb")
+const OUTLINE_SHADER: Shader = preload("res://scenes/player/feedback/outline.gdshader")
 
 var player: Player
 var weapon_visual: WeaponVisual
 var trail: WeaponTrail
 
-var _nodes: Dictionary = {}  # canal -> Node3D
+var _bones: Dictionary = {}  # canal -> índice do osso
+var _skeleton: Skeleton3D
+var _hips_rest: Vector3 = Vector3.ZERO
+var _lean: Node3D
 var _trick: Node3D
 var _hair: Node3D
 var _socket: Node3D
@@ -90,204 +100,79 @@ func apply_body_height(height: float) -> void:
 
 func _build() -> void:
 	var fb := _fb()
-	var suit := _material(fb.suit_color, 0.42, 0.15)
-	var armor := _material(fb.armor_color, 0.18, 0.35)
-	var skin := _material(fb.skin_color, 0.65, 0.0)
-	var hair := _material(fb.hair_color, 0.55, 0.0)
-	_line_material = _emissive(fb.suit_line_color, fb.suit_line_energy)
-	var eyes := _emissive(fb.eye_color, 1.6)
-	var green := _emissive(Color(0.4, 1.0, 0.35), 2.0)
-	var cyan := _emissive(Color(0.3, 0.75, 1.0), 2.0)
-	var line := _line_material
-
-	var lean := _joint(&"lean", self, Vector3.ZERO)
+	var lean := Node3D.new()
+	add_child(lean)
+	_lean = lean
 	_trick = Node3D.new()
 	_trick.position = Vector3(0, HIP_HEIGHT, 0)
 	lean.add_child(_trick)
-	var hips := _joint(&"hips", _trick, Vector3.ZERO)
-	_capsule(hips, 0.12, 0.31, Vector3(0, -0.03, 0), Vector3(0, 0, PI * 0.5), Vector3(1, 1, 0.78), suit)
-	_cylinder(hips, 0.128, 0.128, 0.02, Vector3(0, 0.07, 0), line, Vector3.ZERO, Vector3(1.12, 1, 0.82))  # cinto
-	_box(hips, Vector3(0.022, 0.16, 0.012), Vector3(0.07, -0.06, -0.1), line, Vector3(0, 0, 0.5))
-	_box(hips, Vector3(0.022, 0.16, 0.012), Vector3(-0.07, -0.06, -0.1), line, Vector3(0, 0, -0.5))
+	# O quadril (raiz do esqueleto) fica na origem de _trick, então o mortal gira em torno dele.
+	var body := BODY_SCENE.instantiate() as Node3D
+	body.position = Vector3(0, -HIP_HEIGHT, 0)
+	_trick.add_child(body)
+	_skeleton = body.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	for joint in JOINTS:
+		if joint != &"lean":
+			_bones[joint] = _skeleton.find_bone(joint)
+	_hips_rest = _skeleton.get_bone_rest(_bones[&"hips"]).origin
 
-	var spine := _joint(&"spine", hips, Vector3(0, 0.1, 0))
-	_capsule(spine, 0.11, 0.32, Vector3(0, 0.08, 0), Vector3.ZERO, Vector3(1.15, 1, 0.78), suit)
-	var chest := _joint(&"chest", spine, Vector3(0, 0.2, 0))
-	_capsule(chest, 0.15, 0.38, Vector3(0, 0.11, 0), Vector3.ZERO, Vector3(1.2, 1, 0.7), suit)
-	# Linhas do peito: V até o esterno, faixa horizontal e linha central (como no conceito).
-	_box(chest, Vector3(0.02, 0.27, 0.012), Vector3(0.085, 0.13, -0.113), line, Vector3(0, 0, -0.62))
-	_box(chest, Vector3(0.02, 0.27, 0.012), Vector3(-0.085, 0.13, -0.113), line, Vector3(0, 0, 0.62))
-	_box(chest, Vector3(0.02, 0.2, 0.012), Vector3(0, -0.02, -0.112), line)
-	_box(chest, Vector3(0.3, 0.02, 0.012), Vector3(0, -0.08, -0.1), line)
-	_box(chest, Vector3(0.022, 0.32, 0.012), Vector3(0, 0.06, 0.112), line)  # coluna nas costas
-	_box(chest, Vector3(0.12, 0.12, 0.012), Vector3(0, 0.15, 0.112), line, Vector3(0, 0, PI * 0.25))
-	_cylinder(chest, 0.052, 0.052, 0.1, Vector3(0, 0.3, 0), suit)  # gola alta
+	var outline := ShaderMaterial.new()
+	outline.shader = OUTLINE_SHADER
+	outline.set_shader_parameter(&"outline_color", fb.outline_color)
+	outline.set_shader_parameter(&"thickness", fb.outline_thickness)
+	_line_material = _toon(fb.suit_line_color, false)
+	_line_material.emission_enabled = true
+	_line_material.emission = fb.suit_line_color
+	_line_material.emission_energy_multiplier = fb.suit_line_energy
+	for mesh: MeshInstance3D in body.find_children("*", "MeshInstance3D", true, false):
+		match mesh.name:
+			&"SuitLines":
+				mesh.material_override = _line_material
+			&"Face":
+				mesh.material_override = _toon(fb.body_tint, true)
+			_:
+				var material := _toon(fb.body_tint, true)
+				material.next_pass = outline
+				mesh.material_override = material
+		_meshes.append(mesh)
 
-	var head := _joint(&"head", chest, Vector3(0, 0.34, 0))
-	_sphere(head, 0.102, Vector3(0, 0.1, -0.005), Vector3(0.9, 1.1, 1.0), skin)
-	_sphere(head, 0.06, Vector3(0, 0.035, -0.035), Vector3(1.0, 0.8, 1.0), skin)  # queixo
-	for side: float in [-1.0, 1.0]:
-		_box(head, Vector3(0.034, 0.016, 0.01), Vector3(0.037 * side, 0.1, -0.096), eyes, Vector3(0, 0, -0.12 * side))
+	# Cabelo: preso à cabeça, com um pivô próprio para o balanço (movimento secundário).
+	var head_attach := BoneAttachment3D.new()
+	head_attach.bone_name = &"head"
+	_skeleton.add_child(head_attach)
 	_hair = Node3D.new()
-	_hair.position = Vector3(0, 0.12, 0)
-	head.add_child(_hair)
-	_build_hair(hair)
+	_hair.position = Vector3(0, HAIR_PIVOT_HEIGHT, 0)
+	head_attach.add_child(_hair)
+	var hair := HAIR_SCENE.instantiate() as Node3D
+	hair.position = Vector3(0, -HAIR_PIVOT_HEIGHT, 0)
+	_hair.add_child(hair)
+	var hair_material := _toon(fb.hair_color, false)
+	hair_material.next_pass = outline
+	for mesh: MeshInstance3D in hair.find_children("*", "MeshInstance3D", true, false):
+		mesh.material_override = hair_material
+		_meshes.append(mesh)
 
-	for side: float in [-1.0, 1.0]:
-		var suffix := "l" if side < 0.0 else "r"
-		var shoulder := _joint(StringName("shoulder_" + suffix), chest, Vector3(0.195 * side, 0.235, 0))
-		_sphere(shoulder, 0.085, Vector3(0.025 * side, 0.02, 0), Vector3(1.1, 0.85, 1.05), armor)  # ombreira
-		_cylinder(shoulder, 0.087, 0.087, 0.014, Vector3(0.025 * side, -0.005, 0), line, Vector3.ZERO,
-			Vector3(1.1, 1, 1.05))
-		_capsule(shoulder, 0.053, UPPER_ARM_LENGTH + 0.08, Vector3(0, -UPPER_ARM_LENGTH * 0.5, 0), Vector3.ZERO,
-			Vector3.ONE, suit)
-		_box(shoulder, Vector3(0.012, UPPER_ARM_LENGTH * 0.8, 0.018), Vector3(0.053 * side, -0.15, 0), line)
-		var elbow := _joint(StringName("elbow_" + suffix), shoulder, Vector3(0, -UPPER_ARM_LENGTH, 0))
-		_capsule(elbow, 0.047, FOREARM_LENGTH + 0.06, Vector3(0, -FOREARM_LENGTH * 0.5, 0), Vector3.ZERO,
-			Vector3.ONE, suit)
-		_box(elbow, Vector3(0.012, FOREARM_LENGTH * 0.75, 0.016), Vector3(0.047 * side, -0.12, -0.01), line,
-			Vector3(0, 0, 0.12 * side))
-		_cylinder(elbow, 0.05, 0.05, 0.03, Vector3(0, -FOREARM_LENGTH + 0.01, 0), armor)  # punho
-		var wrist := _joint(StringName("wrist_" + suffix), elbow, Vector3(0, -FOREARM_LENGTH - 0.02, 0))
-		_capsule(wrist, 0.037, 0.08, Vector3(0, -0.035, -0.005), Vector3.ZERO, Vector3(0.95, 1, 0.7), skin)
-		if side < 0.0:
-			# Pulseira de energia (esquerda) com tela verde.
-			_box(elbow, Vector3(0.07, 0.05, 0.075), Vector3(0, -FOREARM_LENGTH + 0.06, 0), armor)
-			_box(elbow, Vector3(0.045, 0.035, 0.004), Vector3(-0.038, -FOREARM_LENGTH + 0.06, 0), green,
-				Vector3(0, PI * 0.5, 0))
-		else:
-			_socket = Node3D.new()
-			_socket.position = Vector3(0, -0.045, 0)
-			wrist.add_child(_socket)
-			# Braçadeira com display ciano.
-			_box(shoulder, Vector3(0.03, 0.045, 0.05), Vector3(0.055, -0.1, 0), armor)
-			_box(shoulder, Vector3(0.004, 0.025, 0.035), Vector3(0.071, -0.1, 0), cyan)
-
-		var thigh := _joint(StringName("thigh_" + suffix), hips, Vector3(0.095 * side, -0.03, 0))
-		_cylinder(thigh, 0.085, 0.06, THIGH_LENGTH, Vector3(0, -THIGH_LENGTH * 0.5, 0), suit)
-		_sphere(thigh, 0.085, Vector3(0, -0.01, 0), Vector3.ONE, suit)
-		_box(thigh, Vector3(0.014, THIGH_LENGTH * 0.85, 0.014), Vector3(0, -0.22, -0.075), line,
-			Vector3(0, 0, 0.18 * side))
-		_box(thigh, Vector3(0.014, THIGH_LENGTH * 0.7, 0.014), Vector3(0.075 * side, -0.2, 0), line)
-		var knee := _joint(StringName("knee_" + suffix), thigh, Vector3(0, -THIGH_LENGTH, 0))
-		_sphere(knee, 0.072, Vector3(0, 0.01, -0.045), Vector3(0.95, 1.2, 0.6), armor)  # joelheira
-		_box(knee, Vector3(0.13, 0.014, 0.014), Vector3(0, 0.065, -0.07), line)
-		_cylinder(knee, 0.06, 0.042, SHIN_LENGTH, Vector3(0, -SHIN_LENGTH * 0.5, 0), suit)
-		_box(knee, Vector3(0.014, SHIN_LENGTH * 0.75, 0.014), Vector3(0, -0.22, -0.055), line,
-			Vector3(0, 0, -0.15 * side))
-		var foot := _joint(StringName("foot_" + suffix), knee, Vector3(0, -SHIN_LENGTH, 0))
-		_cylinder(foot, 0.045, 0.045, 0.03, Vector3(0, 0.0, 0), suit)  # tornozeleira
-		_capsule(foot, 0.04, 0.22, Vector3(0, -0.045, -0.055), Vector3(PI * 0.5, 0, 0), Vector3(1.05, 1, 0.75),
-			skin)
+	# Encaixe da arma na mão direita.
+	var hand_attach := BoneAttachment3D.new()
+	hand_attach.bone_name = &"wrist_r"
+	_skeleton.add_child(hand_attach)
+	_socket = Node3D.new()
+	_socket.position = Vector3(0, -0.045, 0)
+	hand_attach.add_child(_socket)
 
 
-func _build_hair(material: Material) -> void:
-	_sphere(_hair, 0.112, Vector3(0, 0.0, 0.012), Vector3(1.02, 0.92, 1.06), material)
-	# Mechas espetadas: (posição, direção da ponta, comprimento, raio da base).
-	var spikes: Array = [
-		[Vector3(0.0, 0.07, -0.08), Vector3(0.1, -0.35, -1.0), 0.09, 0.032],
-		[Vector3(-0.05, 0.065, -0.075), Vector3(-0.3, -0.45, -0.9), 0.08, 0.03],
-		[Vector3(0.05, 0.065, -0.075), Vector3(0.35, -0.45, -0.9), 0.08, 0.03],
-		[Vector3(-0.09, 0.03, -0.04), Vector3(-0.7, -0.9, -0.2), 0.1, 0.032],
-		[Vector3(0.09, 0.03, -0.04), Vector3(0.7, -0.9, -0.2), 0.1, 0.032],
-		[Vector3(0.0, 0.1, -0.01), Vector3(0.0, 1.0, 0.5), 0.14, 0.045],
-		[Vector3(-0.05, 0.09, 0.02), Vector3(-0.5, 1.0, 0.6), 0.13, 0.04],
-		[Vector3(0.05, 0.09, 0.02), Vector3(0.5, 1.0, 0.6), 0.13, 0.04],
-		[Vector3(0.0, 0.07, 0.07), Vector3(0.0, 0.5, 1.0), 0.15, 0.045],
-		[Vector3(-0.06, 0.04, 0.07), Vector3(-0.5, 0.0, 1.0), 0.13, 0.04],
-		[Vector3(0.06, 0.04, 0.07), Vector3(0.5, 0.0, 1.0), 0.13, 0.04],
-		[Vector3(0.0, -0.02, 0.09), Vector3(0.0, -0.7, 1.0), 0.13, 0.04],
-		[Vector3(-0.095, -0.02, 0.03), Vector3(-0.7, -0.8, 0.4), 0.11, 0.035],
-		[Vector3(0.095, -0.02, 0.03), Vector3(0.7, -0.8, 0.4), 0.11, 0.035],
-	]
-	for spike: Array in spikes:
-		var mesh := CylinderMesh.new()
-		mesh.top_radius = 0.0
-		mesh.bottom_radius = spike[3]
-		mesh.height = spike[2]
-		mesh.radial_segments = 6
-		var instance := MeshInstance3D.new()
-		instance.mesh = mesh
-		instance.material_override = material
-		var dir: Vector3 = (spike[1] as Vector3).normalized()
-		# Alinha o eixo Y do cone com a direção da mecha.
-		var basis := Basis(Quaternion(Vector3.UP, dir))
-		instance.transform = Transform3D(basis, spike[0] + dir * spike[2] * 0.5)
-		_hair.add_child(instance)
-		_meshes.append(instance)
-
-
-func _joint(channel: StringName, parent: Node3D, offset: Vector3) -> Node3D:
-	var node := Node3D.new()
-	node.position = offset
-	parent.add_child(node)
-	_nodes[channel] = node
-	return node
-
-
-func _box(parent: Node3D, size: Vector3, offset: Vector3, material: Material,
-		rot: Vector3 = Vector3.ZERO) -> MeshInstance3D:
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	return _mesh(parent, mesh, offset, rot, Vector3.ONE, material)
-
-
-func _sphere(parent: Node3D, radius: float, offset: Vector3, scl: Vector3, material: Material) -> MeshInstance3D:
-	var mesh := SphereMesh.new()
-	mesh.radius = radius
-	mesh.height = radius * 2.0
-	mesh.radial_segments = 20
-	mesh.rings = 10
-	return _mesh(parent, mesh, offset, Vector3.ZERO, scl, material)
-
-
-func _capsule(parent: Node3D, radius: float, length: float, offset: Vector3, rot: Vector3,
-		scl: Vector3, material: Material) -> MeshInstance3D:
-	var mesh := CapsuleMesh.new()
-	mesh.radius = radius
-	mesh.height = maxf(length, radius * 2.0)  # comprimento total
-	mesh.radial_segments = 16
-	mesh.rings = 6
-	return _mesh(parent, mesh, offset, rot, scl, material)
-
-
-func _cylinder(parent: Node3D, top: float, bottom: float, height: float, offset: Vector3,
-		material: Material, rot: Vector3 = Vector3.ZERO, scl: Vector3 = Vector3.ONE) -> MeshInstance3D:
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = top
-	mesh.bottom_radius = bottom
-	mesh.height = height
-	mesh.radial_segments = 16
-	return _mesh(parent, mesh, offset, rot, scl, material)
-
-
-func _mesh(parent: Node3D, mesh: Mesh, offset: Vector3, rot: Vector3, scl: Vector3,
-		material: Material) -> MeshInstance3D:
-	var instance := MeshInstance3D.new()
-	instance.mesh = mesh
-	instance.position = offset
-	instance.rotation = rot
-	instance.scale = scl
-	instance.material_override = material
-	parent.add_child(instance)
-	_meshes.append(instance)
-	return instance
-
-
-func _material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
+## Material toon (sombra em degraus + luz de borda), como num anime.
+func _toon(color: Color, use_vertex_color: bool) -> StandardMaterial3D:
+	var fb := _fb()
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
-	material.roughness = roughness
-	material.metallic = metallic
-	return material
-
-
-func _emissive(color: Color, energy: float) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.emission_enabled = true
-	material.emission = color
-	material.emission_energy_multiplier = energy
+	material.vertex_color_use_as_albedo = use_vertex_color
+	material.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+	material.specular_mode = BaseMaterial3D.SPECULAR_TOON
+	material.roughness = 0.45
+	material.rim_enabled = true
+	material.rim = fb.rim_amount
+	material.rim_tint = fb.rim_tint
 	return material
 
 
@@ -657,9 +542,12 @@ func _apply_springs(pose: Dictionary, frequency: float, damping: float, delta: f
 			weapon_visual.set_boost(0.0)
 	for joint in JOINTS:
 		var value := _spring(joint, pose[joint], frequency, damping, delta)
-		(_nodes[joint] as Node3D).rotation = value
+		if joint == &"lean":
+			_lean.rotation = value
+		else:
+			_skeleton.set_bone_pose_rotation(_bones[joint], Quaternion.from_euler(value))
 	var hips_y := _spring(HIPS_Y, pose[HIPS_Y], frequency, damping, delta)
-	(_nodes[&"hips"] as Node3D).position.y = hips_y.x
+	_skeleton.set_bone_pose_position(_bones[&"hips"], _hips_rest + Vector3(0, hips_y.x, 0))
 
 
 ## Mola implícita (estável com qualquer delta): x persegue o alvo com frequência e amortecimento.

@@ -52,14 +52,19 @@ extends Resource
 @export_range(0.05, 2.0, 0.01) var hair_spring_damping: float = 0.3
 
 @export_group("Personagem")
-@export var suit_color: Color = Color(0.035, 0.035, 0.045)
-@export var armor_color: Color = Color(0.07, 0.07, 0.085)
+## Malha gerada por tools/gen_character.py; as cores do traje/pele vêm nos vértices e são
+## multiplicadas por esta tonalidade.
+@export var body_tint: Color = Color(1, 1, 1)
 ## Linhas emissivas do traje.
 @export var suit_line_color: Color = Color(0.48, 0.22, 1.0)
 @export_range(0.0, 10.0, 0.1) var suit_line_energy: float = 1.1
-@export var skin_color: Color = Color(0.96, 0.82, 0.72)
-@export var hair_color: Color = Color(0.92, 0.93, 0.97)
-@export var eye_color: Color = Color(0.35, 1.0, 0.45)
+@export var hair_color: Color = Color(0.93, 0.94, 0.98)
+## Luz de borda do toon shading.
+@export_range(0.0, 1.0, 0.01) var rim_amount: float = 0.5
+@export_range(0.0, 1.0, 0.01) var rim_tint: float = 0.3
+## Contorno (casco invertido) estilo anime.
+@export var outline_color: Color = Color(0.02, 0.02, 0.035)
+@export_range(0.0, 0.03, 0.0005, "suffix:m") var outline_thickness: float = 0.0045
 
 @export_group("Poeira e sombra")
 @export_range(0, 100, 1) var dust_amount: int = 14

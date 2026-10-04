@@ -10,7 +10,7 @@ Para rodar: `godot --path .` ou abra o projeto no editor e aperte F5. Abre a **a
 | Mouse | olhar (clique para capturar o mouse) |
 | Space | pular / wall jump |
 | W, W (toque duplo rápido) e segurar | sprint (soltar o W encerra) |
-| Shift + A/D (ou W/S) | dash/dodge na direção (Shift antes ou depois da direção; Ctrl também serve) |
+| Space + A/D | dash lateral (segure A ou D e aperte Space; Space de novo durante o dash = cancela e pula) |
 | Botão esquerdo (ou J) | golpe leve — cliques seguidos fazem o combo |
 | Botão direito (ou K) | golpe pesado (gasta SP) |
 | 1 / 2 / Q | Lâmina de Arco / Presa de Fase / alterna (também faz o **cancel** do wall jump) |
@@ -116,32 +116,37 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - A cor é **vermelha** e o banner mostra `CANCEL`. O SP gasto não volta.
   - Apertar 1/2 sem wall jump só gera o evento `troca de arma` no log.
 - **Bunny hop**: corra em sprint, pule e aperte Space de novo **até 3 ticks depois de aterrissar**.
-  - A velocidade horizontal se mantém (ex.: 10 m/s mesmo sem segurar Shift).
+  - A velocidade horizontal se mantém (ex.: 10 m/s mesmo sem segurar W).
   - Apertar um pouco antes de tocar o chão ou tarde demais dá um pulo normal, limitado à velocidade do chão.
-- **Dash (dodge)**: Shift + A ou D dá um passo rápido para o lado (W/S também funcionam: 8 direções relativas à câmera).
+- **Dash (dodge)**: segure **A ou D** e aperte **Space** → dash só para o lado (não usa mais Shift).
+  - Vai longe e **desacelera** até parar (começa a 24 m/s; curva em `dodge_ease_power`).
+  - W + D + Space dá pulo normal: o dash só sai com a direção bem lateral (`dodge_side_input_threshold`).
   - Custa 20 SP, deixa um rastro azul e levanta poeira; o personagem continua de frente para a câmera e se inclina.
   - `invulnerável: SIM` dura 0,15 s.
-  - Shift sozinho não faz nada (`dodge_requires_direction`).
+  - **Cancelar com pulo**: Space de novo durante o dash interrompe o dash e o personagem **pula**, mantendo 70%
+    da velocidade (`dash_jump_speed_retained`). O log mostra `dash jump`.
 - **Corrida no ar**: no ar, toque W duas vezes rápido (e segure).
   - Vira na hora para onde a câmera aponta. Acelera até a velocidade de sprint (10 m/s), mas **cai mais rápido** (gravidade ×1,7) e gasta 12 SP/s.
   - O HUD de debug mostra `CORRIDA NO AR`; o personagem mergulha para frente pedalando.
   - Acaba ao aterrissar, ao soltar o W ou com SP zerado. O sprint que vem do chão **não** acelera a queda.
-- **Dash no ar**: depois de pular, Shift + direção dá um dash reto (sem cair durante o dash).
+- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral reto (sem cair durante o dash).
   - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
   - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
   - Ao terminar, você continua caindo com 9 m/s na direção do dash (`air_dodge_exit_speed`).
 - **Dodge cancel**:
-  - Shift + direção logo ao aterrissar interrompe a recuperação do `Land`.
-  - Shift + direção durante a recuperação de outro dash emenda um segundo dash.
-  - Durante o deslocamento do dash, um novo Shift não faz nada.
+  - A/D + Space logo ao aterrissar interrompe a recuperação do `Land` (e a cambalhota).
+  - A/D + Space durante a recuperação de outro dash emenda um segundo dash.
   - O banner mostra `DODGE CANCEL`.
 
 ## Parte 3b: personagem e polimento (observar)
-- **Personagem**: corredor de armadura com animação procedural.
-  - Passada acompanha a velocidade (mais longa e inclinada no sprint); a faixa nas costas levanta com a velocidade.
+- **Personagem**: malha lisa com esqueleto (gerada por `tools/gen_character.py`), toon shading e contorno.
+  - Passada acompanha a velocidade (mais longa e inclinada no sprint); o cabelo balança com o vento.
   - No ar: pose de pulo subindo e braços abertos caindo.
-  - Wall jump: giro no ar; reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
-  - Aterrissagem: agacha proporcional ao impacto. O visor e o corpo brilham na cor da técnica.
+  - Wall jump: **mortal para trás** — pisa na parede de frente para ela e gira de costas para longe.
+    Reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
+  - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente absorvendo o impacto. Dá para cancelar
+    com dash (A/D + Space) ou correndo (W, W). Corrida no ar → aterrissa sem cambalhota.
+  - Ao começar a correr, o personagem solta um **gritinho** curto.
 - **Sensação de velocidade**: acima de 8 m/s surgem linhas de velocidade nas bordas da tela, o FOV abre
   (até +18°), a câmera recua um pouco e treme de leve; tudo cresce até 17 m/s. Ajuste na aba Câmera do F2,
   grupo "Sensação de velocidade".
@@ -200,17 +205,18 @@ Ande até os três postes à frente (POSTE).
    No meio do combo leve, o botão direito vira finalizador.
 3. **Troca de arma**: 2 (ou Q). Floreio da arma, flash e som de carga. A **Presa de Fase** tem combo de 4
    golpes rápidos, anda ~8% mais rápido e o pesado (lâmina ascendente) lança para cima.
-4. **Mira assistida**: mire perto do poste (até ~55° de diferença, até 6 m) — o golpe vira sozinho para ele.
+4. Os golpes **não** deslocam o personagem e **não** viram sozinhos para o poste: o golpe sai para onde a câmera
+   aponta. (A mira assistida ainda existe: F2 → Combate → `aim_assist_enabled`.)
 
 ## Parte 7: golpes com movimento
-1. **Golpe aéreo**: pule e clique → o personagem sobe um pouco e mergulha cortando. Suba na plataforma alta
-   (rampa à esquerda) e mergulhe no poste lá em cima.
-2. **Estocada no dash**: Shift + direção e clique durante o dash → avanço longo e rápido.
+1. **Golpe aéreo**: pule e clique → corte no ar mantendo o embalo do pulo. Suba na plataforma alta
+   (rampa à esquerda) e golpeie o poste lá em cima.
+2. **Golpe no dash**: A/D + Space e clique durante o dash → o personagem freia e golpeia no lugar.
 3. **Wall jump + golpe**: na chaminé (paredes de metal à direita), faça wall jumps e clique no ar.
-4. **Poste móvel**: acompanhe o poste que vai e volta; use a mira assistida e a estocada.
+4. **Poste móvel**: acompanhe o poste que vai e volta; posicione-se com dash e corrida antes de golpear.
 
 ## Parte 8: cancels e defesa
-1. **Dodge cancel**: logo depois de um golpe acertar (na recuperação), Shift + direção → o dash interrompe a
+1. **Dodge cancel**: logo depois de um golpe acertar (na recuperação), A/D + Space → o dash interrompe a
    recuperação. Aparece `DODGE CANCEL`.
 2. **Swap cancel**: na recuperação de um golpe, aperte 1/2/Q → a arma troca e a recuperação acaba na hora.
    Aparece `SWAP CANCEL` (dourado). Na preparação do golpe não funciona (é proposital).

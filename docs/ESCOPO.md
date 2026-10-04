@@ -65,3 +65,14 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - **Arena de combate** com postes: parados, móvel, agressivo (contra-ataca com aviso vermelho) e no alto.
 - **Sons** sintetizados (`tools/gen_sfx.py`): golpes, impactos, passos, pulo, wall jump, dash, troca de arma,
   técnicas, esquiva perfeita, dano, aviso do poste.
+
+## Revisão após o teste do combate
+- **Dash**: Space + A/D (sem Shift), só lateral, vai mais longe e desacelera. Space durante o dash cancela
+  e pula mantendo 70% da velocidade (**dash jump**).
+- **Cambalhota** ao aterrissar forte (cancelável com dash ou corrida); **mortal para trás** no wall jump
+  pisando na parede; **gritinho** ao começar a correr.
+- **Golpes** sem avanço e sem mira assistida por padrão (o personagem golpeia no lugar, para onde a câmera
+  aponta). A mira assistida continua disponível em `combat_config.tres`.
+- **Personagem bem modelado**: malha lisa (SDF + marching cubes) com esqueleto e pesos de pele, gerada por
+  `tools/gen_character.py` em `assets/character/`. Toon shading, contorno por casco invertido, rosto com
+  olhos verdes, cabelo em mechas. A animação por molas agora gira os ossos do esqueleto.
