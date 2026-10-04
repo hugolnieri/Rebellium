@@ -50,6 +50,9 @@ extends Resource
 @export_range(1, 60, 1, "suffix:ticks") var sprint_double_tap_ticks: int = 15
 ## O sprint continua enquanto o input para frente for maior que isto (soltou W = parou).
 @export_range(0.0, 1.0, 0.01) var sprint_forward_threshold: float = 0.3
+## Correndo (sprint no chão ou corrida no ar), a velocidade vira NA HORA para a direção da
+## câmera/input, mantendo o embalo. Se false, vira com a aceleração normal.
+@export var sprint_instant_turn: bool = true
 ## Corrida no ar: toque duplo em W no ar acelera até a velocidade de sprint...
 @export var air_sprint_enabled: bool = true
 @export_range(0.0, 200.0, 0.5, "suffix:m/s²") var air_sprint_acceleration: float = 30.0

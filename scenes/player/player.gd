@@ -239,12 +239,24 @@ func apply_ground_movement(input: PlayerInput, target_speed: float, delta: float
 	apply_gravity(delta)
 
 
+## Correndo: aponta a velocidade horizontal para a direção desejada sem perder velocidade.
+func redirect_to_wish(input: PlayerInput) -> void:
+	if not config.sprint_instant_turn or not input.has_move():
+		return
+	var speed := get_horizontal_speed()
+	var dir := input.get_wish_direction().normalized()
+	velocity.x = dir.x * speed
+	velocity.z = dir.z * speed
+
+
 ## Controle no ar: direciona, mas não acelera além de max(velocidade atual, andar).
 func apply_air_movement(input: PlayerInput, delta: float) -> void:
 	if air_sprinting:
 		sp.drain(config.air_sprint_sp_cost_per_second * delta)
 		if sp.exhausted:
 			air_sprinting = false
+		else:
+			redirect_to_wish(input)
 	if input.has_move():
 		var horizontal := get_horizontal_velocity()
 		var base_speed := config.sprint_speed if air_sprinting else config.walk_speed

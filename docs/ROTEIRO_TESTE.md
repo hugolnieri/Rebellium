@@ -35,6 +35,8 @@ A arena livre está em `scenes/arenas/Arena.tscn` (F6 com a cena aberta).
 1. **Andar**: segure W. A velocidade horizontal estabiliza em **6,00 m/s**, no estado `Run`.
 2. **Sprint**: toque W duas vezes rápido (até 0,25 s) e segure. Deve chegar a **10,00 m/s** (`Sprint`), com o SP caindo **12 por segundo**.
    - Um toque só = anda. Soltar o W encerra o sprint.
+   - Correndo, o personagem vira **na hora** para onde a câmera aponta, sem perder velocidade
+     (`sprint_instant_turn`). Andando, vira com aceleração normal.
 3. **Regeneração**: solte o W. O SP fica parado por **0,6 s** e depois sobe **25 por segundo** até 100.
 4. **Exaustão**: faça sprint até zerar o SP.
    - A barra fica vermelha, aparece `EXAUSTO` e o estado volta para `Run`.
@@ -118,7 +120,7 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - `invulnerável: SIM` dura 0,15 s.
   - Shift sozinho não faz nada (`dodge_requires_direction`).
 - **Corrida no ar**: no ar, toque W duas vezes rápido (e segure).
-  - Acelera até a velocidade de sprint (10 m/s), mas **cai mais rápido** (gravidade ×1,7) e gasta 12 SP/s.
+  - Vira na hora para onde a câmera aponta. Acelera até a velocidade de sprint (10 m/s), mas **cai mais rápido** (gravidade ×1,7) e gasta 12 SP/s.
   - O HUD de debug mostra `CORRIDA NO AR`; o personagem mergulha para frente pedalando.
   - Acaba ao aterrissar, ao soltar o W ou com SP zerado. O sprint que vem do chão **não** acelera a queda.
 - **Dash no ar**: depois de pular, Shift + direção dá um dash reto (sem cair durante o dash).

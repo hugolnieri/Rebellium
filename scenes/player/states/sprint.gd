@@ -10,6 +10,7 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		player.apply_ground_movement(input, cfg().walk_speed, delta)
 		machine.transition_to(next, "SP esgotado" if player.sp.exhausted else "soltou sprint")
 		return
+	player.redirect_to_wish(input)
 	player.apply_ground_movement(input, cfg().sprint_speed, delta)
 	player.sp.drain(cfg().sprint_sp_cost_per_second * delta)
 	if player.sp.exhausted:

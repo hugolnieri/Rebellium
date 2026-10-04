@@ -148,3 +148,37 @@ func test_ground_sprint_jump_does_not_speed_up_fall() -> void:
 	d.step(1, FWD)
 	d.step(10, FWD)
 	assert_false(d.player.air_sprinting, "sprint do chão não vira corrida no ar sozinho")
+
+
+func test_sprint_turns_instantly_to_camera_direction() -> void:
+	d.step(40, FWD, true)
+	assert_eq(d.player.get_state_name(), &"Sprint")
+	d.look_yaw = PI * 0.5  # câmera vira 90° (olhando para -X)
+	d.step(1, FWD, true)
+	var v := d.player.get_horizontal_velocity()
+	assert_almost_eq(v.normalized().x, -1.0, 0.01, "virou na hora")
+	assert_almost_eq(v.length(), 10.0, 0.1, "sem perder velocidade")
+
+
+func test_air_sprint_turns_instantly_to_camera_direction() -> void:
+	d.press_jump()
+	d.step(4)
+	d.forward_prev_pressed_tick = d.player.tick - 4
+	d.forward_pressed_tick = d.player.tick + 1
+	d.step(8, FWD)
+	assert_true(d.player.air_sprinting)
+	var speed := d.player.get_horizontal_speed()
+	d.look_yaw = -PI * 0.5  # olhando para +X
+	d.step(1, FWD)
+	var v := d.player.get_horizontal_velocity()
+	assert_almost_eq(v.normalized().x, 1.0, 0.01, "virou na hora no ar")
+	assert_gte(v.length(), speed - 0.01)
+
+
+func test_walking_still_turns_with_acceleration() -> void:
+	d.step(40, FWD)
+	d.look_yaw = PI * 0.5
+	d.step(1, FWD)
+	var dir := d.player.get_horizontal_velocity().normalized()
+	assert_lt(dir.z, -0.9, "andando não vira instantâneo: ainda vai quase todo para a frente antiga")
+	assert_lt(dir.x, -0.05, "mas já começou a virar")
