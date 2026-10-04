@@ -59,6 +59,7 @@ func _build() -> void:
 	root.add_child(_tabs)
 	_add_tab("Movimento", player.config)
 	_add_tab("Câmera", player.camera_config)
+	_add_tab("Visual", player.feedback_config)
 	var buttons := HBoxContainer.new()
 	root.add_child(buttons)
 	_add_button(buttons, "Salvar no .tres", _save)

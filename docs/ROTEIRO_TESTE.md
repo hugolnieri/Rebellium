@@ -131,7 +131,7 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Aterrissagem: agacha proporcional ao impacto. O visor e o corpo brilham na cor da técnica.
 - **Sombra redonda** embaixo do jogador: use para mirar a aterrissagem e medir a altura.
 - **Poeira** ao pular, aterrissar forte e dar dash. **Tremor leve** de câmera no wall jump e em quedas fortes.
-- Ajustes: grupo "Animação procedural" e "Poeira e sombra" em `config/feedback_config.tres`; "Tremor" na aba Câmera do F2.
+- Ajustes: aba **Visual** do F2 (animação, poeira, sombra) e aba **Câmera** (tremor).
 
 ## Parte 4: ajustes ao vivo (F2)
 1. Aperte **F2**: o mouse é solto e o personagem para de receber input.
