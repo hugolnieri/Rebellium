@@ -123,3 +123,13 @@ func test_max_speed_is_capped() -> void:
 	cfg.wall_jump_camera_weight = 0.0
 	var out := WallJumpMath.compute_exit_horizontal(Vector3(0, 0, -40), Vector3(0, 0, 1), Vector3.ZERO, cfg)
 	assert_almost_eq(out.length(), cfg.wall_jump_max_horizontal_speed, 0.001)
+
+
+func test_camera_adjust_keeps_most_of_the_bounce() -> void:
+	var cfg := MovementConfig.new()
+	cfg.wall_jump_camera_weight = 0.3
+	var n := Vector3(1, 0, 0)
+	var v_in := Vector3(-5, 0, -8.66)
+	var out := WallJumpMath.compute_exit_horizontal(v_in, n, Vector3(0, 0, -1), cfg)
+	assert_gte(out.dot(n), 0.7 * 5.0 - 0.001, "câmera para frente tira no máximo 30% do afastamento")
+	assert_lt(out.dot(n), 5.0, "mas ainda puxa para a câmera")

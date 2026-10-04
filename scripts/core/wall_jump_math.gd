@@ -41,7 +41,7 @@ static func exit_angle_deg(v_out: Vector3, normal: Vector3) -> float:
 
 ## Velocidade horizontal de saída do wall jump normal/side jump:
 ## reflexão → multiplicador → afastamento mínimo → velocidade mínima →
-## ajuste fino pela câmera (peso) → teto de velocidade.
+## ajuste fino pela câmera (peso; mantém ≥ (1 − peso) do afastamento) → teto de velocidade.
 static func compute_exit_horizontal(v_in: Vector3, normal: Vector3, camera_forward: Vector3,
 		cfg: MovementConfig) -> Vector3:
 	var n := horizontal_normal(normal)
@@ -52,7 +52,10 @@ static func compute_exit_horizontal(v_in: Vector3, normal: Vector3, camera_forwa
 	var speed := clampf(out.length(), cfg.wall_jump_min_horizontal_speed,
 		cfg.wall_jump_max_horizontal_speed)
 	var dir := out.normalized() if out.length_squared() > 0.000001 else n
-	var min_away_ratio := clampf(cfg.wall_jump_min_away_speed / maxf(speed, 0.001), 0.0, 1.0)
+	# Ajuste fino: a câmera nunca tira mais que `peso` do afastamento refletido.
+	var keep_away := maxf(cfg.wall_jump_min_away_speed,
+		(1.0 - cfg.wall_jump_camera_weight) * out.dot(n) * speed / maxf(out.length(), 0.001))
+	var min_away_ratio := clampf(keep_away / maxf(speed, 0.001), 0.0, 1.0)
 	dir = apply_camera_adjust(dir, n, camera_forward, cfg.wall_jump_camera_weight, min_away_ratio)
 	return dir * speed
 

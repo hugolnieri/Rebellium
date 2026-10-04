@@ -54,6 +54,7 @@ func _ready() -> void:
 	if feedback_config == null:
 		feedback_config = FeedbackConfig.new()
 	apply_body_config()
+	config.changed.connect(apply_body_config)
 	sp = SPPool.new(config)
 	sp.depleted.connect(func() -> void: GameEvents.sp_depleted.emit(self))
 	sp.recovered.connect(func() -> void: GameEvents.sp_recovered.emit(self))
@@ -284,8 +285,10 @@ func try_wall_jump(input: PlayerInput) -> bool:
 	var n := sensor.normal
 	var has_entry := sensor.entry_tick > PlayerInput.NEVER
 	var v_in := sensor.entry_velocity if has_entry else WallJumpMath.horizontal(pre_slide_velocity)
-	var in_window := has_entry and MovementRules.is_within_window(
-		input.jump_pressed_tick, sensor.entry_tick, config.technique_window_ticks)
+	# O segundo wall jump liberado pelo back-coming dispensa a janela justa (contato contínuo).
+	var in_window := (has_entry and MovementRules.is_within_window(
+		input.jump_pressed_tick, sensor.entry_tick, config.technique_window_ticks)) \
+		or sensor.collider_id == back_coming_wall
 	var technique := MovementRules.classify_wall_jump(in_window, sensor.is_near_top(),
 		sensor.is_near_base(), WallJumpMath.incidence_angle_deg(v_in, n),
 		config.side_jump_min_incidence_deg)
@@ -296,7 +299,7 @@ func try_wall_jump(input: PlayerInput) -> bool:
 			horizontal = -n * config.reverse_forward_speed
 			height = config.reverse_jump_height
 		MovementRules.TECH_BACK_COMING:
-			horizontal = n * config.back_coming_away_speed
+			horizontal = -n * config.back_coming_wall_push_speed
 			height = config.back_coming_height
 		_:
 			horizontal = WallJumpMath.compute_exit_horizontal(v_in, n, input.get_camera_forward(), config)

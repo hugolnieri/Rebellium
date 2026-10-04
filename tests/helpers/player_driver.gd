@@ -33,6 +33,15 @@ func setup(test: GutTest, spawn: Vector3, config_overrides: Dictionary = {}) -> 
 	world.tree_exiting.connect(_disconnect)
 
 
+## Usa um Player que já está numa cena (ex.: o percurso de treino).
+func attach(existing_player: Player, existing_world: Node3D) -> void:
+	player = existing_player
+	world = existing_world
+	GameEvents.technique_executed.connect(_on_technique)
+	GameEvents.wall_jump_executed.connect(_on_wall_jump)
+	world.tree_exiting.connect(_disconnect)
+
+
 func _on_technique(who: Node, technique: StringName, _data: Dictionary) -> void:
 	if who == player:
 		techniques.append(technique)

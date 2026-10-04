@@ -14,8 +14,9 @@ Tudo é original: não usar nomes, assets ou termos de outros jogos.
 tools/install_godot.sh          # instala o Godot 4.7.2 e cria o comando `godot` (se faltar)
 tools/run_tests.sh              # importa o projeto e roda TODOS os testes (sai != 0 se falhar)
 tools/run_tests.sh -gselect=test_sp_pool.gd   # um arquivo só
-godot --path .                  # roda o jogo (cena principal)
+godot --path .                  # roda o jogo (cena principal = percurso de treino)
 ```
+Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`.
 
 ## Arquitetura obrigatória
 1. **Nenhum número mágico de gameplay.** Todo valor vem de um Resource em `config/`:
@@ -37,6 +38,8 @@ godot --path .                  # roda o jogo (cena principal)
    apenas ouvem.
 6. Tempo de gameplay medido em **ticks** (int) quando a janela é justa (bunny hop, cancel);
    em segundos (float, convertidos com o delta fixo) para durações longas.
+7. Salvar configs sempre com `ConfigIO.save_full` (grava todos os valores; o ResourceSaver padrão
+   omite os iguais ao padrão).
 
 ## Estrutura
 ```
@@ -46,9 +49,16 @@ scenes/arenas/     arena greybox + percurso de treino
 scenes/ui/         HUD, HUD de debug (F1), menu de debug (F2)
 scripts/core/      eventos, configs, regras puras, utilitários
 tests/unit/        testes de lógica pura
-tests/integration/ testes com o Player real e física headless
+tests/integration/ testes com o Player real e física headless; `test_training_course.gd` tem bots
+                   que completam cada trecho do percurso (rode-os ao mexer em geometria ou config)
+tests/helpers/     `player_driver.gd`: dirige o Player tick a tick com PlayerInput sintético
 tools/             scripts de instalação e de teste
 ```
+
+## Cenas
+- `scenes/arenas/TrainingCourse.tscn` (principal): percurso, cronômetro, checkpoints, R reinicia.
+- `scenes/arenas/Arena.tscn`: arena livre para experimentar.
+- As duas incluem HUD, DebugHUD (F1) e DebugMenu (F2).
 
 ## Convenções
 - Commits de fase: `fase-N: <resumo>`.

@@ -1,0 +1,291 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/core/greybox_block.gd" id="greybox"]
+[ext_resource type="Script" path="res://scenes/arenas/training_course.gd" id="course"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugHUD.tscn" id="dhud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/TrainingHUD.tscn" id="thud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugMenu.tscn" id="dmenu"]
+
+[sub_resource type="BoxShape3D" id="box0"]
+size = Vector3(12, 3, 13)
+
+[sub_resource type="BoxShape3D" id="box1"]
+size = Vector3(8.5, 3, 9)
+
+[sub_resource type="BoxShape3D" id="box2"]
+size = Vector3(8.5, 3, 13)
+
+[sub_resource type="BoxShape3D" id="box3"]
+size = Vector3(8.5, 3, 10)
+
+[sub_resource type="BoxShape3D" id="box4"]
+size = Vector3(8.25, 3, 8)
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.04, 0.04, 0.05, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.55, 0.6, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 2
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.06, 0.06, 0.08, 1)
+fog_density = 0.004
+
+[node name="TrainingCourse" type="Node3D"]
+script = ExtResource("course")
+kill_height = -6.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.819152, -0.469846, 0.32899, 0, 0.573576, 0.819152, -0.573576, -0.67101, 0.469846, 0, 20, 0)
+light_color = Color(0.95, 0.93, 0.9, 1)
+shadow_enabled = true
+
+[node name="Geometry" type="Node3D" parent="."]
+
+[node name="Abyss" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -12, -35)
+script = ExtResource("greybox")
+size = Vector3(80, 1, 140)
+surface = 0
+
+[node name="StartPad" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 6)
+script = ExtResource("greybox")
+size = Vector3(12, 1, 14)
+surface = 0
+
+[node name="StartBackWall" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 13.5)
+script = ExtResource("greybox")
+size = Vector3(12, 5, 1)
+surface = 1
+
+[node name="CorridorWallLeft" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.1, 5, -8)
+script = ExtResource("greybox")
+size = Vector3(1, 10, 18)
+surface = 1
+
+[node name="CorridorWallRight" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1, 5, -8)
+script = ExtResource("greybox")
+size = Vector3(1, 10, 18)
+surface = 1
+
+[node name="CorridorEntryMark" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.9)
+script = ExtResource("greybox")
+size = Vector3(3.2, 0.02, 0.2)
+surface = 4
+
+[node name="SideRunway" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, -0.5, -22)
+script = ExtResource("greybox")
+size = Vector3(8.5, 1, 10)
+surface = 0
+
+[node name="CorridorExitApron" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, -0.5, -20.9)
+script = ExtResource("greybox")
+size = Vector3(4.5, 1, 7.8)
+surface = 0
+
+[node name="SideJumpWall" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3, -33)
+script = ExtResource("greybox")
+size = Vector3(1, 6, 16)
+surface = 3
+
+[node name="GapEdgeMark" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0.01, -26.9)
+script = ExtResource("greybox")
+size = Vector3(8.5, 0.02, 0.2)
+surface = 6
+
+[node name="SideLanding" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, -0.5, -41.5)
+script = ExtResource("greybox")
+size = Vector3(8.5, 1, 13)
+surface = 0
+
+[node name="ReverseLedge" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 1.8, -53)
+script = ExtResource("greybox")
+size = Vector3(8.5, 3.6, 10)
+surface = 2
+
+[node name="ReverseLedgeLip" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 3.61, -48.15)
+script = ExtResource("greybox")
+size = Vector3(8.5, 0.02, 0.3)
+surface = 5
+
+[node name="BackComingWall" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 5.8, -69)
+script = ExtResource("greybox")
+size = Vector3(8.5, 4.4, 22)
+surface = 1
+
+[node name="BackComingBaseMark" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 3.61, -57.85)
+script = ExtResource("greybox")
+size = Vector3(8.5, 0.02, 0.3)
+surface = 7
+
+[node name="TowerA" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 11, -74)
+script = ExtResource("greybox")
+size = Vector3(8.25, 6, 8)
+surface = 3
+
+[node name="TowerB" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 13, -74)
+script = ExtResource("greybox")
+size = Vector3(1, 10, 8)
+surface = 3
+
+[node name="FinishPad" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 14.01, -74)
+script = ExtResource("greybox")
+size = Vector3(8.25, 0.02, 8)
+surface = 4
+
+[node name="Checkpoints" type="Node3D" parent="."]
+
+[node name="CP0_Largada" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
+monitorable = false
+metadata/label = "Largada"
+
+[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP0_Largada"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -1.5)
+shape = SubResource("box0")
+
+[node name="CP1_SideJump" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0, -19)
+monitorable = false
+metadata/label = "Vão de side jump"
+
+[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP1_SideJump"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.5)
+shape = SubResource("box1")
+
+[node name="CP2_Reverse" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0, -39)
+monitorable = false
+metadata/label = "Borda de reverse"
+
+[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP2_Reverse"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.5)
+shape = SubResource("box2")
+
+[node name="CP3_BackComing" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 3.6, -50)
+monitorable = false
+metadata/label = "Parede lisa (back-coming)"
+
+[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP3_BackComing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3)
+shape = SubResource("box3")
+
+[node name="CP4_Torre" type="Area3D" parent="Checkpoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 8, -61)
+monitorable = false
+metadata/label = "Torre"
+
+[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP4_Torre"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3)
+shape = SubResource("box3")
+
+[node name="FinishZone" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 15.5, -74)
+monitorable = false
+
+[node name="Shape" type="CollisionShape3D" parent="FinishZone"]
+shape = SubResource("box4")
+
+[node name="Signs" type="Node3D" parent="."]
+
+[node name="Sign0" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11, -1)
+billboard = 1
+pixel_size = 0.006
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "1 · CORREDOR
+wall jumps em zigue-zague"
+font_size = 64
+outline_size = 12
+
+[node name="Sign1" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 4.2, -18)
+billboard = 1
+pixel_size = 0.006
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "2 · VÃO LARGO
+só atravessa com side jump"
+font_size = 64
+outline_size = 12
+
+[node name="Sign2" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 5.2, -38)
+billboard = 1
+pixel_size = 0.006
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "3 · BORDA
+reverse wall jump perto do topo"
+font_size = 64
+outline_size = 12
+
+[node name="Sign3" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 9, -49.5)
+billboard = 1
+pixel_size = 0.006
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "4 · PAREDE LISA
+back-coming + reverse"
+font_size = 64
+outline_size = 12
+
+[node name="Sign4" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 13, -62)
+billboard = 1
+pixel_size = 0.006
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "5 · TORRE
+wall jumps encadeados"
+font_size = 64
+outline_size = 12
+
+[node name="Sign5" type="Label3D" parent="Signs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 16.5, -74)
+billboard = 1
+pixel_size = 0.006
+modulate = Color(0.86, 0.84, 0.79, 1)
+outline_modulate = Color(0.04, 0.04, 0.05, 1)
+text = "CHEGADA"
+font_size = 64
+outline_size = 12
+
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
+
+[node name="HUD" parent="." instance=ExtResource("hud")]
+
+[node name="DebugHUD" parent="." instance=ExtResource("dhud")]
+
+[node name="TrainingHUD" parent="." instance=ExtResource("thud")]
+
+[node name="DebugMenu" parent="." instance=ExtResource("dmenu")]
+

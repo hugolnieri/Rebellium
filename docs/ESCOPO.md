@@ -26,8 +26,9 @@ Combate, armas, rede, personagens, animações, arte final, som.
 - **Reflexão:** `v_out = v_in - 2 (v_in·n) n` no plano horizontal; impulso vertical somado à parte.
   A câmera ajusta a direção de saída com peso configurável (padrão 0,3), sem apontar para a parede.
 - **Reverse wall jump:** raio acima da cabeça não acha parede → lançamento para dentro/por cima (−n).
-- **Back-coming:** contato perto da base → sobe quase na vertical com leve afastamento; o jogador volta
-  para a mesma parede e ganha um segundo wall jump nela.
+- **Back-coming:** contato perto da base (na janela justa) → sobe quase na vertical com um leve empurrão
+  de volta para a parede, colado nela, e ganha um segundo wall jump na mesma parede. Esse segundo salto
+  dispensa a janela justa; se estiver perto do topo, vira reverse e passa por cima.
 - **Janela justa** (reverse/back-coming): Space até N ticks do contato com a parede.
 - **Cancel:** tecla 1/2 até N ticks do wall jump zera o lançamento e mantém uma fração da velocidade
   de entrada. O SP gasto não volta.

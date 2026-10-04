@@ -108,8 +108,9 @@ extends Resource
 ## Distância máxima dos pés ao chão para o contato contar como "base da parede".
 @export_range(0.0, 4.0, 0.05, "suffix:m") var back_coming_max_feet_height: float = 1.0
 @export_range(0.0, 10.0, 0.05, "suffix:m") var back_coming_height: float = 2.6
-## Leve afastamento da parede no back-coming (o jogador volta para ela com o controle aéreo).
-@export_range(0.0, 10.0, 0.1, "suffix:m/s") var back_coming_away_speed: float = 1.5
+## Leve empurrão de volta PARA a parede no back-coming: o jogador sobe colado nela e ganha
+## um segundo wall jump na mesma parede (sem precisar de nova janela justa).
+@export_range(0.0, 10.0, 0.1, "suffix:m/s") var back_coming_wall_push_speed: float = 1.0
 ## Cancel: troca de arma até N ticks do wall jump.
 @export_range(0, 20, 1, "suffix:ticks") var cancel_window_ticks: int = 4
 ## Fração da velocidade de entrada preservada pelo cancel.
