@@ -33,7 +33,7 @@ func test_project_tres_files_load_with_expected_defaults() -> void:
 	assert_eq(cfg.dodge_sp_cost, 20.0)
 	assert_eq(cfg.dodge_invulnerability, 0.15)
 	assert_eq(cfg.wall_jump_sp_cost, 18.0)
-	assert_eq(cfg.wall_jump_camera_weight, 0.3)
+	assert_eq(cfg.wall_jump_camera_weight, 0.4)
 	assert_eq(cfg.bunny_hop_window_ticks, 3)
 	assert_not_null(load("res://config/camera_config.tres") as CameraConfig)
 	assert_not_null(load("res://config/feedback_config.tres") as FeedbackConfig)

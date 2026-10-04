@@ -61,7 +61,8 @@ func test_jump_into_wall_allows_wall_jump_and_costs_18_sp() -> void:
 
 
 func test_wall_jump_reflects_diagonal_entry() -> void:
-	_world(Vector3(0, 0, 0), {"wall_jump_camera_weight": 0.0})
+	_world(Vector3(0, 0, 0), {"wall_jump_camera_weight": 0.0, "wall_jump_forward_boost": 0.0,
+		"wall_jump_horizontal_multiplier": 1.0})
 	var wall := _tall_wall(-3.0)
 	await d.ready_physics(self)
 	d.step(10)

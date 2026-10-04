@@ -32,6 +32,8 @@ var land_impact_speed: float = 0.0
 var pre_slide_velocity: Vector3 = Vector3.ZERO
 ## Sprint ativado por toque duplo em W; dura enquanto W estiver pressionado.
 var sprint_latched: bool = false
+## Dashes usados no ar desde a última aterrissagem/wall jump.
+var air_dodges_used: int = 0
 ## Flag de invencibilidade (dodge). Consultada pelo combate futuro.
 var is_invulnerable: bool = false
 var spawn_transform: Transform3D
@@ -269,8 +271,13 @@ func try_dodge(input: PlayerInput) -> bool:
 	var cancelling := is_in_recovery()
 	if cancelling and not config.dodge_cancel_enabled:
 		return false
+	var airborne := not is_on_floor()
+	if airborne and (not config.dodge_allow_in_air or air_dodges_used >= config.air_dodge_max_per_air):
+		return false
 	if not sp.try_spend(config.dodge_sp_cost):
 		return false
+	if airborne:
+		air_dodges_used += 1
 	_consumed_dodge_press_tick = input.dodge_pressed_tick
 	var direction := MovementRules.dodge_direction(input.move, input.look_yaw,
 		config.dodge_neutral_backward)
@@ -278,7 +285,7 @@ func try_dodge(input: PlayerInput) -> bool:
 		GameEvents.technique_executed.emit(self, MovementRules.TECH_DODGE_CANCEL,
 			{"from_state": get_state_name(), "position": global_position})
 	state_machine.transition_to(&"Dodge", "dodge cancel" if cancelling else "dodge",
-		{"direction": direction})
+		{"direction": direction, "airborne": airborne})
 	return true
 
 
@@ -318,6 +325,8 @@ func try_wall_jump(input: PlayerInput) -> bool:
 	back_coming_wall = sensor.collider_id if technique == MovementRules.TECH_BACK_COMING else 0
 	last_wall_jump_collider = sensor.collider_id
 	last_wall_jump_tick = tick
+	if config.air_dodge_refresh_on_wall_jump:
+		air_dodges_used = 0
 	mark_jump_origin()
 	sensor.reset_entry()
 	var data := {
@@ -347,6 +356,7 @@ func apply_wall_jump_cancel() -> void:
 
 ## Limpa memória de paredes ao tocar o chão.
 func on_landed() -> void:
+	air_dodges_used = 0
 	last_wall_jump_collider = 0
 	back_coming_wall = 0
 	air_origin = MovementRules.AirOrigin.NONE
@@ -375,6 +385,7 @@ func respawn(at: Transform3D) -> void:
 	air_origin = MovementRules.AirOrigin.NONE
 	is_invulnerable = false
 	sprint_latched = false
+	air_dodges_used = 0
 	last_wall_jump_collider = 0
 	back_coming_wall = 0
 	wall_sensor.clear()

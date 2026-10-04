@@ -1,16 +1,22 @@
 extends PlayerState
-## Passo rápido em 8 direções relativas à câmera.
-## Fases: deslocamento (`dodge_duration`) → recuperação (`dodge_recovery`, cancelável por dodge).
+## Passo rápido (dash) em 8 direções relativas à câmera, no chão ou no ar.
+## Chão: deslocamento (`dodge_duration`) → recuperação (`dodge_recovery`, cancelável por dodge).
+## Ar: deslocamento reto (gravidade suspensa, se configurado) → volta a cair mantendo
+## `air_dodge_exit_speed`; dá para emendar wall jump durante o dash.
 ## `player.is_invulnerable` fica true durante `dodge_invulnerability` desde o início.
 
 var _direction: Vector3 = Vector3.FORWARD
+var _airborne: bool = false
 
 
 func enter(_from: StringName, data: Dictionary) -> void:
 	_direction = data.get("direction", -player.visual.global_basis.z)
+	_airborne = data.get("airborne", false)
 	player.is_invulnerable = cfg().dodge_invulnerability > 0.0
 	player.velocity.x = _direction.x * cfg().dodge_speed
 	player.velocity.z = _direction.z * cfg().dodge_speed
+	if _airborne and cfg().air_dodge_suspends_gravity:
+		player.velocity.y = 0.0
 	GameEvents.dodged.emit(player, _direction)
 
 
@@ -19,12 +25,15 @@ func exit() -> void:
 
 
 func is_recovery() -> bool:
-	return machine.ticks_in_state() >= _dash_ticks()
+	return not _airborne and machine.ticks_in_state() >= _dash_ticks()
 
 
 func physics_update(input: PlayerInput, delta: float) -> void:
 	var t := machine.ticks_in_state()
 	player.is_invulnerable = t < player.secs_to_ticks(cfg().dodge_invulnerability)
+	if _airborne:
+		_air_update(input, delta, t)
+		return
 	if is_recovery() and player.try_dodge(input):
 		return
 	var dash := _dash_ticks()
@@ -46,6 +55,29 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 			player.air_origin = MovementRules.AirOrigin.FALL
 			player.left_floor_tick = player.tick
 			machine.transition_to(&"Fall", "fim do dodge no ar")
+
+
+func _air_update(input: PlayerInput, delta: float, t: int) -> void:
+	if player.try_wall_jump(input):
+		return
+	if t < _dash_ticks():
+		player.velocity.x = _direction.x * cfg().dodge_speed
+		player.velocity.z = _direction.z * cfg().dodge_speed
+		if cfg().air_dodge_suspends_gravity:
+			player.velocity.y = 0.0
+		else:
+			player.apply_gravity(delta)
+		return
+	var exit := _direction * cfg().air_dodge_exit_speed
+	player.velocity.x = exit.x
+	player.velocity.z = exit.z
+	player.apply_gravity(delta)
+	machine.transition_to(&"Jump" if player.velocity.y > 0.0 else &"Fall", "fim do dash no ar")
+
+
+func post_move(_input: PlayerInput) -> void:
+	if _airborne and player.is_on_floor() and machine.ticks_in_state() > 0:
+		machine.transition_to(&"Land", "dash no ar tocou o chão")
 
 
 func _dash_ticks() -> int:

@@ -99,3 +99,48 @@ func test_dodge_returns_to_ground_state() -> void:
 	d.step(1, Vector2(1, 0))
 	d.step(40)
 	assert_eq(d.state(), &"Idle")
+
+
+func test_air_dash_once_per_jump_flat_and_refilled_on_landing() -> void:
+	d.press_jump()
+	d.step(8)
+	var y_before := d.player.global_position.y
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge")
+	assert_almost_eq(d.player.velocity.y, 0.0, 0.001, "dash no ar é reto")
+	assert_almost_eq(d.player.sp.current, 80.0, 0.01)
+	d.step(5, Vector2(1, 0))
+	assert_almost_eq(d.player.global_position.y, y_before, 0.05, "não caiu durante o dash")
+	d.step(6)
+	assert_ne(d.state(), &"Dodge")
+	assert_false(d.player.is_on_floor())
+	d.press_dodge()
+	d.step(1, Vector2(-1, 0))
+	assert_ne(d.state(), &"Dodge", "só um dash por pulo")
+	d.step_until(func() -> bool: return d.player.is_on_floor(), 120)
+	d.step(10)
+	d.press_jump()
+	d.step(6)
+	d.press_dodge()
+	d.step(1, Vector2(-1, 0))
+	assert_eq(d.state(), &"Dodge", "recarregou ao aterrissar")
+
+
+func test_air_dash_keeps_momentum_and_returns_to_fall() -> void:
+	d.press_jump()
+	d.step(20)
+	d.press_dodge()
+	d.step(1, Vector2(0, 1))
+	d.step(d.player.secs_to_ticks(d.player.config.dodge_duration) + 1)
+	assert_true(d.state() == &"Fall" or d.state() == &"Jump")
+	assert_almost_eq(d.player.get_horizontal_speed(), d.player.config.air_dodge_exit_speed, 0.5)
+
+
+func test_air_dash_can_be_disabled() -> void:
+	d.player.config.dodge_allow_in_air = false
+	d.press_jump()
+	d.step(8)
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_ne(d.state(), &"Dodge")

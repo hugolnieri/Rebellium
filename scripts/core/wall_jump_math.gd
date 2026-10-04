@@ -1,5 +1,8 @@
 class_name WallJumpMath
 extends RefCounted
+
+## Abaixo disto (m/s) a entrada é considerada de frente: sem empurrão lateral.
+const TANGENT_EPSILON: float = 0.5
 ## Matemática pura do wall jump (sem cena). Tudo no plano horizontal (XZ).
 
 
@@ -40,12 +43,16 @@ static func exit_angle_deg(v_out: Vector3, normal: Vector3) -> float:
 
 
 ## Velocidade horizontal de saída do wall jump normal/side jump:
-## reflexão → multiplicador → afastamento mínimo → velocidade mínima →
+## reflexão → multiplicador → empurrão para frente (ao longo da parede) → afastamento mínimo →
+## velocidade mínima →
 ## ajuste fino pela câmera (peso; mantém ≥ (1 − peso) do afastamento) → teto de velocidade.
 static func compute_exit_horizontal(v_in: Vector3, normal: Vector3, camera_forward: Vector3,
 		cfg: MovementConfig) -> Vector3:
 	var n := horizontal_normal(normal)
 	var out := reflect_horizontal(v_in, n) * cfg.wall_jump_horizontal_multiplier
+	var tangent := out - n * out.dot(n)
+	if tangent.length_squared() > TANGENT_EPSILON * TANGENT_EPSILON:
+		out += tangent.normalized() * cfg.wall_jump_forward_boost
 	var away := out.dot(n)
 	if away < cfg.wall_jump_min_away_speed:
 		out += n * (cfg.wall_jump_min_away_speed - away)

@@ -82,30 +82,30 @@ func test_corridor_pit_cannot_be_crossed_with_plain_jump() -> void:
 
 
 func test_side_jump_crosses_wide_gap() -> void:
-	await _teleport(Vector3(1.5, 0, -18))
-	d.step_until(func() -> bool: return d.player.global_position.z < -23.0, 120, FWD, true)
+	await _teleport(Vector3(1.5, 0, -30))
+	d.step_until(func() -> bool: return d.player.global_position.z < -35.0, 120, FWD, true)
 	var diagonal := Vector2(-0.5, 0.866)  # 30° para a esquerda, rumo à parede lateral
-	d.step_until(func() -> bool: return d.player.global_position.z < -26.7, 60, diagonal, true)
+	d.step_until(func() -> bool: return d.player.global_position.z < -38.7, 60, diagonal, true)
 	d.press_jump()
 	d.step(1, diagonal, true)
 	var jumps := _auto_wall_jump_until_landed(200)
 	assert_eq(jumps, 1)
 	assert_has(d.techniques, MovementRules.TECH_SIDE_JUMP)
-	assert_lt(d.player.global_position.z, -35.0, "aterrissou depois do vão")
+	assert_lt(d.player.global_position.z, -47.0, "aterrissou depois do vão")
 	assert_almost_eq(d.player.global_position.y, 0.0, 0.05)
 
 
 func test_wide_gap_cannot_be_crossed_with_sprint_jump() -> void:
-	await _teleport(Vector3(3.0, 0, -18))
-	d.step_until(func() -> bool: return d.player.global_position.z < -26.8, 120, FWD, true)
+	await _teleport(Vector3(3.0, 0, -30))
+	d.step_until(func() -> bool: return d.player.global_position.z < -38.8, 120, FWD, true)
 	d.press_jump()
 	d.step(90, FWD)
 	assert_lt(d.player.global_position.y, -1.0, "sprint + pulo não alcança o outro lado")
 
 
 func test_reverse_wall_jump_climbs_the_ledge() -> void:
-	await _teleport(Vector3(1.75, 0, -40))
-	d.step_until(func() -> bool: return d.player.global_position.z < -45.4, 120, FWD)
+	await _teleport(Vector3(1.75, 0, -52))
+	d.step_until(func() -> bool: return d.player.global_position.z < -57.4, 120, FWD)
 	d.press_jump()
 	d.step(1, FWD)
 	assert_gt(d.step_until_wall(_block("ReverseLedge"), 60, FWD), 0)
@@ -117,7 +117,7 @@ func test_reverse_wall_jump_climbs_the_ledge() -> void:
 
 
 func test_back_coming_then_reverse_climbs_the_smooth_wall() -> void:
-	await _teleport(Vector3(1.75, 3.6, -55))
+	await _teleport(Vector3(1.75, 3.6, -67))
 	d.step_until(func() -> bool: return d.player.wall_sensor.has_contact, 120, FWD)
 	d.step(5, FWD)
 	d.press_jump()
@@ -134,8 +134,8 @@ func test_back_coming_then_reverse_climbs_the_smooth_wall() -> void:
 
 
 func test_smooth_wall_cannot_be_climbed_with_single_jump_wall_jump() -> void:
-	await _teleport(Vector3(1.75, 3.6, -54))
-	d.step_until(func() -> bool: return d.player.global_position.z < -55.6, 120, FWD)
+	await _teleport(Vector3(1.75, 3.6, -66))
+	d.step_until(func() -> bool: return d.player.global_position.z < -67.6, 120, FWD)
 	d.press_jump()
 	d.step(1, FWD)
 	_auto_wall_jump_until_landed(200, FWD)
@@ -143,7 +143,7 @@ func test_smooth_wall_cannot_be_climbed_with_single_jump_wall_jump() -> void:
 
 
 func test_tower_is_climbed_with_chained_wall_jumps() -> void:
-	await _teleport(Vector3(1.75, 8.0, -74))
+	await _teleport(Vector3(1.75, 8.0, -86))
 	course.running = true
 	d.step(3, Vector2(-1, 0), true)
 	d.press_jump()
@@ -157,7 +157,7 @@ func test_tower_is_climbed_with_chained_wall_jumps() -> void:
 
 func test_timer_runs_from_start_to_finish_and_keeps_best() -> void:
 	assert_false(course.running)
-	await _teleport(Vector3(1.75, 0, -20))  # sai da área de largada
+	await _teleport(Vector3(1.75, 0, -32))  # sai da área de largada
 	await wait_physics_frames(3)
 	assert_true(course.running, "cronômetro começou ao sair da largada")
 	d.step(10)
@@ -175,17 +175,17 @@ func test_timer_runs_from_start_to_finish_and_keeps_best() -> void:
 
 
 func test_falling_into_pit_respawns_at_checkpoint() -> void:
-	await _teleport(Vector3(1.75, 0, -20))
+	await _teleport(Vector3(1.75, 0, -32))
 	await wait_physics_frames(3)
 	assert_eq(course.get_checkpoint_label(), "Vão de side jump")
-	d.player.respawn(Transform3D(Basis(), Vector3(1.75, -7.0, -30)))
+	d.player.respawn(Transform3D(Basis(), Vector3(1.75, -7.0, -42)))
 	await wait_physics_frames(2)
 	assert_eq(course.falls, 1)
 	assert_almost_eq(d.player.global_position.z, -19.0, 0.01, "voltou ao checkpoint do vão")
 
 
 func test_reset_returns_to_start_and_clears_counters() -> void:
-	await _teleport(Vector3(1.75, 0, -40))
+	await _teleport(Vector3(1.75, 0, -52))
 	course.technique_counts[&"side_jump"] = 2
 	course.reset_run()
 	assert_eq(course.get_total_techniques(), 0)

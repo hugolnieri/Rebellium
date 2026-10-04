@@ -39,5 +39,8 @@ Combate, armas, rede, personagens, animações, arte final, som.
 - **Controles:** dash = Shift + direção (A/D para os lados; Ctrl alternativo). Sprint = toque duplo em W
   e segurar.
 - **Wall jump** mais alto (2,6 m); corredor e torre do percurso ficaram mais altos para manter o desafio.
+- **Dash no ar** (um por pulo, recarrega ao aterrissar/wall jump) e **wall jump mais longo e rápido**:
+  saída refletida ×1,1, empurrão de 2 m/s ao longo da parede no sentido do movimento, teto de 18 m/s,
+  peso da câmera 0,4. A pista depois do corredor ficou 12 m maior e os trechos seguintes foram deslocados.
 - **Personagem** procedural (primitivas + animação por código) no lugar da cápsula, mais sombra redonda,
   poeira e tremor leve de câmera. Tudo ajustável em `feedback_config.tres` / `camera_config.tres`.

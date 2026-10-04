@@ -68,9 +68,20 @@ func test_moving_away_from_wall_is_not_reflected() -> void:
 	assert_eq(WallJumpMath.reflect_horizontal(v, Vector3(0, 0, 1)), v)
 
 
-func test_exit_without_camera_weight_is_pure_reflection_in_speed_range() -> void:
+## Config sem multiplicador, empurrão nem câmera: isola a reflexão.
+func _neutral_cfg() -> MovementConfig:
 	var cfg := MovementConfig.new()
 	cfg.wall_jump_camera_weight = 0.0
+	cfg.wall_jump_horizontal_multiplier = 1.0
+	cfg.wall_jump_forward_boost = 0.0
+	cfg.wall_jump_min_horizontal_speed = 6.0
+	cfg.wall_jump_max_horizontal_speed = 14.0
+	cfg.wall_jump_min_away_speed = 3.0
+	return cfg
+
+
+func test_exit_without_camera_weight_is_pure_reflection_in_speed_range() -> void:
+	var cfg := _neutral_cfg()
 	var n := _normal_from_angle(45.0)
 	var v_in := _incoming(n, 50.0, -1.0, 9.0)
 	var out := WallJumpMath.compute_exit_horizontal(v_in, n, Vector3.FORWARD, cfg)
@@ -78,8 +89,7 @@ func test_exit_without_camera_weight_is_pure_reflection_in_speed_range() -> void
 
 
 func test_diagonal_entry_launches_forward_side_jump() -> void:
-	var cfg := MovementConfig.new()
-	cfg.wall_jump_camera_weight = 0.0
+	var cfg := _neutral_cfg()
 	var n := Vector3(1, 0, 0)  # parede à esquerda, jogador correndo para -Z
 	var v_in := Vector3(-5, 0, -8)
 	var out := WallJumpMath.compute_exit_horizontal(v_in, n, Vector3.FORWARD, cfg)
@@ -88,7 +98,7 @@ func test_diagonal_entry_launches_forward_side_jump() -> void:
 
 
 func test_camera_weight_bends_exit_toward_camera() -> void:
-	var cfg := MovementConfig.new()
+	var cfg := _neutral_cfg()
 	cfg.wall_jump_camera_weight = 0.3
 	var n := Vector3(0, 0, 1)
 	var v_in := Vector3(0, 0, -8)
@@ -108,8 +118,7 @@ func test_camera_pointing_into_wall_never_sends_player_into_it() -> void:
 
 
 func test_min_speed_and_min_away_are_enforced() -> void:
-	var cfg := MovementConfig.new()
-	cfg.wall_jump_camera_weight = 0.0
+	var cfg := _neutral_cfg()
 	var n := Vector3(0, 0, 1)
 	var parallel := WallJumpMath.compute_exit_horizontal(Vector3(1, 0, 0), n, Vector3.ZERO, cfg)
 	assert_gte(parallel.dot(n), cfg.wall_jump_min_away_speed - 0.001)
@@ -119,17 +128,36 @@ func test_min_speed_and_min_away_are_enforced() -> void:
 
 
 func test_max_speed_is_capped() -> void:
-	var cfg := MovementConfig.new()
-	cfg.wall_jump_camera_weight = 0.0
+	var cfg := _neutral_cfg()
 	var out := WallJumpMath.compute_exit_horizontal(Vector3(0, 0, -40), Vector3(0, 0, 1), Vector3.ZERO, cfg)
 	assert_almost_eq(out.length(), cfg.wall_jump_max_horizontal_speed, 0.001)
 
 
 func test_camera_adjust_keeps_most_of_the_bounce() -> void:
-	var cfg := MovementConfig.new()
+	var cfg := _neutral_cfg()
 	cfg.wall_jump_camera_weight = 0.3
 	var n := Vector3(1, 0, 0)
 	var v_in := Vector3(-5, 0, -8.66)
 	var out := WallJumpMath.compute_exit_horizontal(v_in, n, Vector3(0, 0, -1), cfg)
 	assert_gte(out.dot(n), 0.7 * 5.0 - 0.001, "câmera para frente tira no máximo 30% do afastamento")
 	assert_lt(out.dot(n), 5.0, "mas ainda puxa para a câmera")
+
+
+func test_forward_boost_and_multiplier_launch_further_along_the_wall() -> void:
+	var cfg := _neutral_cfg()
+	var v_in := Vector3(-5, 0, -8.66)  # parede à esquerda (n = +X), correndo para -Z
+	var n := Vector3(1, 0, 0)
+	var base := WallJumpMath.compute_exit_horizontal(v_in, n, Vector3.ZERO, cfg)
+	cfg.wall_jump_horizontal_multiplier = 1.25
+	cfg.wall_jump_forward_boost = 2.5
+	cfg.wall_jump_max_horizontal_speed = 20.0
+	var boosted := WallJumpMath.compute_exit_horizontal(v_in, n, Vector3.ZERO, cfg)
+	assert_lt(boosted.z, base.z - 3.0, "bem mais rápido para frente")
+	assert_gt(boosted.x, base.x, "e ainda se afasta mais da parede")
+
+
+func test_forward_boost_does_not_apply_head_on() -> void:
+	var cfg := _neutral_cfg()
+	cfg.wall_jump_forward_boost = 5.0
+	var out := WallJumpMath.compute_exit_horizontal(Vector3(0, 0, -8), Vector3(0, 0, 1), Vector3.ZERO, cfg)
+	assert_almost_eq(out.x, 0.0, 0.0001, "de frente: sem empurrão lateral")

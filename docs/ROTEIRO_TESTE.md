@@ -117,6 +117,10 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Custa 20 SP, deixa um rastro azul e levanta poeira; o personagem continua de frente para a câmera e se inclina.
   - `invulnerável: SIM` dura 0,15 s.
   - Shift sozinho não faz nada (`dodge_requires_direction`).
+- **Dash no ar**: depois de pular, Shift + direção dá um dash reto (sem cair durante o dash).
+  - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
+  - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
+  - Ao terminar, você continua caindo com 9 m/s na direção do dash (`air_dodge_exit_speed`).
 - **Dodge cancel**:
   - Shift + direção logo ao aterrissar interrompe a recuperação do `Land`.
   - Shift + direção durante a recuperação de outro dash emenda um segundo dash.
@@ -146,8 +150,9 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 | Velocidade no chão | `walk_speed`, `sprint_speed`, `ground_acceleration`, `ground_deceleration` |
 | Pulo "flutuante" × "seco" | `jump_height`, `jump_time_to_apex`, `fall_gravity_multiplier` |
 | Controle no ar | `air_acceleration` |
+| Dash no ar | `dodge_allow_in_air`, `air_dodge_max_per_air`, `air_dodge_refresh_on_wall_jump`, `air_dodge_suspends_gravity`, `air_dodge_exit_speed` |
 | Sprint por toque duplo | `sprint_double_tap_ticks`, `sprint_forward_threshold` |
-| Força do wall jump (altura padrão 2,6 m) | `wall_jump_height`, `wall_jump_horizontal_multiplier`, `wall_jump_min/max_horizontal_speed` |
+| Força do wall jump (altura 2,6 m; saída ×1,1 + 2 m/s para frente, até 18 m/s) | `wall_jump_forward_boost`, `wall_jump_height`, `wall_jump_horizontal_multiplier`, `wall_jump_min/max_horizontal_speed` |
 | Quanto a câmera influencia o side jump | `wall_jump_camera_weight` |
 | Facilidade das técnicas | `technique_window_ticks`, `cancel_window_ticks`, `bunny_hop_window_ticks` |
 | Altura do reverse / back-coming | `reverse_probe_height`, `reverse_jump_height`, `back_coming_height`, `back_coming_max_feet_height` |

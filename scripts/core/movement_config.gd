@@ -69,7 +69,14 @@ extends Resource
 @export var dodge_requires_direction: bool = true
 ## Sem direção pressionada (só se não exigir direção): true = para trás, false = para frente.
 @export var dodge_neutral_backward: bool = true
-@export var dodge_allow_in_air: bool = false
+@export var dodge_allow_in_air: bool = true
+## Quantos dashes no ar por pulo (recarrega ao aterrissar e, se ligado, a cada wall jump).
+@export_range(0, 5, 1) var air_dodge_max_per_air: int = 1
+@export var air_dodge_refresh_on_wall_jump: bool = true
+## Durante o dash no ar a gravidade é suspensa (dash reto, sem cair).
+@export var air_dodge_suspends_gravity: bool = true
+## Velocidade horizontal mantida ao fim do dash no ar (não há recuperação no ar).
+@export_range(0.0, 30.0, 0.5, "suffix:m/s") var air_dodge_exit_speed: float = 9.0
 ## Dodge pode interromper estados de recuperação (Land, recuperação do dodge).
 @export var dodge_cancel_enabled: bool = true
 @export_range(0, 20, 1, "suffix:ticks") var dodge_buffer_ticks: int = 3
@@ -81,13 +88,15 @@ extends Resource
 ## Altura ganha pelo impulso vertical do wall jump.
 @export_range(0.0, 10.0, 0.05, "suffix:m") var wall_jump_height: float = 2.6
 ## Multiplicador da velocidade horizontal refletida.
-@export_range(0.1, 3.0, 0.01) var wall_jump_horizontal_multiplier: float = 1.0
-@export_range(0.0, 30.0, 0.1, "suffix:m/s") var wall_jump_min_horizontal_speed: float = 6.0
-@export_range(1.0, 60.0, 0.1, "suffix:m/s") var wall_jump_max_horizontal_speed: float = 14.0
+@export_range(0.1, 3.0, 0.01) var wall_jump_horizontal_multiplier: float = 1.1
+@export_range(0.0, 30.0, 0.1, "suffix:m/s") var wall_jump_min_horizontal_speed: float = 8.0
+@export_range(1.0, 60.0, 0.1, "suffix:m/s") var wall_jump_max_horizontal_speed: float = 18.0
+## Empurrão extra ao longo da parede, no sentido em que o jogador já ia (lança mais para frente).
+@export_range(0.0, 20.0, 0.1, "suffix:m/s") var wall_jump_forward_boost: float = 2.0
 ## Componente mínima de afastamento da parede na saída (evita grudar/entrar na parede).
 @export_range(0.0, 20.0, 0.1, "suffix:m/s") var wall_jump_min_away_speed: float = 3.0
 ## Peso da direção da câmera no ajuste fino da saída (side jump). 0 = reflexão pura.
-@export_range(0.0, 1.0, 0.01) var wall_jump_camera_weight: float = 0.3
+@export_range(0.0, 1.0, 0.01) var wall_jump_camera_weight: float = 0.4
 ## Tempo sem controle aéreo logo após o wall jump (estado WallJump).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_lock_time: float = 0.15
 ## Proíbe dois wall jumps seguidos na MESMA parede (exceto após back-coming).
@@ -110,7 +119,7 @@ extends Resource
 @export_range(0.5, 4.0, 0.05, "suffix:m") var reverse_probe_height: float = 2.0
 @export_range(0.0, 10.0, 0.05, "suffix:m") var reverse_jump_height: float = 2.3
 ## Velocidade para FRENTE (por cima da parede) no reverse wall jump.
-@export_range(0.0, 20.0, 0.1, "suffix:m/s") var reverse_forward_speed: float = 5.0
+@export_range(0.0, 20.0, 0.1, "suffix:m/s") var reverse_forward_speed: float = 6.5
 ## Distância máxima dos pés ao chão para o contato contar como "base da parede".
 @export_range(0.0, 4.0, 0.05, "suffix:m") var back_coming_max_feet_height: float = 1.0
 @export_range(0.0, 10.0, 0.05, "suffix:m") var back_coming_height: float = 2.6
