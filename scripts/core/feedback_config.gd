@@ -23,7 +23,7 @@ extends Resource
 @export_range(0.0, 90.0, 1.0, "suffix:°") var leg_swing_deg: float = 42.0
 @export_range(0.0, 120.0, 1.0, "suffix:°") var knee_bend_deg: float = 70.0
 @export_range(0.0, 90.0, 1.0, "suffix:°") var arm_swing_deg: float = 38.0
-@export_range(0.0, 45.0, 0.5, "suffix:°") var run_lean_deg: float = 15.0
+@export_range(0.0, 45.0, 0.5, "suffix:°") var run_lean_deg: float = 26.0
 @export_range(0.0, 45.0, 0.5, "suffix:°") var sprint_extra_lean_deg: float = 9.0
 @export_range(0.0, 0.3, 0.005, "suffix:m") var run_bob_height: float = 0.05
 ## Velocidade de mistura entre poses (maior = mais seco).
@@ -47,8 +47,10 @@ extends Resource
 @export_range(0.0, 25.0, 0.5, "suffix:°") var idle_stance_width_deg: float = 10.0
 ## Cambalhota: altura do centro do corpo encolhido (as costas encostam no chão no meio do giro).
 @export_range(0.1, 1.0, 0.01, "suffix:m") var roll_ball_height: float = 0.36
+## Dash como estrela (cambalhota lateral): giro completo durante o deslocamento do dash.
+@export var dash_cartwheel: bool = true
 ## Sprint "ninja": tronco bem inclinado e braços esticados para trás.
-@export_range(0.0, 60.0, 0.5, "suffix:°") var ninja_run_lean_deg: float = 30.0
+@export_range(0.0, 60.0, 0.5, "suffix:°") var ninja_run_lean_deg: float = 45.0
 @export_range(0.0, 110.0, 1.0, "suffix:°") var ninja_arm_back_deg: float = 70.0
 
 @export_group("Molas da animação")

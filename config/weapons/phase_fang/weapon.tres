@@ -20,3 +20,4 @@ heavy = ExtResource("7")
 air = ExtResource("8")
 dash = ExtResource("9")
 move_speed_multiplier = 1.08
+rest_on_shoulder = false

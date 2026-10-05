@@ -107,5 +107,15 @@ func post_move(_input: PlayerInput) -> void:
 		machine.transition_to(&"Land", "dash no ar tocou o chão")
 
 
+## Progresso 0–1 do deslocamento do dash (para a animação).
+func get_dash_progress() -> float:
+	return clampf(float(machine.ticks_in_state()) / _dash_ticks(), 0.0, 1.0)
+
+
+## Direção do dash no mundo.
+func get_direction() -> Vector3:
+	return _direction
+
+
 func _dash_ticks() -> int:
 	return maxi(player.secs_to_ticks(cfg().dodge_duration), 1)

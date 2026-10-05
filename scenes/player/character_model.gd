@@ -48,6 +48,14 @@ const PALM_OFFSET: float = 0.06
 const FINGERS: Array[String] = ["Index", "Middle", "Ring", "Little"]
 ## Quanto cada falange dobra em relação à base.
 const PHALANX_CURL: Array[float] = [1.0, 1.1, 0.8]
+## Braço da arma com a lâmina apoiada no ombro (armas com `rest_on_shoulder`).
+const SHOULDER_REST: Dictionary = {
+	&"shoulder_r": Vector3(0.3, -0.4, 0.55),
+	&"elbow_r": Vector3(2.1, 0, 0),
+	&"wrist_r": Vector3(0.25, -1.0, -0.6),
+}
+## Quanto o quadril sobe no meio da estrela (mãos no chão, corpo de ponta-cabeça).
+const CARTWHEEL_LIFT: float = 0.2
 ## Balanço do cabelo aplicado às mechas presas à cabeça.
 const HAIR_SWAY: float = 0.8
 
@@ -470,6 +478,12 @@ func _ground_pose(pose: Dictionary, sprinting: bool, accel: float) -> void:
 		sin(_phase) * 0.18 * amount + sin(_time * 0.23) * 0.07 * calm, 0)
 	pose[HIPS_Y] = Vector3(-absf(cos(_phase)) * fb.run_bob_height * amount - 0.02 * calm
 		- breath * 0.004 * calm, 0, 0)
+	var weapon := player.get_weapon()
+	if weapon != null and weapon.rest_on_shoulder:
+		# Lâmina apoiada no ombro direito (parado e andando).
+		for key: StringName in SHOULDER_REST:
+			pose[key] = SHOULDER_REST[key]
+		pose[&"shoulder_r"] += Vector3(sin(_phase) * arm_swing * 0.1 + lift, 0, 0)
 	_sprint_amount = move_toward(_sprint_amount, 1.0 if sprinting else 0.0, get_process_delta_time() * 6.0)
 	if _sprint_amount > 0.0:
 		_ninja_run(pose, _sprint_amount)
@@ -566,6 +580,9 @@ func _roll_pose(pose: Dictionary) -> void:
 
 func _dodge_pose(pose: Dictionary) -> void:
 	var fb := _fb()
+	if fb.dash_cartwheel and _dash_progress() < 1.0:
+		_cartwheel_pose(pose)
+		return
 	var local := player.visual.global_basis.inverse() * player.get_horizontal_velocity()
 	var side := clampf(local.x / maxf(player.config.dodge_speed, 0.01), -1.0, 1.0)
 	var forward := clampf(-local.z / maxf(player.config.dodge_speed, 0.01), -1.0, 1.0)
@@ -581,6 +598,28 @@ func _dodge_pose(pose: Dictionary) -> void:
 	pose[&"shoulder_r"] = Vector3(0.4, 0, 0.8 - side * 0.4)
 	pose[&"elbow_l"] = Vector3(0.9, 0, 0)
 	pose[&"elbow_r"] = Vector3(0.9, 0, 0)
+
+
+## Estrela: braços abertos acima da cabeça e pernas afastadas (o giro vem de _update_trick).
+func _cartwheel_pose(pose: Dictionary) -> void:
+	pose[HIPS_Y] = Vector3.ZERO
+	pose[&"spine"] = Vector3(0.05, 0, 0)
+	pose[&"head"] = Vector3(0.1, 0, 0)
+	pose[&"shoulder_l"] = Vector3(0.15, 0, -2.5)
+	pose[&"shoulder_r"] = Vector3(0.15, 0, 2.5)
+	pose[&"elbow_l"] = Vector3(0.1, 0, 0)
+	pose[&"elbow_r"] = Vector3(0.1, 0, 0)
+	pose[&"thigh_l"] = Vector3(0.05, 0, -0.6)
+	pose[&"thigh_r"] = Vector3(0.05, 0, 0.6)
+	pose[&"knee_l"] = Vector3(-0.15, 0, 0)
+	pose[&"knee_r"] = Vector3(-0.15, 0, 0)
+
+
+## Progresso do deslocamento do dash (1 fora do dash).
+func _dash_progress() -> float:
+	if not player.state_machine.is_in(&"Dodge"):
+		return 1.0
+	return player.state_machine.current.call(&"get_dash_progress")
 
 
 func _hurt_pose(pose: Dictionary) -> void:
@@ -770,6 +809,14 @@ func _update_trick(delta: float) -> void:
 		basis = basis * Basis(Vector3.RIGHT, -TAU * _ease_in_out(roll))
 		var down := clampf(minf(roll / 0.18, (1.0 - roll) / 0.25), 0.0, 1.0)
 		pivot_y = lerpf(pivot_y, _fb().roll_ball_height, _ease_in_out(down))
+	var dash := _dash_progress()
+	if _trick_timer <= 0.0 and _fb().dash_cartwheel and dash < 1.0:
+		# Cambalhota lateral: gira em torno do eixo da frente, para o lado do dash.
+		var dir: Vector3 = player.state_machine.current.call(&"get_direction")
+		var side := signf((player.visual.global_basis.inverse() * dir).x)
+		var eased := _ease_in_out(dash)
+		basis = basis * Basis(Vector3.BACK, -side * TAU * eased)
+		pivot_y += CARTWHEEL_LIFT * sin(PI * eased)
 	_trick.basis = basis
 	_trick.position.y = pivot_y
 

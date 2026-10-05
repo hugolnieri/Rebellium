@@ -101,3 +101,9 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Pulo cancela o golpe no chão; golpe leve ou pesado cancela o dash (corta o embalo).
 - Dash no ar acelera a queda mais devagar (3 m/s, gravidade ×1,4).
 
+## Revisão: estrela no dash e espada no ombro
+- Cambalhota ao aterrissar mais longa (`roll_duration` 0,7 s).
+- Dash vira uma estrela (cambalhota lateral), no chão e no ar (`dash_cartwheel`).
+- Tronco mais inclinado: 26° andando, 45° no sprint.
+- Lâmina de Arco apoiada no ombro parado e andando (`WeaponConfig.rest_on_shoulder`).
+

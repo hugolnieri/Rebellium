@@ -144,7 +144,11 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   olhos verdes, toon shading e contorno. Pisca sozinho e franze a testa ao golpear.
   - Parado: pernas abertas (`idle_stance_width_deg`), respira devagar (peito e ombros sobem e descem), apoia o
     peso numa perna e olha em volta.
-  - Andando o tronco inclina para frente (`run_lean_deg`); no sprint inclina ainda mais (corrida ninja).
+  - Andando o tronco inclina bem para frente (26°, `run_lean_deg`); no sprint ainda mais (45°, corrida ninja).
+  - Lâmina de Arco: parado e andando a espada fica **apoiada no ombro** (`rest_on_shoulder` na arma); no sprint
+    os braços vão para trás como antes. A Presa de Fase continua na mão.
+  - Dash: **estrela** (cambalhota lateral) para o lado do dash, com as mãos tocando o chão no meio do giro
+    (`dash_cartwheel` no F2, aba Visual, para desligar).
   - Trocar de direção não inclina o corpo para os lados (`bank_strength` = 0 no F2, aba Visual).
   - Sprint: **corrida ninja** — tronco bem inclinado para frente, cabeça erguida, braços esticados para trás e
     a lâmina arrastando atrás. Na corrida no ar a pose é a mesma.
@@ -153,7 +157,7 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Wall jump: o personagem **cola na parede** por um instante (bem encolhido, de frente para ela, ~0,1 s,
     `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.
     Reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
-  - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente absorvendo o impacto, rolando com as
+  - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente (0,7 s, `roll_duration`), rolando com as
     costas no chão (`roll_ball_height`). Dá para cancelar
     com dash (A/D + Space) ou correndo (W, W). Corrida no ar → aterrissa sem cambalhota.
   - Ao começar a correr, o personagem solta um **gritinho** curto.

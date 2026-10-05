@@ -23,3 +23,5 @@ enum Model { ARC_BLADE, PHASE_FANG }
 @export_group("Manuseio")
 ## Multiplicador da velocidade de andar/correr com esta arma.
 @export_range(0.5, 1.5, 0.01) var move_speed_multiplier: float = 1.0
+## Parado/andando a arma fica apoiada no ombro (no sprint segue a corrida ninja).
+@export var rest_on_shoulder: bool = false
