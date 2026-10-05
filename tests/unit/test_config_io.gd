@@ -29,7 +29,7 @@ func test_project_tres_files_load_with_expected_defaults() -> void:
 	var cfg := load("res://config/movement_config.tres") as MovementConfig
 	assert_eq(cfg.walk_speed, 6.0)
 	assert_eq(cfg.sprint_speed, 10.0)
-	assert_eq(cfg.jump_height, 2.2)
+	assert_eq(cfg.jump_height, 2.35)
 	assert_eq(cfg.dodge_sp_cost, 20.0)
 	assert_eq(cfg.dodge_invulnerability, 0.15)
 	assert_eq(cfg.wall_jump_sp_cost, 18.0)

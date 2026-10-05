@@ -60,15 +60,16 @@ const POSES: Dictionary = {
 		{"spine": Vector3(-0.2, 0.3, 0), "shoulder_r": Vector3(1.2, 0.1, 0), "elbow_r": Vector3(0.4, 0, 0)},
 	],
 	"spin": [
-		{"spine": Vector3(0.1, -0.7, 0), "chest": Vector3(0, -0.3, 0), "shoulder_r": Vector3(0.4, -0.3, 1.2),
+		# Gira para a DIREITA (sentido horário visto de cima): prepara torcendo o tronco para a esquerda.
+		{"spine": Vector3(0.1, 0.7, 0), "chest": Vector3(0, 0.3, 0), "shoulder_r": Vector3(0.4, 0.6, 0.9),
 			"elbow_r": Vector3(0.6, 0, 0), "wrist_r": Vector3(-1.2, 0, 0), "shoulder_l": Vector3(0.5, 0, -1.0),
 			"elbow_l": Vector3(0.6, 0, 0), "thigh_l": Vector3(0.4, 0, -0.25), "knee_l": Vector3(-0.8, 0, 0),
 			"thigh_r": Vector3(0.1, 0, 0.3), "knee_r": Vector3(-0.8, 0, 0), "hips_y": -0.2},
 		{"spine": Vector3(-0.1, 0.2, 0), "shoulder_r": Vector3(0.15, 0, 1.45), "elbow_r": Vector3(0.05, 0, 0),
 			"wrist_r": Vector3(-1.5, 0, 0), "shoulder_l": Vector3(0.1, 0, -1.3), "elbow_l": Vector3(0.2, 0, 0),
 			"thigh_l": Vector3(0.2, 0, -0.35), "knee_l": Vector3(-0.5, 0, 0), "thigh_r": Vector3(0.2, 0, 0.35),
-			"knee_r": Vector3(-0.5, 0, 0), "hips_y": -0.15, "spin": TAU},
-		{"spine": Vector3(-0.15, 0.4, 0), "shoulder_r": Vector3(0.8, 0.8, 0.6), "elbow_r": Vector3(0.4, 0, 0),
+			"knee_r": Vector3(-0.5, 0, 0), "hips_y": -0.15, "spin": -TAU},
+		{"spine": Vector3(-0.15, -0.4, 0), "shoulder_r": Vector3(0.8, -0.8, 0.6), "elbow_r": Vector3(0.4, 0, 0),
 			"hips_y": -0.1},
 	],
 	"rising": [

@@ -18,8 +18,8 @@ extends Resource
 
 @export_group("Animação procedural")
 ## Comprimento de um ciclo completo de passada (dois passos) andando / correndo.
-@export_range(0.5, 6.0, 0.05, "suffix:m") var stride_length_walk: float = 2.2
-@export_range(0.5, 8.0, 0.05, "suffix:m") var stride_length_sprint: float = 3.0
+@export_range(0.5, 6.0, 0.05, "suffix:m") var stride_length_walk: float = 3.4
+@export_range(0.5, 8.0, 0.05, "suffix:m") var stride_length_sprint: float = 4.4
 @export_range(0.0, 90.0, 1.0, "suffix:°") var leg_swing_deg: float = 42.0
 @export_range(0.0, 120.0, 1.0, "suffix:°") var knee_bend_deg: float = 85.0
 @export_range(0.0, 90.0, 1.0, "suffix:°") var arm_swing_deg: float = 38.0
@@ -29,6 +29,9 @@ extends Resource
 @export_range(0.0, 0.3, 0.005, "suffix:m") var run_bob_height: float = 0.05
 ## Velocidade de mistura entre poses (maior = mais seco).
 @export_range(1.0, 60.0, 0.5) var pose_blend_speed: float = 16.0
+## Pulo do chão vira mortal para frente (duração do giro).
+@export var jump_flip_enabled: bool = true
+@export_range(0.1, 2.0, 0.01, "suffix:s") var jump_flip_duration: float = 0.62
 ## Duração do mortal/giro do wall jump.
 @export_range(0.05, 2.0, 0.01, "suffix:s") var flip_duration: float = 0.42
 @export_range(0.0, 1.0, 0.01, "suffix:s") var land_crouch_time: float = 0.22
@@ -55,9 +58,9 @@ extends Resource
 ## Ângulo dos braços no sprint em relação ao chão (0 = totalmente na horizontal, + = para cima).
 @export_range(-45.0, 45.0, 1.0, "suffix:°") var ninja_arm_pitch_deg: float = 0.0
 ## Passada: fração do ciclo com o pé no chão andando / correndo e flexão do joelho de apoio.
-@export_range(0.2, 0.8, 0.01) var stance_fraction_walk: float = 0.6
+@export_range(0.2, 0.8, 0.01) var stance_fraction_walk: float = 0.42
 @export_range(0.2, 0.8, 0.01) var stance_fraction_run: float = 0.38
-@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_walk_deg: float = 12.0
+@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_walk_deg: float = 20.0
 @export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_run_deg: float = 32.0
 ## Elevação do joelho no balanço (coxa sobe além do passo) andando / correndo.
 @export_range(0.0, 90.0, 1.0, "suffix:°") var knee_lift_walk_deg: float = 34.0

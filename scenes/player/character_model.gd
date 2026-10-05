@@ -101,6 +101,9 @@ var _trick_axis: Vector3 = Vector3.RIGHT
 var _trick_angle: float = 0.0
 ## No mortal do wall jump o corpo começa de frente para a parede e termina olhando o caminho.
 var _trick_face_wall: bool = false
+var _trick_duration: float = 0.42
+## Mortal para frente do pulo do chão (some se o personagem golpear, der dash ou wall jump).
+var _trick_from_jump: bool = false
 var _spin_angle: float = 0.0
 var _flash_timer: float = 0.0
 var _flash_duration: float = 0.001
@@ -123,6 +126,7 @@ func _ready() -> void:
 		_vel[channel] = Vector3.ZERO
 	GameEvents.wall_jump_executed.connect(_on_wall_jump)
 	GameEvents.landed.connect(_on_landed)
+	GameEvents.jumped.connect(_on_jumped)
 	GameEvents.weapon_changed.connect(_on_weapon_changed)
 	_equip.call_deferred()
 
@@ -319,10 +323,26 @@ func _on_wall_jump(who: Node, data: Dictionary) -> void:
 			_trick_axis = Vector3.RIGHT
 			_trick_angle = TAU
 			_trick_face_wall = true
-			_trick_timer = _fb().flip_duration
+			_start_trick(_fb().flip_duration, false)
 			return
 	_trick_face_wall = false
-	_trick_timer = _fb().flip_duration
+	_start_trick(_fb().flip_duration, false)
+
+
+func _start_trick(duration: float, from_jump: bool) -> void:
+	_trick_duration = maxf(duration, 0.01)
+	_trick_timer = _trick_duration
+	_trick_from_jump = from_jump
+
+
+## Pulo do chão: mortal para frente.
+func _on_jumped(who: Node) -> void:
+	if who != player or not _fb().jump_flip_enabled:
+		return
+	_trick_axis = Vector3.RIGHT
+	_trick_angle = -TAU
+	_trick_face_wall = false
+	_start_trick(_fb().jump_flip_duration, true)
 
 
 ## O mortal espera enquanto o personagem está colado na parede (antes do impulso).
@@ -388,10 +408,12 @@ func _process(delta: float) -> void:
 			attack_weight = _attack_pose(pose)
 		&"Jump", &"Fall" when player.air_sprinting:
 			_air_sprint_pose(pose)
-		&"WallJump" when _trick_face_wall and (_is_wall_sticking() or _trick_timer > _fb().flip_duration * 0.75):
+		&"WallJump" when _trick_face_wall and (_is_wall_sticking() or _trick_timer > _trick_duration * 0.75):
 			_wall_kick_pose(pose)
 		&"Jump", &"Fall", &"WallJump":
 			_air_pose(pose)
+			if _trick_from_jump and _trick_timer > 0.0:
+				_flip_tuck(pose)
 		&"Land" when _is_rolling():
 			_roll_pose(pose)
 		&"Dodge":
@@ -463,13 +485,13 @@ func _ground_pose(pose: Dictionary, sprinting: bool, accel: float) -> void:
 	pose[&"elbow_r"] = Vector3(lerpf(0.75, 0.35, amount), 0, 0)
 	pose[&"wrist_r"] = Vector3(lerpf(-0.35, 3.3, amount), 0, 0)
 	var accel_lean := clampf(accel * 0.01, -0.15, 0.2)
-	pose[&"hips"] = Vector3(-lean, sin(_phase) * 0.15 * amount, -shift * 0.6)
-	pose[&"spine"] = Vector3(-accel_lean - lean * 0.1 + breath * depth * 0.3 * calm, -sin(_phase) * 0.12 * amount,
-		shift * 0.3)
-	pose[&"chest"] = Vector3(breath * depth * calm, -sin(_phase) * 0.14 * amount, shift * 0.2)
+	# Sem giro do quadril: com o corpo inclinado, girar a pelve faz o corpo balançar para os lados.
+	pose[&"hips"] = Vector3(-lean, 0, -shift * 0.6)
+	pose[&"spine"] = Vector3(-accel_lean - lean * 0.1 + breath * depth * 0.3 * calm, 0, shift * 0.3)
+	pose[&"chest"] = Vector3(breath * depth * calm, -sin(_phase) * 0.05 * amount, shift * 0.2)
 	# Cabeça: olha para frente apesar da inclinação, compensa a respiração e olha em volta devagar.
 	pose[&"head"] = Vector3(lean * 0.75 - breath * depth * 0.5 * calm,
-		sin(_phase) * 0.12 * amount + sin(_time * 0.23) * 0.07 * calm, 0)
+		sin(_time * 0.23) * 0.07 * calm, 0)
 	var weapon := player.get_weapon()
 	if weapon != null and weapon.rest_on_shoulder:
 		# Lâmina apoiada no ombro direito (parado e andando).
@@ -523,9 +545,11 @@ func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: f
 		# Pé plano em relação ao chão: desfaz a inclinação acumulada (quadril + coxa + joelho).
 		var flat := lean - thigh - knee
 		pose[StringName("foot_" + side)] = Vector3(flat + ankle + 0.05 * relaxed * calm, 0, -out - shift)
-	# Sobe-desce: andando o ponto mais alto é no meio do apoio; correndo, o mais baixo.
+	# Sobe-desce: passada com fase de voo (trote/corrida) afunda no meio do apoio e sobe no voo;
+	# caminhada com apoio longo faz o contrário.
 	var mid := cos(2.0 * (_phase - PI * stance_frac))
-	var bob := _fb().run_bob_height * amount * lerpf(mid, -mid, run_k) * 0.5
+	var flight := clampf((0.55 - stance_frac) / 0.15, 0.0, 1.0)
+	var bob := _fb().run_bob_height * amount * lerpf(mid, -mid, flight) * 0.5
 	pose[HIPS_Y] = Vector3(bob - 0.02 * calm - 0.03 * amount, 0, 0)
 
 
@@ -580,6 +604,20 @@ func _air_sprint_pose(pose: Dictionary) -> void:
 	pose[&"knee_l"] = Vector3(-0.9 - maxf(cycle, 0.0) * 0.6, 0, 0)
 	pose[&"knee_r"] = Vector3(-0.9 - maxf(-cycle, 0.0) * 0.6, 0, 0)
 	_ninja_run(pose, 1.0)
+
+
+## Mortal do pulo: encolhe no meio do giro (joelhos no peito) e abre de novo para cair.
+func _flip_tuck(pose: Dictionary) -> void:
+	var t := 1.0 - _trick_timer / _trick_duration
+	var w := sin(PI * clampf(t, 0.0, 1.0))
+	var tuck := {
+		&"spine": Vector3(-0.5, 0, 0), &"chest": Vector3(-0.3, 0, 0), &"head": Vector3(-0.3, 0, 0),
+		&"thigh_l": Vector3(1.9, 0, 0.1), &"thigh_r": Vector3(1.9, 0, -0.1),
+		&"knee_l": Vector3(-2.3, 0, 0), &"knee_r": Vector3(-2.3, 0, 0),
+		&"shoulder_l": Vector3(1.0, 0, 0.1), &"elbow_l": Vector3(1.5, 0, 0),
+	}
+	for key: StringName in tuck:
+		pose[key] = (pose[key] as Vector3).lerp(tuck[key], w)
 
 
 ## Colado na parede: agachado de frente para ela, um pé plantado alto e o outro embaixo,
@@ -833,12 +871,20 @@ func _emit_footsteps(speed: float, cfg: MovementConfig) -> void:
 
 func _update_trick(delta: float) -> void:
 	var basis := Basis(Vector3.UP, _spin_angle)
+	if _trick_from_jump and _trick_timer > 0.0 \
+			and not (player.state_machine.is_in(&"Jump") or player.state_machine.is_in(&"Fall")):
+		_trick_timer = 0.0  # golpe, dash ou wall jump interrompem o mortal do pulo
 	if _trick_timer > 0.0 and _is_wall_sticking():
 		if _trick_face_wall:
 			basis = basis * Basis(Vector3.UP, PI)
 	elif _trick_timer > 0.0:
-		_trick_timer = maxf(_trick_timer - delta, 0.0)
-		var t := 1.0 - _trick_timer / maxf(_fb().flip_duration, 0.001)
+		if _trick_from_jump:
+			# Mortal do pulo acompanha os ticks de física desde o pulo (sincronizado com a subida).
+			var elapsed := player.ticks_since(player.last_jump_tick) / float(Engine.physics_ticks_per_second)
+			_trick_timer = maxf(_trick_duration - elapsed, 0.0)
+		else:
+			_trick_timer = maxf(_trick_timer - delta, 0.0)
+		var t := 1.0 - _trick_timer / _trick_duration
 		var eased := t * t * (3.0 - 2.0 * t)
 		if _trick_face_wall:
 			basis = basis * Basis(Vector3.UP, PI * (1.0 - eased))

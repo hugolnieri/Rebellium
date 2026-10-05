@@ -56,8 +56,13 @@ func test_blinks_over_time() -> void:
 
 
 func test_running_swings_the_leg_bones() -> void:
-	_animate(40, FWD)
+	_animate(30, FWD)
 	var skeleton := _skeleton()
-	var thigh_l := skeleton.get_bone_pose_rotation(skeleton.find_bone(CharacterModel.BONE_MAP[&"thigh_l"]))
-	var thigh_r := skeleton.get_bone_pose_rotation(skeleton.find_bone(CharacterModel.BONE_MAP[&"thigh_r"]))
-	assert_gt(thigh_l.angle_to(thigh_r), 0.2, "pernas em fases opostas")
+	var thigh_l := skeleton.find_bone(CharacterModel.BONE_MAP[&"thigh_l"])
+	var thigh_r := skeleton.find_bone(CharacterModel.BONE_MAP[&"thigh_r"])
+	var widest := 0.0
+	for i in 40:
+		_animate(1, FWD)
+		widest = maxf(widest, skeleton.get_bone_pose_rotation(thigh_l).angle_to(
+			skeleton.get_bone_pose_rotation(thigh_r)))
+	assert_gt(widest, 0.4, "pernas em fases opostas ao longo da passada")

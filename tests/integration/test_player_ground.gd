@@ -51,7 +51,7 @@ func test_sprint_ends_when_sp_depleted() -> void:
 	assert_almost_eq(d.player.get_horizontal_speed(), 6.0, 0.1)
 
 
-func test_jump_height_is_2_2_m() -> void:
+func test_jump_height_matches_config() -> void:
 	var start_y := d.player.global_position.y
 	d.press_jump()
 	d.step()
@@ -60,7 +60,7 @@ func test_jump_height_is_2_2_m() -> void:
 	for i in 60:
 		d.step()
 		max_y = maxf(max_y, d.player.global_position.y)
-	assert_almost_eq(max_y - start_y, 2.2, 0.03)
+	assert_almost_eq(max_y - start_y, d.player.config.jump_height, 0.03)
 	assert_true(d.player.is_on_floor())
 
 

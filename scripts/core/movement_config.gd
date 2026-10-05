@@ -23,7 +23,7 @@ extends Resource
 
 @export_group("Pulo e ar")
 ## Altura do pulo do chão.
-@export_range(0.2, 10.0, 0.05, "suffix:m") var jump_height: float = 2.2
+@export_range(0.2, 10.0, 0.05, "suffix:m") var jump_height: float = 2.35
 ## Tempo do chão até o ápice do pulo (define a gravidade de subida).
 @export_range(0.1, 1.5, 0.01, "suffix:s") var jump_time_to_apex: float = 0.38
 ## Multiplicador da gravidade quando caindo (queda mais seca que a subida).
@@ -118,7 +118,7 @@ extends Resource
 ## Depois de um pulo (ou wall jump), por quanto tempo o wall jump continua liberado mesmo caindo.
 @export_range(0.0, 3.0, 0.01, "suffix:s") var wall_jump_window_after_jump: float = 0.6
 ## Altura ganha pelo impulso vertical do wall jump.
-@export_range(0.0, 10.0, 0.05, "suffix:m") var wall_jump_height: float = 2.6
+@export_range(0.0, 10.0, 0.05, "suffix:m") var wall_jump_height: float = 2.35
 ## Multiplicador da velocidade horizontal refletida.
 @export_range(0.1, 3.0, 0.01) var wall_jump_horizontal_multiplier: float = 1.1
 @export_range(0.0, 30.0, 0.1, "suffix:m/s") var wall_jump_min_horizontal_speed: float = 8.0
@@ -151,7 +151,7 @@ extends Resource
 @export_range(0, 30, 1, "suffix:ticks") var technique_window_ticks: int = 6
 ## Altura (acima dos pés) do raio que procura o topo da parede.
 @export_range(0.5, 4.0, 0.05, "suffix:m") var reverse_probe_height: float = 2.0
-@export_range(0.0, 10.0, 0.05, "suffix:m") var reverse_jump_height: float = 2.3
+@export_range(0.0, 10.0, 0.05, "suffix:m") var reverse_jump_height: float = 2.35
 ## Velocidade para FRENTE (por cima da parede) no reverse wall jump.
 @export_range(0.0, 20.0, 0.1, "suffix:m/s") var reverse_forward_speed: float = 6.5
 ## Distância máxima dos pés ao chão para o contato contar como "base da parede".

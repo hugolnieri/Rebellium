@@ -119,3 +119,9 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Dash ou golpe no ar cancelam a animação de impacto ao aterrissar (sem cambalhota nem agachamento).
 - Joelhos sobem mais no balanço da passada, andando e correndo.
 
+## Revisão: trote, mortal no pulo e giro para a direita
+- Andar como trote (passada 3,4 m, fase de voo), sem giro de quadril que balançava o corpo inclinado.
+- Pulo do chão com mortal para frente; altura do pulo 2,35 m (o máximo que mantém a parede lisa de
+  4,4 m do percurso exigindo back-coming + reverse).
+- Pesado da Lâmina de Arco gira para a direita.
+

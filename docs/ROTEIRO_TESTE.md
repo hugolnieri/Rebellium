@@ -23,7 +23,7 @@ Para rodar: `godot --path .` ou abra o projeto no editor e aperte F5. Abre a **a
 
 ## HUD de debug (F1): o que cada linha diz
 - **estado**: estado atual da máquina (Idle, Run, Sprint, Jump, Fall, WallJump, Dodge, Land) e há quantos ticks.
-- **vel horiz / vel vertical / altura pés**: para conferir 6 m/s andando, 10 m/s em sprint e pulo de 2,2 m.
+- **vel horiz / vel vertical / altura pés**: para conferir 6 m/s andando, 10 m/s em sprint e pulo de 2,35 m.
 - **na parede**: normal da parede, há quantos ticks foi a entrada no contato, e se o topo/base estão perto.
   "topo: perto" significa que o reverse está disponível; "base: perto" significa que o back-coming está disponível.
 - **wall jump**: `LIBERADO` ou o motivo do bloqueio (`sem parede`, `não veio de pulo`, `janela pós-pulo expirou`,
@@ -146,6 +146,10 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     peso numa perna e olha em volta.
   - Andando o **corpo inteiro** inclina para frente a partir do quadril (26°, `run_lean_deg`); no sprint ainda
     mais (45°, `ninja_run_lean_deg`), com os **braços esticados para trás na horizontal** (`ninja_arm_pitch_deg`).
+  - Andar é um **trote** (passada longa, ritmo mais calmo, pequeno voo entre os passos), sem o corpo balançar
+    para os lados.
+  - Pulo do chão: **mortal para frente** (encolhe no meio do giro; `jump_flip_enabled`, `jump_flip_duration`).
+    Golpe, dash ou wall jump no ar interrompem o mortal.
   - Pernas: passada com calcanhar no contato, joelho de apoio levemente dobrado, impulso na ponta do pé e
     joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`).
   - Lâmina de Arco: parado e andando a lâmina fica **encostada em cima do ombro direito** (`rest_on_shoulder` na arma); no sprint
@@ -220,7 +224,7 @@ Ande até os três postes à frente (POSTE).
      e a câmera treme de leve. O HUD da direita conta os hits, o dano do combo e o DPS.
    - Clicar rápido demais não pula etapas: o próximo golpe sai quando o atual permite (clique fica guardado ~0,16 s).
 2. **Pesado** (segure o botão esquerdo ~0,27 s, ou botão direito): a arma brilha enquanto carrega e sai um
-   giro 360° mais lento e pesado que acerta em volta (teste com um poste atrás de você). Gasta 15 SP. No meio
+   giro 360° para a **direita**, mais lento e pesado que acerta em volta (teste com um poste atrás de você). Gasta 15 SP. No meio
    do combo leve, segurar vira finalizador. **Também funciona no ar** (o personagem flutua girando e o golpe
    acaba ao tocar o chão). Tempo de carga: F2 → Combate → `heavy_hold_ticks`.
 3. **Troca de arma**: 2 (ou Q). Floreio da arma, flash e som de carga. A **Presa de Fase** tem combo de 4
