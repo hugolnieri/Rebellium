@@ -50,9 +50,9 @@ const FINGERS: Array[String] = ["Index", "Middle", "Ring", "Little"]
 const PHALANX_CURL: Array[float] = [1.0, 1.1, 0.8]
 ## Braço da arma com a lâmina apoiada no ombro (armas com `rest_on_shoulder`).
 const SHOULDER_REST: Dictionary = {
-	&"shoulder_r": Vector3(0.3, -0.4, 0.55),
-	&"elbow_r": Vector3(2.1, 0, 0),
-	&"wrist_r": Vector3(0.25, -1.0, -0.6),
+	&"shoulder_r": Vector3(0.25, 0.07, 0.1),
+	&"elbow_r": Vector3(1.2, 0, 0),
+	&"wrist_r": Vector3(1.1, -0.1, -0.39),
 }
 ## Quanto o quadril sobe no meio da estrela (mãos no chão, corpo de ponta-cabeça).
 const CARTWHEEL_LIFT: float = 0.2
@@ -435,75 +435,112 @@ func _rest_pose() -> Dictionary:
 
 func _ground_pose(pose: Dictionary, sprinting: bool, accel: float) -> void:
 	var fb := _fb()
-	var amount := _run_amount
-	var calm := 1.0 - clampf(amount, 0.0, 1.0)
-	var swing := deg_to_rad(fb.leg_swing_deg) * amount * (1.2 if sprinting else 1.0)
-	var knee_bend := deg_to_rad(fb.knee_bend_deg) * amount
+	var cfg := player.config
+	var amount := clampf(_run_amount, 0.0, 1.0)
+	var calm := 1.0 - amount
+	var speed := player.get_horizontal_speed()
+	var run_k := clampf((speed - cfg.walk_speed) / maxf(cfg.sprint_speed - cfg.walk_speed, 0.01), 0.0, 1.0)
+	_sprint_amount = move_toward(_sprint_amount, 1.0 if sprinting else 0.0, get_process_delta_time() * 6.0)
 	var arm_swing := deg_to_rad(fb.arm_swing_deg) * amount
 	# Parado: respiração lenta e peso numa perna (a outra relaxada, joelho levemente dobrado).
 	var breath := sin(_time * TAU / maxf(fb.breath_period, 0.1))
 	var depth := deg_to_rad(fb.breath_depth_deg)
 	var shift := deg_to_rad(fb.idle_weight_shift_deg) * calm
 	var stance := deg_to_rad(fb.idle_stance_width_deg) * calm
-	for i in 2:
-		var side := "l" if i == 0 else "r"
-		var leg_phase := _phase + PI * i
-		var thigh := sin(leg_phase) * swing
-		# Joelho dobra mais na passagem (perna vindo para frente) e estica no contato.
-		var knee := -knee_bend * (0.5 + 0.5 * sin(leg_phase + PI * 0.65)) - 0.1 * amount
-		var relaxed := 1.0 if i == 1 else 0.0  # perna direita relaxada
-		# Pernas abertas: esquerda gira -Z (para fora), direita +Z; o pé compensa e fica plano.
-		var out := -stance if i == 0 else stance
-		pose[StringName("thigh_" + side)] = Vector3(thigh + 0.08 * relaxed * calm, 0, out + shift)
-		pose[StringName("knee_" + side)] = Vector3(knee - (0.06 + 0.14 * relaxed) * calm, 0, 0)
-		pose[StringName("foot_" + side)] = Vector3(-thigh * 0.35 - knee * 0.25 + 0.05 * relaxed * calm, 0,
-			-out - shift)
+	# O corpo inteiro inclina a partir do quadril; as coxas compensam quase tudo para os pés
+	# continuarem embaixo do corpo (linha diagonal do pé de trás até a cabeça).
+	var lean := lerpf(deg_to_rad(fb.run_lean_deg) * amount, deg_to_rad(fb.ninja_run_lean_deg), _sprint_amount)
+	_legs(pose, amount, run_k, lean, stance, shift, calm)
 	# Braço livre balança oposto à perna; ombros sobem de leve ao inspirar.
 	var lift := breath * depth * 0.8 * calm
-	pose[&"shoulder_l"] = Vector3(-sin(_phase) * arm_swing + 0.1, 0, -0.16 - 0.1 * amount - lift)
+	pose[&"shoulder_l"] = Vector3(-sin(_phase) * arm_swing + 0.1 + lean * 0.5, 0, -0.16 - 0.1 * amount - lift)
 	pose[&"elbow_l"] = Vector3(0.35 + 0.9 * amount, 0, 0)
-	# Correndo, o braço da arma vai para trás e a lâmina "arrasta" atrás do corpo.
-	var run_k := clampf(amount, 0.0, 1.0)
-	pose[&"shoulder_r"] = Vector3(lerpf(0.35, -0.45, run_k) + sin(_phase) * arm_swing * 0.25, 0.05,
-		0.18 + 0.12 * run_k + lift)
-	pose[&"elbow_r"] = Vector3(lerpf(0.75, 0.35, run_k), 0, 0)
-	pose[&"wrist_r"] = Vector3(lerpf(-0.35, 3.3, run_k), 0, 0)
-	# Quadril e tronco em contra-rotação e sobe-desce de dois tempos (sem balanço lateral).
-	var lean := deg_to_rad(fb.run_lean_deg) * amount + clampf(accel * 0.01, -0.15, 0.2)
-	pose[&"hips"] = Vector3(0, sin(_phase) * 0.22 * amount, -shift * 0.6)
-	pose[&"spine"] = Vector3(-lean + breath * depth * 0.3 * calm, -sin(_phase) * 0.14 * amount, shift * 0.3)
-	pose[&"chest"] = Vector3(breath * depth * calm - lean * 0.3, -sin(_phase) * 0.16 * amount, shift * 0.2)
-	# Cabeça: compensa a respiração e olha em volta devagar.
-	pose[&"head"] = Vector3(lean * 0.8 - breath * depth * 0.5 * calm,
-		sin(_phase) * 0.18 * amount + sin(_time * 0.23) * 0.07 * calm, 0)
-	pose[HIPS_Y] = Vector3(-absf(cos(_phase)) * fb.run_bob_height * amount - 0.02 * calm
-		- breath * 0.004 * calm, 0, 0)
+	pose[&"shoulder_r"] = Vector3(lerpf(0.35, -0.45, amount) + sin(_phase) * arm_swing * 0.25 + lean * 0.5,
+		0.05, 0.18 + 0.12 * amount + lift)
+	pose[&"elbow_r"] = Vector3(lerpf(0.75, 0.35, amount), 0, 0)
+	pose[&"wrist_r"] = Vector3(lerpf(-0.35, 3.3, amount), 0, 0)
+	var accel_lean := clampf(accel * 0.01, -0.15, 0.2)
+	pose[&"hips"] = Vector3(-lean, sin(_phase) * 0.15 * amount, -shift * 0.6)
+	pose[&"spine"] = Vector3(-accel_lean - lean * 0.1 + breath * depth * 0.3 * calm, -sin(_phase) * 0.12 * amount,
+		shift * 0.3)
+	pose[&"chest"] = Vector3(breath * depth * calm, -sin(_phase) * 0.14 * amount, shift * 0.2)
+	# Cabeça: olha para frente apesar da inclinação, compensa a respiração e olha em volta devagar.
+	pose[&"head"] = Vector3(lean * 0.75 - breath * depth * 0.5 * calm,
+		sin(_phase) * 0.12 * amount + sin(_time * 0.23) * 0.07 * calm, 0)
 	var weapon := player.get_weapon()
 	if weapon != null and weapon.rest_on_shoulder:
 		# Lâmina apoiada no ombro direito (parado e andando).
 		for key: StringName in SHOULDER_REST:
 			pose[key] = SHOULDER_REST[key]
 		pose[&"shoulder_r"] += Vector3(sin(_phase) * arm_swing * 0.1 + lift, 0, 0)
-	_sprint_amount = move_toward(_sprint_amount, 1.0 if sprinting else 0.0, get_process_delta_time() * 6.0)
 	if _sprint_amount > 0.0:
 		_ninja_run(pose, _sprint_amount)
 
 
-## Corrida "ninja": tronco mergulhado para frente, cabeça erguida, braços esticados para trás.
+## Passada realista por perna: apoio (contato com o calcanhar → carga com o joelho um pouco
+## dobrado → impulso na ponta do pé) e balanço (joelho sobe dobrado e estica antes do contato).
+func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: float, shift: float,
+		calm: float) -> void:
+	var fb := _fb()
+	var stance_frac := lerpf(fb.stance_fraction_walk, fb.stance_fraction_run, run_k)
+	var swing_range := deg_to_rad(fb.leg_swing_deg) * amount * lerpf(1.0, 1.3, run_k)
+	var front := swing_range * 0.58
+	var back := swing_range * 0.42
+	var knee_swing := deg_to_rad(fb.knee_bend_deg) * amount * lerpf(0.9, 1.6, run_k)
+	var knee_load := deg_to_rad(lerpf(fb.stance_knee_walk_deg, fb.stance_knee_run_deg, run_k)) * amount
+	var compensate := lean * 0.8
+	for i in 2:
+		var side := "l" if i == 0 else "r"
+		var u := fposmod((_phase + PI * i) / TAU, 1.0)
+		var thigh: float
+		var knee: float
+		var ankle: float
+		if u < stance_frac:
+			var t := u / stance_frac
+			thigh = lerpf(front, -back, t)
+			knee = -knee_load * sin(PI * t)
+			# Calcanhar no contato (ponta para cima), pé plano, impulso na ponta no fim do apoio.
+			ankle = 0.18 * maxf(0.0, 1.0 - t * 4.0) - 0.55 * pow(maxf(0.0, (t - 0.65) / 0.35), 2.0)
+			ankle *= amount
+		else:
+			var t := (u - stance_frac) / (1.0 - stance_frac)
+			thigh = -back + (front + back) * (0.5 - 0.5 * cos(PI * t))
+			knee = -knee_swing * sin(PI * minf(t / 0.8, 1.0))
+			# Saindo do impulso com a ponta para baixo, depois levanta a ponta para não arrastar.
+			ankle = (-0.5 * pow(1.0 - t, 3.0) + 0.15 * sin(PI * t)) * amount
+		var relaxed := 1.0 if i == 1 else 0.0  # parado: perna direita relaxada
+		# Pernas abertas parado: esquerda gira -Z (para fora), direita +Z; o pé compensa.
+		var out := -stance if i == 0 else stance
+		thigh += compensate + 0.08 * relaxed * calm
+		knee -= (0.06 + 0.14 * relaxed) * calm
+		pose[StringName("thigh_" + side)] = Vector3(thigh, 0, out + shift)
+		pose[StringName("knee_" + side)] = Vector3(knee, 0, 0)
+		# Pé plano em relação ao chão: desfaz a inclinação acumulada (quadril + coxa + joelho).
+		var flat := lean - thigh - knee
+		pose[StringName("foot_" + side)] = Vector3(flat + ankle + 0.05 * relaxed * calm, 0, -out - shift)
+	# Sobe-desce: andando o ponto mais alto é no meio do apoio; correndo, o mais baixo.
+	var mid := cos(2.0 * (_phase - PI * stance_frac))
+	var bob := _fb().run_bob_height * amount * lerpf(mid, -mid, run_k) * 0.5
+	pose[HIPS_Y] = Vector3(bob - 0.02 * calm - 0.03 * amount, 0, 0)
+
+
+## Corrida "ninja": corpo inteiro mergulhado (vem do quadril, em _ground_pose), cabeça erguida e
+## braços esticados para trás NA HORIZONTAL — o ângulo do ombro desconta a inclinação do tronco.
 func _ninja_run(pose: Dictionary, weight: float) -> void:
 	var fb := _fb()
-	var lean := deg_to_rad(fb.ninja_run_lean_deg)
-	var back := -deg_to_rad(fb.ninja_arm_back_deg)
-	var bounce := sin(_phase * 2.0) * 0.05
+	var bounce := sin(_phase * 2.0) * 0.04
+	var torso_forward := -((pose[&"hips"] as Vector3).x + (pose[&"spine"] as Vector3).x
+		+ (pose[&"chest"] as Vector3).x)
+	# Com o tronco inclinado para frente, o braço solto já aponta um pouco para trás; falta
+	# girar (90° − inclinação) para ficar paralelo ao chão.
+	var back := -(PI * 0.5 - torso_forward + deg_to_rad(fb.ninja_arm_pitch_deg))
 	var target := {
-		&"spine": Vector3(-lean, (pose[&"spine"] as Vector3).y * 0.4, 0),
-		&"chest": Vector3(-lean * 0.25, (pose[&"chest"] as Vector3).y * 0.4, 0),
-		&"head": Vector3(lean * 1.0, 0, 0),
-		&"shoulder_l": Vector3(back + bounce, 0, -0.22),
-		&"shoulder_r": Vector3(back - bounce, 0, 0.22),
-		&"elbow_l": Vector3(0.12, 0, 0),
-		&"elbow_r": Vector3(0.12, 0, 0),
-		&"wrist_l": Vector3(-0.3, 0, 0),
+		&"head": Vector3(torso_forward * 0.85, 0, 0),
+		&"shoulder_l": Vector3(back + bounce, 0, -0.18),
+		&"shoulder_r": Vector3(back - bounce, 0, 0.18),
+		&"elbow_l": Vector3(0.05, 0, 0),
+		&"elbow_r": Vector3(0.05, 0, 0),
+		&"wrist_l": Vector3(-0.2, 0, 0),
 		&"wrist_r": Vector3(-1.4, 0, 0),  # lâmina alinhada ao braço, arrastando atrás
 	}
 	for key: StringName in target:
@@ -531,13 +568,13 @@ func _air_pose(pose: Dictionary) -> void:
 ## Corrida no ar: corpo mergulhado para frente, pernas pedalando para trás.
 func _air_sprint_pose(pose: Dictionary) -> void:
 	var cycle := sin(_time * 14.0)
-	pose[&"thigh_l"] = Vector3(-0.2 + cycle * 0.6, 0, 0)
-	pose[&"thigh_r"] = Vector3(-0.2 - cycle * 0.6, 0, 0)
+	pose[&"hips"] = Vector3(-0.5, 0, 0)
+	pose[&"spine"] = Vector3(-0.1, 0, 0)
+	pose[&"thigh_l"] = Vector3(0.3 + cycle * 0.6, 0, 0)
+	pose[&"thigh_r"] = Vector3(0.3 - cycle * 0.6, 0, 0)
 	pose[&"knee_l"] = Vector3(-0.9 - maxf(cycle, 0.0) * 0.6, 0, 0)
 	pose[&"knee_r"] = Vector3(-0.9 - maxf(-cycle, 0.0) * 0.6, 0, 0)
 	_ninja_run(pose, 1.0)
-	pose[&"spine"] = Vector3(-0.55, 0, 0)
-	pose[&"head"] = Vector3(0.5, 0, 0)
 
 
 ## Colado na parede: agachado de frente para ela, um pé plantado alto e o outro embaixo,

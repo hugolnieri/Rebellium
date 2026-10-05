@@ -6,10 +6,10 @@
 script = ExtResource("1")
 display_name = "Corte crescente"
 anim = "slash_r"
-startup = 0.08
-active = 0.08
-recovery = 0.26
-chain_after = 0.22
+startup = 0.128
+active = 0.104
+recovery = 0.442
+chain_after = 0.475
 damage = 12.0
 reach = 1.9
 arc_deg = 170.0

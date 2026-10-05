@@ -6,10 +6,10 @@
 script = ExtResource("1")
 display_name = "Furada dupla"
 anim = "jab"
-startup = 0.05
-active = 0.06
-recovery = 0.16
-chain_after = 0.12
+startup = 0.08
+active = 0.078
+recovery = 0.272
+chain_after = 0.308
 damage = 8.0
 reach = 1.7
 arc_deg = 100.0

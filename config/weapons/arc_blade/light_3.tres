@@ -6,10 +6,10 @@
 script = ExtResource("1")
 display_name = "Golpe descendente"
 anim = "overhead"
-startup = 0.16
-active = 0.1
-recovery = 0.38
-chain_after = 0.32
+startup = 0.256
+active = 0.13
+recovery = 0.646
+chain_after = 0.741
 damage = 20.0
 reach = 2.6
 arc_deg = 90.0

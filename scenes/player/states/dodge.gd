@@ -20,7 +20,8 @@ func enter(_from: StringName, data: Dictionary) -> void:
 		if cfg().air_dodge_suspends_gravity:
 			player.velocity.y = 0.0
 		else:
-			player.velocity.y = minf(player.velocity.y, -cfg().air_dodge_fall_speed)
+			# O dash corta a queda acumulada: recomeça a descer devagar a partir daqui.
+			player.velocity.y = -cfg().air_dodge_fall_speed
 	GameEvents.dodged.emit(player, _direction)
 
 

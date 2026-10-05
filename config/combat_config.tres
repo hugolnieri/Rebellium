@@ -6,7 +6,7 @@
 script = ExtResource("1")
 max_hp = 100.0
 respawn_delay = 1.5
-attack_buffer_ticks = 10
+attack_buffer_ticks = 20
 heavy_hold_ticks = 16
 swap_cooldown = 0.25
 aim_assist_enabled = false

@@ -23,6 +23,7 @@ extends Resource
 @export_range(0.0, 90.0, 1.0, "suffix:°") var leg_swing_deg: float = 42.0
 @export_range(0.0, 120.0, 1.0, "suffix:°") var knee_bend_deg: float = 70.0
 @export_range(0.0, 90.0, 1.0, "suffix:°") var arm_swing_deg: float = 38.0
+## Inclinação do CORPO INTEIRO (a partir do quadril) andando; no sprint usa ninja_run_lean_deg.
 @export_range(0.0, 45.0, 0.5, "suffix:°") var run_lean_deg: float = 26.0
 @export_range(0.0, 45.0, 0.5, "suffix:°") var sprint_extra_lean_deg: float = 9.0
 @export_range(0.0, 0.3, 0.005, "suffix:m") var run_bob_height: float = 0.05
@@ -49,9 +50,15 @@ extends Resource
 @export_range(0.1, 1.0, 0.01, "suffix:m") var roll_ball_height: float = 0.36
 ## Dash como estrela (cambalhota lateral): giro completo durante o deslocamento do dash.
 @export var dash_cartwheel: bool = true
-## Sprint "ninja": tronco bem inclinado e braços esticados para trás.
+## Sprint "ninja": corpo inteiro bem inclinado e braços esticados para trás.
 @export_range(0.0, 60.0, 0.5, "suffix:°") var ninja_run_lean_deg: float = 45.0
-@export_range(0.0, 110.0, 1.0, "suffix:°") var ninja_arm_back_deg: float = 70.0
+## Ângulo dos braços no sprint em relação ao chão (0 = totalmente na horizontal, + = para cima).
+@export_range(-45.0, 45.0, 1.0, "suffix:°") var ninja_arm_pitch_deg: float = 0.0
+## Passada: fração do ciclo com o pé no chão andando / correndo e flexão do joelho de apoio.
+@export_range(0.2, 0.8, 0.01) var stance_fraction_walk: float = 0.6
+@export_range(0.2, 0.8, 0.01) var stance_fraction_run: float = 0.38
+@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_walk_deg: float = 12.0
+@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_run_deg: float = 32.0
 
 @export_group("Molas da animação")
 ## Frequência/amortecimento das articulações na locomoção (menor amortecimento = mais balanço).

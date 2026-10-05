@@ -129,8 +129,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Vira na hora para onde a câmera aponta. Acelera até a velocidade de sprint (10 m/s), mas **cai mais rápido** (gravidade ×1,7) e gasta 12 SP/s.
   - O HUD de debug mostra `CORRIDA NO AR`; o personagem mergulha para frente pedalando.
   - Acaba ao aterrissar, ao soltar o W ou com SP zerado. O sprint que vem do chão **não** acelera a queda.
-- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral que **acelera a queda** de leve (desce a
-  3 m/s e a gravidade fica ×1,4 durante o dash). Para o dash reto antigo: F2 → `air_dodge_suspends_gravity`.
+- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral que **corta a queda** (a velocidade de
+  queda acumulada zera e ele recomeça descendo a 3 m/s, com gravidade ×1,4 durante o dash). Para o dash reto antigo: F2 → `air_dodge_suspends_gravity`.
   - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
   - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
   - Ao terminar, você continua caindo com 9 m/s na direção do dash (`air_dodge_exit_speed`).
@@ -144,8 +144,11 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   olhos verdes, toon shading e contorno. Pisca sozinho e franze a testa ao golpear.
   - Parado: pernas abertas (`idle_stance_width_deg`), respira devagar (peito e ombros sobem e descem), apoia o
     peso numa perna e olha em volta.
-  - Andando o tronco inclina bem para frente (26°, `run_lean_deg`); no sprint ainda mais (45°, corrida ninja).
-  - Lâmina de Arco: parado e andando a espada fica **apoiada no ombro** (`rest_on_shoulder` na arma); no sprint
+  - Andando o **corpo inteiro** inclina para frente a partir do quadril (26°, `run_lean_deg`); no sprint ainda
+    mais (45°, `ninja_run_lean_deg`), com os **braços esticados para trás na horizontal** (`ninja_arm_pitch_deg`).
+  - Pernas: passada com calcanhar no contato, joelho de apoio levemente dobrado, impulso na ponta do pé e
+    joelho subindo no balanço (`stance_fraction_*`, `stance_knee_*`).
+  - Lâmina de Arco: parado e andando a lâmina fica **encostada em cima do ombro direito** (`rest_on_shoulder` na arma); no sprint
     os braços vão para trás como antes. A Presa de Fase continua na mão.
   - Dash: **estrela** (cambalhota lateral) para o lado do dash, com as mãos tocando o chão no meio do giro
     (`dash_cartwheel` no F2, aba Visual, para desligar).

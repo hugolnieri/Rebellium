@@ -107,3 +107,11 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Tronco mais inclinado: 26° andando, 45° no sprint.
 - Lâmina de Arco apoiada no ombro parado e andando (`WeaponConfig.rest_on_shoulder`).
 
+## Revisão: corpo inclinado, passada e ritmo do combo
+- Inclinação do corpo inteiro a partir do quadril (coxas compensam, pés embaixo do corpo).
+- Sprint com braços na horizontal (o ângulo do ombro desconta a inclinação do tronco).
+- Passada nova por fases (apoio/balanço) com calcanhar, carga no joelho e impulso na ponta.
+- Golpes leves mais lentos com intervalo maior entre os acertos do combo; buffer do clique 20 ticks.
+- Lâmina de Arco encostada no ombro (pose resolvida para a lâmina tocar o topo do ombro).
+- Dash no ar zera a queda acumulada antes de descer.
+

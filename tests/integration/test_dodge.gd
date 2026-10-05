@@ -143,6 +143,15 @@ func test_air_dash_accelerates_fall() -> void:
 	assert_gt(d.player.get_horizontal_speed(), 10.0, "continua indo para o lado")
 
 
+func test_air_dash_cancels_accumulated_fall() -> void:
+	d.player.respawn(Transform3D(Basis(), Vector3(0, 30, 0)))
+	d.step_until(func() -> bool: return d.player.velocity.y < -12.0, 120)
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge")
+	assert_gt(d.player.velocity.y, -d.player.config.air_dodge_fall_speed - 0.5, "o dash corta a queda")
+
+
 func test_air_dash_keeps_momentum_and_returns_to_fall() -> void:
 	d.player.config.air_dodge_suspends_gravity = true
 	d.press_jump()

@@ -9,7 +9,7 @@ extends Resource
 
 @export_group("Entrada")
 ## Ticks que um clique de ataque fica guardado (permite apertar um pouco antes).
-@export_range(0, 30, 1, "suffix:ticks") var attack_buffer_ticks: int = 10
+@export_range(0, 30, 1, "suffix:ticks") var attack_buffer_ticks: int = 20
 ## Segurar o botão esquerdo por este tempo solta o golpe pesado (toque = leve, ao soltar).
 @export_range(1, 60, 1, "suffix:ticks") var heavy_hold_ticks: int = 16
 ## Tempo mínimo entre trocas de arma.
