@@ -130,6 +130,40 @@ func test_heavy_in_air_with_right_click() -> void:
 	assert_false(d.player.is_on_floor())
 
 
+func test_jump_cancels_ground_attack() -> void:
+	await _ready_world()
+	d.press_attack()
+	d.step(3)
+	assert_eq(d.state(), &"Attack")
+	d.press_jump()
+	d.step(1)
+	assert_eq(d.state(), &"Jump", "pulo interrompe o golpe")
+	assert_gt(d.player.velocity.y, 0.0)
+
+
+func test_heavy_hold_during_dash_cancels_dash() -> void:
+	await _ready_world()
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	d.press_attack()
+	d.attack_light_held = true
+	d.step(d.player.combat_config.heavy_hold_ticks + 1, Vector2(1, 0))
+	assert_eq(d.state(), &"Attack")
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_HEAVY)
+	d.attack_light_held = false
+
+
+func test_attack_cuts_dash_momentum() -> void:
+	await _ready_world()
+	d.press_dodge()
+	d.step(2, Vector2(1, 0))
+	assert_gt(d.player.get_horizontal_speed(), 15.0)
+	d.press_attack()
+	d.step(1)
+	assert_eq(d.state(), &"Attack")
+	assert_lte(d.player.get_horizontal_speed(), d.player.get_walk_speed() + 0.01, "golpe corta o dash")
+
+
 func test_attack_during_dash_is_dash_attack() -> void:
 	await _ready_world()
 	d.press_dodge()

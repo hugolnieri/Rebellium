@@ -436,6 +436,7 @@ func _ground_pose(pose: Dictionary, sprinting: bool, accel: float) -> void:
 	var breath := sin(_time * TAU / maxf(fb.breath_period, 0.1))
 	var depth := deg_to_rad(fb.breath_depth_deg)
 	var shift := deg_to_rad(fb.idle_weight_shift_deg) * calm
+	var stance := deg_to_rad(fb.idle_stance_width_deg) * calm
 	for i in 2:
 		var side := "l" if i == 0 else "r"
 		var leg_phase := _phase + PI * i
@@ -443,10 +444,12 @@ func _ground_pose(pose: Dictionary, sprinting: bool, accel: float) -> void:
 		# Joelho dobra mais na passagem (perna vindo para frente) e estica no contato.
 		var knee := -knee_bend * (0.5 + 0.5 * sin(leg_phase + PI * 0.65)) - 0.1 * amount
 		var relaxed := 1.0 if i == 1 else 0.0  # perna direita relaxada
-		pose[StringName("thigh_" + side)] = Vector3(thigh + 0.08 * relaxed * calm, 0,
-			((0.04 if i == 0 else -0.04) + (shift if i == 0 else shift * 0.4)) * calm)
+		# Pernas abertas: esquerda gira -Z (para fora), direita +Z; o pé compensa e fica plano.
+		var out := -stance if i == 0 else stance
+		pose[StringName("thigh_" + side)] = Vector3(thigh + 0.08 * relaxed * calm, 0, out + shift)
 		pose[StringName("knee_" + side)] = Vector3(knee - (0.06 + 0.14 * relaxed) * calm, 0, 0)
-		pose[StringName("foot_" + side)] = Vector3(-thigh * 0.35 - knee * 0.25 + 0.05 * relaxed * calm, 0, 0)
+		pose[StringName("foot_" + side)] = Vector3(-thigh * 0.35 - knee * 0.25 + 0.05 * relaxed * calm, 0,
+			-out - shift)
 	# Braço livre balança oposto à perna; ombros sobem de leve ao inspirar.
 	var lift := breath * depth * 0.8 * calm
 	pose[&"shoulder_l"] = Vector3(-sin(_phase) * arm_swing + 0.1, 0, -0.16 - 0.1 * amount - lift)
@@ -526,14 +529,17 @@ func _air_sprint_pose(pose: Dictionary) -> void:
 ## Colado na parede: agachado de frente para ela, um pé plantado alto e o outro embaixo,
 ## tronco ereto, braços abrindo para o mortal.
 func _wall_kick_pose(pose: Dictionary) -> void:
-	pose[HIPS_Y] = Vector3(-0.12, 0, 0)
-	pose[&"thigh_l"] = Vector3(1.0, 0, 0.12)
-	pose[&"thigh_r"] = Vector3(0.45, 0, -0.1)
-	pose[&"knee_l"] = Vector3(-1.6, 0, 0)
-	pose[&"knee_r"] = Vector3(-1.0, 0, 0)
-	pose[&"foot_l"] = Vector3(0.4, 0, 0)
-	pose[&"spine"] = Vector3(0.05, 0, 0)
-	pose[&"head"] = Vector3(0.2, 0, 0)
+	# Bem encolhido: joelhos no peito, tronco curvado para a parede, braços recolhidos.
+	pose[HIPS_Y] = Vector3(-0.28, 0, 0)
+	pose[&"thigh_l"] = Vector3(1.75, 0, 0.1)
+	pose[&"thigh_r"] = Vector3(1.35, 0, -0.1)
+	pose[&"knee_l"] = Vector3(-2.3, 0, 0)
+	pose[&"knee_r"] = Vector3(-2.0, 0, 0)
+	pose[&"foot_l"] = Vector3(0.5, 0, 0)
+	pose[&"foot_r"] = Vector3(0.4, 0, 0)
+	pose[&"spine"] = Vector3(-0.35, 0, 0)
+	pose[&"chest"] = Vector3(-0.2, 0, 0)
+	pose[&"head"] = Vector3(0.35, 0, 0)
 	pose[&"shoulder_l"] = Vector3(1.6, 0, -0.6)
 	pose[&"shoulder_r"] = Vector3(1.4, 0, 0.6)
 	pose[&"elbow_l"] = Vector3(0.5, 0, 0)
@@ -542,14 +548,16 @@ func _wall_kick_pose(pose: Dictionary) -> void:
 
 ## Cambalhota: corpo encolhido (joelhos no peito, cabeça baixa, braços abraçando as pernas).
 func _roll_pose(pose: Dictionary) -> void:
-	pose[HIPS_Y] = Vector3(-0.42, 0, 0)
-	pose[&"spine"] = Vector3(-0.7, 0, 0)
-	pose[&"chest"] = Vector3(-0.35, 0, 0)
-	pose[&"head"] = Vector3(-0.4, 0, 0)
-	pose[&"thigh_l"] = Vector3(1.9, 0, 0.12)
-	pose[&"thigh_r"] = Vector3(1.9, 0, -0.12)
-	pose[&"knee_l"] = Vector3(-2.3, 0, 0)
-	pose[&"knee_r"] = Vector3(-2.3, 0, 0)
+	# O corpo inteiro desce pelo pivô (_update_trick); aqui só a bola: costas arredondadas,
+	# queixo no peito, joelhos colados no peito.
+	pose[HIPS_Y] = Vector3(0, 0, 0)
+	pose[&"spine"] = Vector3(-0.9, 0, 0)
+	pose[&"chest"] = Vector3(-0.5, 0, 0)
+	pose[&"head"] = Vector3(-0.55, 0, 0)
+	pose[&"thigh_l"] = Vector3(2.1, 0, 0.12)
+	pose[&"thigh_r"] = Vector3(2.1, 0, -0.12)
+	pose[&"knee_l"] = Vector3(-2.4, 0, 0)
+	pose[&"knee_r"] = Vector3(-2.4, 0, 0)
 	pose[&"shoulder_l"] = Vector3(1.2, 0, 0.1)
 	pose[&"shoulder_r"] = Vector3(1.0, 0, -0.1)
 	pose[&"elbow_l"] = Vector3(1.4, 0, 0)
@@ -754,11 +762,16 @@ func _update_trick(delta: float) -> void:
 		if _trick_face_wall:
 			basis = basis * Basis(Vector3.UP, PI * (1.0 - eased))
 		basis = basis * Basis(_trick_axis, _trick_angle * eased)
-	elif _is_rolling():
-		# Cambalhota para frente ao aterrissar.
+	var pivot_y := _hips_rest.y * _rig_scale
+	if _trick_timer <= 0.0 and _is_rolling():
+		# Cambalhota para frente: o centro do corpo desce até a altura da "bola" para as costas
+		# rolarem no chão, e sobe de novo no fim.
 		var roll: float = player.state_machine.current.call(&"get_roll_progress")
 		basis = basis * Basis(Vector3.RIGHT, -TAU * _ease_in_out(roll))
+		var down := clampf(minf(roll / 0.18, (1.0 - roll) / 0.25), 0.0, 1.0)
+		pivot_y = lerpf(pivot_y, _fb().roll_ball_height, _ease_in_out(down))
 	_trick.basis = basis
+	_trick.position.y = pivot_y
 
 
 func _is_rolling() -> bool:

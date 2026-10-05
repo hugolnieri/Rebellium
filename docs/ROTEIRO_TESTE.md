@@ -129,8 +129,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Vira na hora para onde a câmera aponta. Acelera até a velocidade de sprint (10 m/s), mas **cai mais rápido** (gravidade ×1,7) e gasta 12 SP/s.
   - O HUD de debug mostra `CORRIDA NO AR`; o personagem mergulha para frente pedalando.
   - Acaba ao aterrissar, ao soltar o W ou com SP zerado. O sprint que vem do chão **não** acelera a queda.
-- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral que **acelera a queda** (mergulha a 6 m/s
-  e a gravidade fica ×2,5 durante o dash). Para o dash reto antigo: F2 → `air_dodge_suspends_gravity`.
+- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral que **acelera a queda** de leve (desce a
+  3 m/s e a gravidade fica ×1,4 durante o dash). Para o dash reto antigo: F2 → `air_dodge_suspends_gravity`.
   - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
   - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
   - Ao terminar, você continua caindo com 9 m/s na direção do dash (`air_dodge_exit_speed`).
@@ -142,16 +142,19 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 ## Parte 3b: personagem e polimento (observar)
 - **Personagem**: modelo anime (base VRoid, licença CC0) com traje preto e linhas roxas, cabelo branco,
   olhos verdes, toon shading e contorno. Pisca sozinho e franze a testa ao golpear.
-  - Parado: respira devagar (peito e ombros sobem e descem), apoia o peso numa perna e olha em volta.
+  - Parado: pernas abertas (`idle_stance_width_deg`), respira devagar (peito e ombros sobem e descem), apoia o
+    peso numa perna e olha em volta.
+  - Andando o tronco inclina para frente (`run_lean_deg`); no sprint inclina ainda mais (corrida ninja).
   - Trocar de direção não inclina o corpo para os lados (`bank_strength` = 0 no F2, aba Visual).
   - Sprint: **corrida ninja** — tronco bem inclinado para frente, cabeça erguida, braços esticados para trás e
     a lâmina arrastando atrás. Na corrida no ar a pose é a mesma.
   - Passada acompanha a velocidade; o cabelo balança com o vento.
   - No ar: pose de pulo subindo e braços abertos caindo.
-  - Wall jump: o personagem **cola na parede** por um instante (agachado, de frente para ela, ~0,1 s,
+  - Wall jump: o personagem **cola na parede** por um instante (bem encolhido, de frente para ela, ~0,1 s,
     `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.
     Reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
-  - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente absorvendo o impacto. Dá para cancelar
+  - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente absorvendo o impacto, rolando com as
+    costas no chão (`roll_ball_height`). Dá para cancelar
     com dash (A/D + Space) ou correndo (W, W). Corrida no ar → aterrissa sem cambalhota.
   - Ao começar a correr, o personagem solta um **gritinho** curto.
 - **Sensação de velocidade**: acima de 8 m/s surgem linhas de velocidade nas bordas da tela, o FOV abre
@@ -214,6 +217,10 @@ Ande até os três postes à frente (POSTE).
    acaba ao tocar o chão). Tempo de carga: F2 → Combate → `heavy_hold_ticks`.
 3. **Troca de arma**: 2 (ou Q). Floreio da arma, flash e som de carga. A **Presa de Fase** tem combo de 4
    golpes rápidos, anda ~8% mais rápido e o pesado (lâmina ascendente) lança para cima.
+5. **Pular golpeando**: aperte Espaço no meio de um golpe no chão → o golpe é interrompido e o personagem
+   pula (`attack_jump_cancel`).
+6. **Golpe cancela o dash**: durante o dash, clique (leve) ou segure/botão direito (pesado) → o dash para na
+   hora e sai o golpe (`attack_cancels_dash_momentum`).
 4. **Golpear andando/correndo**: o golpe não trava o personagem nem o empurra sozinho. Segurando WASD ele
    continua andando enquanto golpeia; em sprint (W, W) continua correndo (gasta SP). Parado, golpeia no lugar.
    O golpe sai para onde a câmera aponta (mira assistida opcional: F2 → Combate → `aim_assist_enabled`).

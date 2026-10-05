@@ -240,10 +240,9 @@ func get_sprint_speed() -> float:
 
 
 func _update_attack_charge(input: PlayerInput) -> void:
-	var instant := state_machine.is_in(&"Dodge")
 	var step_result := CombatRules.attack_charge_step(_attack_charge_tick, tick,
 		input.is_pressed_this_tick(input.attack_light_pressed_tick), input.attack_light_held,
-		combat_config.heavy_hold_ticks, instant)
+		combat_config.heavy_hold_ticks, false)
 	_attack_charge_tick = step_result.charge_tick
 	if step_result.light:
 		_light_ready_tick = tick
@@ -291,7 +290,8 @@ func try_attack(input: PlayerInput) -> bool:
 	var attack: AttackData
 	var index := 0
 	var use_heavy := false
-	if state_machine.is_in(&"Dodge") and light:
+	if state_machine.is_in(&"Dodge") and light and not heavy:
+		# Golpe interrompe o dash (o pesado também: segurando ou botão direito, abaixo).
 		kind = CombatRules.KIND_DASH
 		attack = weapon.dash
 	elif not is_on_floor():

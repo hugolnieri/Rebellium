@@ -103,8 +103,8 @@ extends Resource
 ## Durante o dash no ar a gravidade é suspensa (dash reto, sem cair). Desligado: o dash no ar
 ## ACELERA a queda (velocidade inicial para baixo + gravidade multiplicada).
 @export var air_dodge_suspends_gravity: bool = false
-@export_range(0.0, 40.0, 0.5, "suffix:m/s") var air_dodge_fall_speed: float = 6.0
-@export_range(0.0, 6.0, 0.05) var air_dodge_gravity_multiplier: float = 2.5
+@export_range(0.0, 40.0, 0.5, "suffix:m/s") var air_dodge_fall_speed: float = 3.0
+@export_range(0.0, 6.0, 0.05) var air_dodge_gravity_multiplier: float = 1.4
 ## Velocidade horizontal mantida ao fim do dash no ar (não há recuperação no ar).
 @export_range(0.0, 30.0, 0.5, "suffix:m/s") var air_dodge_exit_speed: float = 9.0
 ## Dodge pode interromper estados de recuperação (Land, recuperação do dodge).

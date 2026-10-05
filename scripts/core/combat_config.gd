@@ -26,6 +26,10 @@ extends Resource
 @export_group("Golpes")
 ## Velocidade de movimento durante o golpe (× andar/correr). 1 = golpeia sem perder o passo.
 @export_range(0.0, 1.5, 0.05) var attack_move_speed_multiplier: float = 1.0
+## Espaço durante um golpe no chão interrompe o golpe e pula.
+@export var attack_jump_cancel: bool = true
+## Golpe (leve ou pesado) durante o dash corta o embalo do dash.
+@export var attack_cancels_dash_momentum: bool = true
 
 @export_group("Combo")
 ## Sem acertar por este tempo, o contador de combo zera.

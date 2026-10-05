@@ -95,3 +95,9 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Wall jump cola o personagem na parede por `wall_jump_stick_ticks` antes do impulso.
 - Pesado também no ar (segurar ou botão direito) e com animação mais longa (tempos dos `heavy.tres`).
 
+## Revisão: postura, cambalhota e cancels
+- Parado com as pernas abertas; tronco inclina ao andar e mais no sprint.
+- Wall jump com o personagem bem encolhido na parede; cambalhota rola com as costas no chão.
+- Pulo cancela o golpe no chão; golpe leve ou pesado cancela o dash (corta o embalo).
+- Dash no ar acelera a queda mais devagar (3 m/s, gravidade ×1,4).
+

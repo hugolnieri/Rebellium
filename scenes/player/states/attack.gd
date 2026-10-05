@@ -5,6 +5,7 @@ extends PlayerState
 ## - Na janela de acerto testa os alvos do grupo "hittable" (cada alvo leva no máximo 1 acerto).
 ## - A partir de `chain_after`, um clique guardado encadeia o próximo golpe do combo (ou o pesado).
 ## - A recuperação é cancelável por dash (dodge cancel) e por troca de arma (swap cancel).
+## - No chão, Espaço pula a qualquer momento do golpe (cancela o golpe).
 ## O tempo do golpe conta em ticks próprios: o hitstop pausa o golpe.
 
 enum Phase { STARTUP, ACTIVE, RECOVERY }
@@ -24,7 +25,7 @@ var _chain_ticks: int = 1
 var _hit_ids: Dictionary = {}
 
 
-func enter(_from: StringName, data: Dictionary) -> void:
+func enter(from: StringName, data: Dictionary) -> void:
 	attack = data.attack
 	kind = data.kind
 	combo_index = data.get("combo_index", 0)
@@ -37,6 +38,11 @@ func enter(_from: StringName, data: Dictionary) -> void:
 	_recovery_ticks = maxi(player.secs_to_ticks(attack.recovery), 0)
 	_chain_ticks = player.secs_to_ticks(attack.chain_after)
 	player.facing_override = direction
+	if from == &"Dodge" and player.combat_config.attack_cancels_dash_momentum:
+		# O golpe corta o dash: sobra no máximo a velocidade de andar.
+		var horizontal := player.get_horizontal_velocity().limit_length(player.get_walk_speed())
+		player.velocity.x = horizontal.x
+		player.velocity.z = horizontal.z
 	if kind == CombatRules.KIND_AIR and attack.air_start_vertical_speed != 0.0:
 		player.velocity.y = attack.air_start_vertical_speed
 	GameEvents.attack_started.emit(player, attack, player.get_weapon(), kind)
@@ -72,6 +78,8 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	_t += 1
 	if is_recovery() and player.try_dodge(input):
 		return
+	if _try_jump_cancel(input):
+		return
 	if _t >= _chain_ticks and player.try_attack(input):
 		return
 	var phase := get_phase()
@@ -89,6 +97,17 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		_check_hits()
 	if _t >= _startup_ticks + _active_ticks + _recovery_ticks:
 		_finish(input)
+
+
+## Pulo durante o golpe (no chão): o golpe é interrompido e o personagem sai pulando.
+func _try_jump_cancel(input: PlayerInput) -> bool:
+	if not player.combat_config.attack_jump_cancel or airborne or not player.is_on_floor():
+		return false
+	if not player.consume_jump_press(input, cfg().jump_buffer_ticks):
+		return false
+	player.do_jump("pulo cancelando golpe")
+	machine.transition_to(&"Jump", "pulo cancelou o golpe")
+	return true
 
 
 ## Golpe no chão sem perder o passo: anda ou corre (sprint ativo) pelo input.
