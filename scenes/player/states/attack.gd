@@ -120,12 +120,15 @@ func _move_on_ground(input: PlayerInput, delta: float) -> void:
 		player.apply_ground_movement(input, player.get_sprint_speed() * multiplier, delta)
 		player.sp.drain(cfg().sprint_sp_cost_per_second * delta)
 	else:
+		player.redirect_to_wish(input, cfg().walk_instant_turn)
 		player.apply_ground_movement(input, player.get_walk_speed() * multiplier, delta)
 
 
 func post_move(_input: PlayerInput) -> void:
 	if airborne and _t > 1 and player.is_on_floor():
-		machine.transition_to(&"Land", "golpe aéreo tocou o chão")
+		# O golpe continua até o fim no chão; só o pulo (ou dash na recuperação) interrompe.
+		airborne = false
+		player.touch_down_during_action()
 
 
 func _check_hits() -> void:

@@ -99,8 +99,14 @@ func test_air_attack_dives_and_lands() -> void:
 	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_AIR)
 	d.step(d.player.secs_to_ticks(_blade().air.startup) + 3)
 	assert_lt(d.player.velocity.y, -5.0, "mergulha na janela de acerto")
-	var landed := d.step_until(func() -> bool: return d.state() == &"Land", 90)
+	var landed := d.step_until(func() -> bool: return d.player.is_on_floor(), 90)
 	assert_gt(landed, 0)
+	d.step(1)
+	assert_eq(d.state(), &"Attack", "o golpe continua depois de tocar o chão")
+	assert_false(d.player.state_machine.current.airborne)
+	var ended := d.step_until(func() -> bool: return d.state() != &"Attack", 90)
+	assert_gt(ended, 0)
+	assert_ne(d.state(), &"Land", "não passa pela aterrissagem")
 
 
 func test_heavy_in_air_by_holding_left_click() -> void:
@@ -115,8 +121,9 @@ func test_heavy_in_air_by_holding_left_click() -> void:
 	assert_eq(attack.kind, CombatRules.KIND_HEAVY)
 	assert_true(attack.airborne, "pesado aéreo")
 	d.attack_light_held = false
-	var landed := d.step_until(func() -> bool: return d.state() == &"Land", 120)
-	assert_gt(landed, 0, "termina ao tocar o chão")
+	var ended := d.step_until(func() -> bool: return d.state() != &"Attack", 180)
+	assert_gt(ended, 0, "o pesado aéreo termina (mesmo depois de tocar o chão)")
+	assert_true(d.player.is_on_floor())
 
 
 func test_heavy_in_air_with_right_click() -> void:

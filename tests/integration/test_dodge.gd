@@ -179,6 +179,21 @@ func test_landing_after_air_attack_has_no_roll() -> void:
 	assert_true(d.player.state_machine.current.rolling, "queda normal ainda rola")
 
 
+func test_air_dash_continues_after_touching_ground() -> void:
+	d.press_jump()
+	d.step(4)
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge")
+	d.step_until(func() -> bool: return d.player.is_on_floor(), 60, Vector2(1, 0))
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge", "o dash continua no chão")
+	assert_gt(d.player.get_horizontal_speed(), 4.0)
+	d.press_jump()
+	d.step(1)
+	assert_eq(d.state(), &"Jump", "pular interrompe o dash")
+
+
 func test_air_dash_keeps_momentum_and_returns_to_fall() -> void:
 	d.player.config.air_dodge_suspends_gravity = true
 	d.press_jump()

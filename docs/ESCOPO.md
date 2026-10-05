@@ -125,3 +125,8 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   4,4 m do percurso exigindo back-coming + reverse).
 - Pesado da Lâmina de Arco gira para a direita.
 
+## Revisão: ações que continuam no chão, giro imediato e passada agachada
+- Dash e golpe aéreos continuam ao tocar o chão (pouso limpo); só o pulo interrompe.
+- Corpo e velocidade viram na hora para o input/câmera também andando.
+- Passada mais agachada com calcanhar para trás.
+

@@ -459,8 +459,8 @@ func apply_ground_movement(input: PlayerInput, target_speed: float, delta: float
 
 
 ## Correndo: aponta a velocidade horizontal para a direção desejada sem perder velocidade.
-func redirect_to_wish(input: PlayerInput) -> void:
-	if not config.sprint_instant_turn or not input.has_move():
+func redirect_to_wish(input: PlayerInput, enabled: bool = config.sprint_instant_turn) -> void:
+	if not enabled or not input.has_move():
 		return
 	var speed := get_horizontal_speed()
 	var dir := input.get_wish_direction().normalized()
@@ -619,6 +619,16 @@ func apply_wall_jump_cancel() -> void:
 	state_machine.transition_to(&"Jump" if velocity.y > 0.0 else &"Fall", "cancel")
 
 
+## Tocou o chão no meio de um dash ou golpe aéreo: a ação continua (sem passar pelo Land),
+## mas o pouso conta (recarrega o dash no ar, limpa paredes) e é "limpo" (sem animação de impacto).
+func touch_down_during_action() -> void:
+	land_tick = tick
+	land_impact_speed = maxf(-pre_slide_velocity.y, 0.0)
+	last_landing_soft = true
+	on_landed()
+	GameEvents.landed.emit(self, land_impact_speed)
+
+
 ## Limpa memória de paredes ao tocar o chão.
 func on_landed() -> void:
 	air_sprinting = false
@@ -670,10 +680,11 @@ func respawn(at: Transform3D) -> void:
 func _update_visual(delta: float) -> void:
 	var horizontal := get_horizontal_velocity()
 	var target_yaw: float
+	var instant := feedback_config.instant_facing
 	if facing_override != Vector3.ZERO and state_machine.is_in(&"Attack"):
-		# Golpe: o corpo encara o alvo/câmera rapidamente.
+		# Golpe: o corpo encara o alvo/câmera.
 		target_yaw = atan2(-facing_override.x, -facing_override.z)
-		visual.rotation.y = lerp_angle(visual.rotation.y, target_yaw,
+		visual.rotation.y = target_yaw if instant else lerp_angle(visual.rotation.y, target_yaw,
 			clampf(feedback_config.model_turn_speed * 2.0 * delta, 0.0, 1.0))
 		return
 	elif state_machine.is_in(&"WallJump") and state_machine.current.call(&"is_sticking"):
@@ -685,9 +696,16 @@ func _update_visual(delta: float) -> void:
 	elif state_machine.is_in(&"Dodge"):
 		# Dash lateral: o corpo continua de frente para a câmera e só se inclina.
 		target_yaw = current_input.look_yaw
+	elif instant and current_input.has_move() and not state_machine.is_in(&"WallJump"):
+		# Vira na hora para a direção do input (relativa à câmera).
+		var wish := current_input.get_wish_direction()
+		target_yaw = atan2(-wish.x, -wish.z)
 	elif horizontal.length() < 0.5:
 		return
 	else:
 		target_yaw = atan2(-horizontal.x, -horizontal.z)
+	if instant:
+		visual.rotation.y = target_yaw
+		return
 	var weight := clampf(feedback_config.model_turn_speed * delta, 0.0, 1.0)
 	visual.rotation.y = lerp_angle(visual.rotation.y, target_yaw, weight)

@@ -151,7 +151,10 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Pulo do chão: **mortal para frente** (encolhe no meio do giro; `jump_flip_enabled`, `jump_flip_duration`).
     Golpe, dash ou wall jump no ar interrompem o mortal.
   - Pernas: passada com calcanhar no contato, joelho de apoio levemente dobrado, impulso na ponta do pé e
-    joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`).
+    joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`),
+    calcanhar jogado para trás (`heel_kick_*`) e passada agachada, perto do chão (`gait_crouch`).
+  - O corpo vira **na hora** para a direção do input/câmera, andando ou correndo (`instant_facing`,
+    `walk_instant_turn`).
   - Lâmina de Arco: parado e andando a lâmina fica **encostada em cima do ombro direito** (`rest_on_shoulder` na arma); no sprint
     os braços vão para trás como antes. A Presa de Fase continua na mão.
   - Dash: **estrela** (cambalhota lateral) para o lado do dash, com as mãos tocando o chão no meio do giro
@@ -168,6 +171,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     costas no chão (`roll_ball_height`). Dá para cancelar
     com dash (A/D + Space) ou correndo (W, W). Corrida no ar, **dash no ar** ou **golpe no ar** → aterrissa
     limpo, sem cambalhota nem agachamento (`air_action_cancels_landing`).
+  - Tocar o chão no meio de um **dash no ar** ou de um **golpe no ar** não interrompe nada: o dash continua no
+    chão (Espaço interrompe com pulo) e o golpe vai até o fim.
   - Ao começar a correr, o personagem solta um **gritinho** curto.
 - **Sensação de velocidade**: acima de 8 m/s surgem linhas de velocidade nas bordas da tela, o FOV abre
   (até +18°), a câmera recua um pouco e treme de leve; tudo cresce até 17 m/s. Ajuste na aba Câmera do F2,

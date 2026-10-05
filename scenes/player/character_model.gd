@@ -514,6 +514,10 @@ func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: f
 	var knee_swing := deg_to_rad(fb.knee_bend_deg) * amount * lerpf(0.9, 1.6, run_k)
 	var knee_load := deg_to_rad(lerpf(fb.stance_knee_walk_deg, fb.stance_knee_run_deg, run_k)) * amount
 	var knee_lift := deg_to_rad(lerpf(fb.knee_lift_walk_deg, fb.knee_lift_run_deg, run_k)) * amount
+	var heel_kick := deg_to_rad(lerpf(fb.heel_kick_walk_deg, fb.heel_kick_run_deg, run_k)) * amount
+	# Agachado: joelhos sempre um pouco dobrados (o quadril desce em HIPS_Y, abaixo).
+	var crouch_knee := fb.gait_crouch * 3.0 * amount
+	var crouch_thigh := crouch_knee * 0.5
 	var compensate := lean * 0.8
 	for i in 2:
 		var side := "l" if i == 0 else "r"
@@ -524,7 +528,7 @@ func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: f
 		if u < stance_frac:
 			var t := u / stance_frac
 			thigh = lerpf(front, -back, t)
-			knee = -knee_load * sin(PI * t)
+			knee = -knee_load * sin(PI * t) - crouch_knee
 			# Calcanhar no contato (ponta para cima), pé plano, impulso na ponta no fim do apoio.
 			ankle = 0.18 * maxf(0.0, 1.0 - t * 4.0) - 0.55 * pow(maxf(0.0, (t - 0.65) / 0.35), 2.0)
 			ankle *= amount
@@ -532,13 +536,15 @@ func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: f
 			var t := (u - stance_frac) / (1.0 - stance_frac)
 			# Joelho sobe alto no meio do balanço e a perna estica de volta antes de pisar.
 			thigh = -back + (front + back) * (0.5 - 0.5 * cos(PI * t)) + knee_lift * sin(PI * minf(t / 0.85, 1.0))
-			knee = -(knee_swing + knee_lift * 0.8) * sin(PI * minf(t / 0.8, 1.0))
+			knee = -(knee_swing + knee_lift * 0.8) * sin(PI * minf(t / 0.8, 1.0)) - crouch_knee
+			# Calcanhar vai para trás logo no começo do balanço (coxa ainda atrás).
+			knee -= heel_kick * sin(PI * minf(t / 0.55, 1.0))
 			# Saindo do impulso com a ponta para baixo, depois levanta a ponta para não arrastar.
 			ankle = (-0.5 * pow(1.0 - t, 3.0) + 0.15 * sin(PI * t)) * amount
 		var relaxed := 1.0 if i == 1 else 0.0  # parado: perna direita relaxada
 		# Pernas abertas parado: esquerda gira -Z (para fora), direita +Z; o pé compensa.
 		var out := -stance if i == 0 else stance
-		thigh += compensate + 0.08 * relaxed * calm
+		thigh += compensate + crouch_thigh + 0.08 * relaxed * calm
 		knee -= (0.06 + 0.14 * relaxed) * calm
 		pose[StringName("thigh_" + side)] = Vector3(thigh, 0, out + shift)
 		pose[StringName("knee_" + side)] = Vector3(knee, 0, 0)
@@ -550,7 +556,7 @@ func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: f
 	var mid := cos(2.0 * (_phase - PI * stance_frac))
 	var flight := clampf((0.55 - stance_frac) / 0.15, 0.0, 1.0)
 	var bob := _fb().run_bob_height * amount * lerpf(mid, -mid, flight) * 0.5
-	pose[HIPS_Y] = Vector3(bob - 0.02 * calm - 0.03 * amount, 0, 0)
+	pose[HIPS_Y] = Vector3(bob - 0.02 * calm - 0.03 * amount - fb.gait_crouch * amount, 0, 0)
 
 
 ## Corrida "ninja": corpo inteiro mergulhado (vem do quadril, em _ground_pose), cabeça erguida e

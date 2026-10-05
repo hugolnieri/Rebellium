@@ -175,12 +175,22 @@ func test_air_sprint_turns_instantly_to_camera_direction() -> void:
 	assert_gte(v.length(), speed - 0.01)
 
 
-func test_walking_still_turns_with_acceleration() -> void:
+func test_walking_turns_instantly_with_camera() -> void:
+	d.step(40, FWD)
+	d.look_yaw = PI * 0.5  # olhando para -X
+	d.step(1, FWD)
+	var dir := d.player.get_horizontal_velocity().normalized()
+	assert_almost_eq(dir.x, -1.0, 0.01, "andando vira na hora para a câmera")
+	assert_almost_eq(d.player.visual.rotation.y, PI * 0.5, 0.01, "o corpo vira junto, sem atraso")
+
+
+func test_walking_turn_can_be_gradual_when_disabled() -> void:
+	d.player.config.walk_instant_turn = false
 	d.step(40, FWD)
 	d.look_yaw = PI * 0.5
 	d.step(1, FWD)
 	var dir := d.player.get_horizontal_velocity().normalized()
-	assert_lt(dir.z, -0.9, "andando não vira instantâneo: ainda vai quase todo para a frente antiga")
+	assert_lt(dir.z, -0.9, "sem walk_instant_turn: ainda vai quase todo para a frente antiga")
 	assert_lt(dir.x, -0.05, "mas já começou a virar")
 
 

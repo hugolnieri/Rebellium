@@ -63,6 +63,8 @@ extends Resource
 ## Correndo (sprint no chão ou corrida no ar), a velocidade vira NA HORA para a direção da
 ## câmera/input, mantendo o embalo. Se false, vira com a aceleração normal.
 @export var sprint_instant_turn: bool = true
+## Andando também vira na hora para onde o input/câmera aponta (sem perder velocidade).
+@export var walk_instant_turn: bool = true
 ## Corrida no ar: toque duplo em W no ar acelera até a velocidade de sprint...
 @export var air_sprint_enabled: bool = true
 @export_range(0.0, 200.0, 0.5, "suffix:m/s²") var air_sprint_acceleration: float = 30.0

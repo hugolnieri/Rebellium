@@ -105,7 +105,9 @@ func _set_dash_velocity(t: int) -> void:
 
 func post_move(_input: PlayerInput) -> void:
 	if _airborne and player.is_on_floor() and machine.ticks_in_state() > 0:
-		machine.transition_to(&"Land", "dash no ar tocou o chão")
+		# O dash continua no chão (mesma estrela, mesma curva de velocidade); pular interrompe.
+		_airborne = false
+		player.touch_down_during_action()
 
 
 ## Progresso 0–1 do deslocamento do dash (para a animação).
