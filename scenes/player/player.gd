@@ -39,6 +39,10 @@ var sprint_latched: bool = false
 var air_sprinting: bool = false
 ## Dashes usados no ar desde a última aterrissagem/wall jump.
 var air_dodges_used: int = 0
+## Fez dash ou golpe no ar desde que saiu do chão (aterrissa sem cambalhota/agachamento).
+var air_action_used: bool = false
+## A última aterrissagem foi "limpa" (sem animação de impacto).
+var last_landing_soft: bool = false
 ## Flag de invencibilidade (dodge). Consultada pelo combate futuro.
 var is_invulnerable: bool = false
 var spawn_transform: Transform3D
@@ -530,6 +534,7 @@ func try_dodge(input: PlayerInput) -> bool:
 		return false
 	if airborne:
 		air_dodges_used += 1
+		air_action_used = true
 	if side_request:
 		consume_jump_press(input, config.jump_buffer_ticks)
 	else:
@@ -617,6 +622,7 @@ func apply_wall_jump_cancel() -> void:
 ## Limpa memória de paredes ao tocar o chão.
 func on_landed() -> void:
 	air_sprinting = false
+	air_action_used = false
 	air_dodges_used = 0
 	last_wall_jump_collider = 0
 	back_coming_wall = 0

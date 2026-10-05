@@ -334,6 +334,9 @@ func _on_landed(who: Node, impact_speed: float) -> void:
 	if who != player:
 		return
 	var fb := _fb()
+	_trick_timer = 0.0
+	if player.last_landing_soft:
+		return  # dash/golpe no ar: sem agachamento de impacto
 	_land_strength = clampf(impact_speed / fb.land_crouch_full_speed, 0.15, 1.0)
 	_land_timer = fb.land_crouch_time
 	_trick_timer = 0.0
@@ -488,6 +491,7 @@ func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: f
 	var back := swing_range * 0.42
 	var knee_swing := deg_to_rad(fb.knee_bend_deg) * amount * lerpf(0.9, 1.6, run_k)
 	var knee_load := deg_to_rad(lerpf(fb.stance_knee_walk_deg, fb.stance_knee_run_deg, run_k)) * amount
+	var knee_lift := deg_to_rad(lerpf(fb.knee_lift_walk_deg, fb.knee_lift_run_deg, run_k)) * amount
 	var compensate := lean * 0.8
 	for i in 2:
 		var side := "l" if i == 0 else "r"
@@ -504,8 +508,9 @@ func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: f
 			ankle *= amount
 		else:
 			var t := (u - stance_frac) / (1.0 - stance_frac)
-			thigh = -back + (front + back) * (0.5 - 0.5 * cos(PI * t))
-			knee = -knee_swing * sin(PI * minf(t / 0.8, 1.0))
+			# Joelho sobe alto no meio do balanço e a perna estica de volta antes de pisar.
+			thigh = -back + (front + back) * (0.5 - 0.5 * cos(PI * t)) + knee_lift * sin(PI * minf(t / 0.85, 1.0))
+			knee = -(knee_swing + knee_lift * 0.8) * sin(PI * minf(t / 0.8, 1.0))
 			# Saindo do impulso com a ponta para baixo, depois levanta a ponta para não arrastar.
 			ankle = (-0.5 * pow(1.0 - t, 3.0) + 0.15 * sin(PI * t)) * amount
 		var relaxed := 1.0 if i == 1 else 0.0  # parado: perna direita relaxada

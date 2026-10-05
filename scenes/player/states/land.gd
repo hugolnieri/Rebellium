@@ -16,8 +16,10 @@ func enter(_from: StringName, _data: Dictionary) -> void:
 	player.land_tick = player.tick
 	player.land_impact_speed = maxf(-player.pre_slide_velocity.y, 0.0)
 	_landing_velocity = WallJumpMath.horizontal(player.pre_slide_velocity)
+	# Dash ou golpe no ar cancelam a animação de impacto: aterrissa limpo, sem cambalhota.
+	player.last_landing_soft = player.air_action_used and cfg().air_action_cancels_landing
 	rolling = cfg().roll_enabled and player.land_impact_speed >= cfg().roll_min_impact_speed \
-		and not player.air_sprinting
+		and not player.air_sprinting and not player.last_landing_soft
 	_roll_ticks = maxi(player.secs_to_ticks(cfg().roll_duration), 1)
 	if _landing_velocity.length() > 0.5:
 		_roll_direction = _landing_velocity.normalized()

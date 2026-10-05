@@ -152,6 +152,33 @@ func test_air_dash_cancels_accumulated_fall() -> void:
 	assert_gt(d.player.velocity.y, -d.player.config.air_dodge_fall_speed - 0.5, "o dash corta a queda")
 
 
+func test_landing_after_air_dash_has_no_roll() -> void:
+	d.player.respawn(Transform3D(Basis(), Vector3(0, 12, 0)))
+	d.step(20)
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	d.step_until(func() -> bool: return d.state() == &"Land", 200)
+	assert_eq(d.state(), &"Land")
+	assert_gt(d.player.land_impact_speed, d.player.config.roll_min_impact_speed, "queda forte")
+	assert_false(d.player.state_machine.current.rolling, "dash no ar cancela a cambalhota")
+	assert_true(d.player.last_landing_soft)
+
+
+func test_landing_after_air_attack_has_no_roll() -> void:
+	d.player.respawn(Transform3D(Basis(), Vector3(0, 12, 0)))
+	d.step(20)
+	d.press_attack()
+	d.step(1)
+	assert_eq(d.state(), &"Attack")
+	d.step_until(func() -> bool: return d.state() == &"Land", 200)
+	assert_eq(d.state(), &"Land")
+	assert_false(d.player.state_machine.current.rolling, "golpe no ar cancela a cambalhota")
+	d.step(30)
+	d.player.respawn(Transform3D(Basis(), Vector3(0, 12, 0)))
+	d.step_until(func() -> bool: return d.state() == &"Land", 200)
+	assert_true(d.player.state_machine.current.rolling, "queda normal ainda rola")
+
+
 func test_air_dash_keeps_momentum_and_returns_to_fall() -> void:
 	d.player.config.air_dodge_suspends_gravity = true
 	d.press_jump()

@@ -115,3 +115,7 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Lâmina de Arco encostada no ombro (pose resolvida para a lâmina tocar o topo do ombro).
 - Dash no ar zera a queda acumulada antes de descer.
 
+## Revisão: aterrissagem limpa e joelhos
+- Dash ou golpe no ar cancelam a animação de impacto ao aterrissar (sem cambalhota nem agachamento).
+- Joelhos sobem mais no balanço da passada, andando e correndo.
+

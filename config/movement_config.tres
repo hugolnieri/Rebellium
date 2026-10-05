@@ -23,6 +23,7 @@ land_recovery_ticks = 5
 roll_enabled = true
 roll_min_impact_speed = 7.0
 roll_duration = 0.7
+air_action_cancels_landing = true
 roll_min_speed = 4.0
 roll_deceleration = 8.0
 sp_max = 100.0

@@ -147,7 +147,7 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Andando o **corpo inteiro** inclina para frente a partir do quadril (26°, `run_lean_deg`); no sprint ainda
     mais (45°, `ninja_run_lean_deg`), com os **braços esticados para trás na horizontal** (`ninja_arm_pitch_deg`).
   - Pernas: passada com calcanhar no contato, joelho de apoio levemente dobrado, impulso na ponta do pé e
-    joelho subindo no balanço (`stance_fraction_*`, `stance_knee_*`).
+    joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`).
   - Lâmina de Arco: parado e andando a lâmina fica **encostada em cima do ombro direito** (`rest_on_shoulder` na arma); no sprint
     os braços vão para trás como antes. A Presa de Fase continua na mão.
   - Dash: **estrela** (cambalhota lateral) para o lado do dash, com as mãos tocando o chão no meio do giro
@@ -162,7 +162,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     Reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
   - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente (0,7 s, `roll_duration`), rolando com as
     costas no chão (`roll_ball_height`). Dá para cancelar
-    com dash (A/D + Space) ou correndo (W, W). Corrida no ar → aterrissa sem cambalhota.
+    com dash (A/D + Space) ou correndo (W, W). Corrida no ar, **dash no ar** ou **golpe no ar** → aterrissa
+    limpo, sem cambalhota nem agachamento (`air_action_cancels_landing`).
   - Ao começar a correr, o personagem solta um **gritinho** curto.
 - **Sensação de velocidade**: acima de 8 m/s surgem linhas de velocidade nas bordas da tela, o FOV abre
   (até +18°), a câmera recua um pouco e treme de leve; tudo cresce até 17 m/s. Ajuste na aba Câmera do F2,

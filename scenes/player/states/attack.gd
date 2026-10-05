@@ -31,6 +31,8 @@ func enter(from: StringName, data: Dictionary) -> void:
 	combo_index = data.get("combo_index", 0)
 	direction = data.get("direction", Vector3.FORWARD)
 	airborne = kind == CombatRules.KIND_AIR or not player.is_on_floor()
+	if airborne:
+		player.air_action_used = true
 	_t = 0
 	_hit_ids.clear()
 	_startup_ticks = maxi(player.secs_to_ticks(attack.startup), 0)

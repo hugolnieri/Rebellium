@@ -44,6 +44,8 @@ extends Resource
 ## Impacto mínimo (velocidade de queda) para rolar.
 @export_range(0.0, 40.0, 0.5, "suffix:m/s") var roll_min_impact_speed: float = 7.0
 @export_range(0.1, 1.5, 0.01, "suffix:s") var roll_duration: float = 0.7
+## Depois de dash ou golpe no ar, aterrissa sem cambalhota nem agachamento de impacto.
+@export var air_action_cancels_landing: bool = true
 ## Velocidade mínima para frente durante a cambalhota.
 @export_range(0.0, 15.0, 0.1, "suffix:m/s") var roll_min_speed: float = 4.0
 @export_range(0.0, 60.0, 0.5, "suffix:m/s²") var roll_deceleration: float = 8.0

@@ -21,7 +21,7 @@ extends Resource
 @export_range(0.5, 6.0, 0.05, "suffix:m") var stride_length_walk: float = 2.2
 @export_range(0.5, 8.0, 0.05, "suffix:m") var stride_length_sprint: float = 3.0
 @export_range(0.0, 90.0, 1.0, "suffix:°") var leg_swing_deg: float = 42.0
-@export_range(0.0, 120.0, 1.0, "suffix:°") var knee_bend_deg: float = 70.0
+@export_range(0.0, 120.0, 1.0, "suffix:°") var knee_bend_deg: float = 85.0
 @export_range(0.0, 90.0, 1.0, "suffix:°") var arm_swing_deg: float = 38.0
 ## Inclinação do CORPO INTEIRO (a partir do quadril) andando; no sprint usa ninja_run_lean_deg.
 @export_range(0.0, 45.0, 0.5, "suffix:°") var run_lean_deg: float = 26.0
@@ -59,6 +59,9 @@ extends Resource
 @export_range(0.2, 0.8, 0.01) var stance_fraction_run: float = 0.38
 @export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_walk_deg: float = 12.0
 @export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_run_deg: float = 32.0
+## Elevação do joelho no balanço (coxa sobe além do passo) andando / correndo.
+@export_range(0.0, 90.0, 1.0, "suffix:°") var knee_lift_walk_deg: float = 34.0
+@export_range(0.0, 120.0, 1.0, "suffix:°") var knee_lift_run_deg: float = 55.0
 
 @export_group("Molas da animação")
 ## Frequência/amortecimento das articulações na locomoção (menor amortecimento = mais balanço).
