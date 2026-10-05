@@ -34,6 +34,7 @@ sprint_double_tap_ticks = 15
 sprint_forward_threshold = 0.3
 sprint_instant_turn = true
 walk_instant_turn = true
+air_instant_turn = true
 air_sprint_enabled = true
 air_sprint_acceleration = 30.0
 air_sprint_gravity_multiplier = 1.7

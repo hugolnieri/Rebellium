@@ -476,6 +476,9 @@ func apply_air_movement(input: PlayerInput, delta: float, gravity_scale: float =
 			air_sprinting = false
 		else:
 			redirect_to_wish(input)
+	elif config.air_instant_turn:
+		# Pulo vai para onde se olha: a velocidade horizontal aponta para o input relativo à câmera.
+		redirect_to_wish(input, true)
 	if input.has_move():
 		var horizontal := get_horizontal_velocity()
 		var base_speed := get_sprint_speed() if air_sprinting else get_walk_speed()

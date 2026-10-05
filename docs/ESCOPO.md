@@ -128,5 +128,9 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 ## Revisão: ações que continuam no chão, giro imediato e passada agachada
 - Dash e golpe aéreos continuam ao tocar o chão (pouso limpo); só o pulo interrompe.
 - Corpo e velocidade viram na hora para o input/câmera também andando.
-- Passada mais agachada com calcanhar para trás.
+- (Passada agachada com calcanhar para trás foi testada e desfeita.)
+
+## Revisão: pulo segue a câmera
+- No ar a direção vira na hora para o input relativo à câmera, sem perder velocidade (`air_instant_turn`).
+- Andando o pé fica menos tempo no chão (`stance_fraction_walk` 0,32).
 

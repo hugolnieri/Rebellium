@@ -175,6 +175,18 @@ func test_air_sprint_turns_instantly_to_camera_direction() -> void:
 	assert_gte(v.length(), speed - 0.01)
 
 
+func test_jump_goes_where_the_camera_looks() -> void:
+	d.step(40, FWD)
+	d.press_jump()
+	d.step(3, FWD)
+	var speed := d.player.get_horizontal_speed()
+	d.look_yaw = PI * 0.5  # olhando para -X no meio do pulo
+	d.step(1, FWD)
+	var v := d.player.get_horizontal_velocity()
+	assert_almost_eq(v.normalized().x, -1.0, 0.01, "no ar vai para onde olha")
+	assert_gte(v.length(), speed - 0.01, "sem perder velocidade")
+
+
 func test_walking_turns_instantly_with_camera() -> void:
 	d.step(40, FWD)
 	d.look_yaw = PI * 0.5  # olhando para -X

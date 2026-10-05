@@ -60,18 +60,13 @@ extends Resource
 ## Ângulo dos braços no sprint em relação ao chão (0 = totalmente na horizontal, + = para cima).
 @export_range(-45.0, 45.0, 1.0, "suffix:°") var ninja_arm_pitch_deg: float = 0.0
 ## Passada: fração do ciclo com o pé no chão andando / correndo e flexão do joelho de apoio.
-@export_range(0.2, 0.8, 0.01) var stance_fraction_walk: float = 0.42
+@export_range(0.2, 0.8, 0.01) var stance_fraction_walk: float = 0.32
 @export_range(0.2, 0.8, 0.01) var stance_fraction_run: float = 0.38
-@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_walk_deg: float = 32.0
-@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_run_deg: float = 42.0
+@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_walk_deg: float = 20.0
+@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_run_deg: float = 32.0
 ## Elevação do joelho no balanço (coxa sobe além do passo) andando / correndo.
 @export_range(0.0, 90.0, 1.0, "suffix:°") var knee_lift_walk_deg: float = 34.0
 @export_range(0.0, 120.0, 1.0, "suffix:°") var knee_lift_run_deg: float = 55.0
-## Calcanhar jogado para trás logo depois do impulso (joelho dobra cedo no balanço).
-@export_range(0.0, 120.0, 1.0, "suffix:°") var heel_kick_walk_deg: float = 45.0
-@export_range(0.0, 150.0, 1.0, "suffix:°") var heel_kick_run_deg: float = 70.0
-## Passada agachada: quanto o quadril desce andando/correndo (pernas mais dobradas, perto do chão).
-@export_range(0.0, 0.4, 0.005, "suffix:m") var gait_crouch: float = 0.1
 
 @export_group("Molas da animação")
 ## Frequência/amortecimento das articulações na locomoção (menor amortecimento = mais balanço).

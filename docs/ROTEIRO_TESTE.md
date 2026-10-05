@@ -151,10 +151,10 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Pulo do chão: **mortal para frente** (encolhe no meio do giro; `jump_flip_enabled`, `jump_flip_duration`).
     Golpe, dash ou wall jump no ar interrompem o mortal.
   - Pernas: passada com calcanhar no contato, joelho de apoio levemente dobrado, impulso na ponta do pé e
-    joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`),
-    calcanhar jogado para trás (`heel_kick_*`) e passada agachada, perto do chão (`gait_crouch`).
+    joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`); andando
+    o pé fica pouco tempo no chão (`stance_fraction_walk`).
   - O corpo vira **na hora** para a direção do input/câmera, andando ou correndo (`instant_facing`,
-    `walk_instant_turn`).
+    `walk_instant_turn`). No pulo também: segurando W, ele vai para onde a câmera olha (`air_instant_turn`).
   - Lâmina de Arco: parado e andando a lâmina fica **encostada em cima do ombro direito** (`rest_on_shoulder` na arma); no sprint
     os braços vão para trás como antes. A Presa de Fase continua na mão.
   - Dash: **estrela** (cambalhota lateral) para o lado do dash, com as mãos tocando o chão no meio do giro
