@@ -60,14 +60,12 @@ extends Resource
 ## Ângulo dos braços no sprint em relação ao chão (0 = totalmente na horizontal, + = para cima).
 @export_range(-45.0, 45.0, 1.0, "suffix:°") var ninja_arm_pitch_deg: float = 0.0
 ## Passada: fração do ciclo com o pé no chão andando / correndo e flexão do joelho de apoio.
-@export_range(0.2, 0.8, 0.01) var stance_fraction_walk: float = 0.25
+@export_range(0.2, 0.8, 0.01) var stance_fraction_walk: float = 0.32
 @export_range(0.2, 0.8, 0.01) var stance_fraction_run: float = 0.38
 @export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_walk_deg: float = 20.0
 @export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_run_deg: float = 32.0
-## Passada agachada: quanto o quadril desce andando / correndo (pernas dobram para os pés
-## continuarem no chão).
-@export_range(0.0, 0.4, 0.005, "suffix:m") var gait_crouch_walk: float = 0.09
-@export_range(0.0, 0.5, 0.005, "suffix:m") var gait_crouch_run: float = 0.14
+## Andando: altura do pulinho a cada passo.
+@export_range(0.0, 0.3, 0.005, "suffix:m") var walk_hop_height: float = 0.07
 ## Elevação do joelho no balanço (coxa sobe além do passo) andando / correndo.
 @export_range(0.0, 90.0, 1.0, "suffix:°") var knee_lift_walk_deg: float = 34.0
 @export_range(0.0, 120.0, 1.0, "suffix:°") var knee_lift_run_deg: float = 55.0

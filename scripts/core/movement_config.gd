@@ -67,6 +67,9 @@ extends Resource
 @export var walk_instant_turn: bool = true
 ## No ar (pulo/queda) a direção vira na hora para onde o input/câmera aponta, mantendo a velocidade.
 @export var air_instant_turn: bool = true
+## Pular do chão (inclusive depois de sprint ou dash) volta à velocidade de andar. O bunny hop
+## (técnica) continua preservando a velocidade.
+@export var jump_resets_to_walk_speed: bool = true
 ## Corrida no ar: toque duplo em W no ar acelera até a velocidade de sprint...
 @export var air_sprint_enabled: bool = true
 @export_range(0.0, 200.0, 0.5, "suffix:m/s²") var air_sprint_acceleration: float = 30.0

@@ -148,3 +148,8 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   pé andando no chão 25% do ciclo.
 - Reverse vai bem mais para frente depois de passar da borda (`reverse_clear_speed`).
 
+## Revisão: passada de volta, pulinho e pulo a andar
+- Passada agachada desfeita; andando o corpo dá um pulinho a cada passo (`walk_hop_height`).
+- Pulo do chão volta à velocidade de andar, inclusive após sprint/dash (`jump_resets_to_walk_speed`);
+  o bunny hop preserva a velocidade de aterrissagem (útil com a corrida no ar).
+

@@ -115,8 +115,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - O lançamento é desfeito: você mantém 50% da velocidade de entrada e cai junto à parede.
   - A cor é **vermelha** e o banner mostra `CANCEL`. O SP gasto não volta.
   - Apertar 1/2 sem wall jump só gera o evento `troca de arma` no log.
-- **Bunny hop**: corra em sprint, pule e aperte Space de novo **até 3 ticks depois de aterrissar**.
-  - A velocidade horizontal se mantém (ex.: 10 m/s mesmo sem segurar W).
+- **Bunny hop**: pule, faça a corrida no ar (W, W) e aperte Space de novo **até 3 ticks depois de aterrissar**.
+  - A velocidade horizontal com que aterrissou se mantém (ex.: 10 m/s da corrida no ar, mesmo sem segurar W).
   - Apertar um pouco antes de tocar o chão ou tarde demais dá um pulo normal, limitado à velocidade do chão.
 - **Dash (dodge)**: segure **A ou D** e aperte **Space** → dash só para o lado (não usa mais Shift).
   - Vai longe e **desacelera** até parar (começa a 24 m/s; curva em `dodge_ease_power`).
@@ -152,8 +152,11 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     Golpe, dash ou wall jump no ar interrompem o mortal.
   - Pernas: passada com calcanhar no contato, joelho de apoio levemente dobrado, impulso na ponta do pé e
     joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`); andando
-    o pé fica pouco tempo no chão (`stance_fraction_walk`). Corpo baixo andando e mais baixo correndo
-    (`gait_crouch_walk`, `gait_crouch_run`).
+    o pé fica pouco tempo no chão (`stance_fraction_walk`) e o corpo dá um pulinho a cada passo
+    (`walk_hop_height`).
+  - Pular do chão volta à velocidade de andar (6 m/s), mesmo vindo de sprint ou dash
+    (`jump_resets_to_walk_speed`). Para ganhar velocidade no ar use a corrida no ar (W, W); o bunny hop
+    preserva a velocidade com que você aterrissa.
   - O corpo vira **na hora** para a direção do input/câmera, andando ou correndo (`instant_facing`,
     `walk_instant_turn`). No pulo e na cambalhota também: segurando W, ele vai para onde a câmera olha
     (`air_instant_turn`). Depois de um wall jump não: mantém a direção do salto até pousar.

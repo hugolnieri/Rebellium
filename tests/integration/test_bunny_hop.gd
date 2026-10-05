@@ -9,7 +9,9 @@ var d: Driver
 
 func before_each() -> void:
 	d = Driver.new()
-	d.setup(self, Vector3(0, 0, 0))
+	# Mecânica do bunny hop isolada: o pulo do sprint mantém os 10 m/s (com a regra padrão
+	# "pulo volta a andar", a velocidade alta vem da corrida no ar).
+	d.setup(self, Vector3(0, 0, 0), {"jump_resets_to_walk_speed": false})
 	d.add_block(Vector3(0, -0.5, 0), Vector3(400, 1, 400))
 	await d.ready_physics(self)
 	d.step(10)

@@ -510,8 +510,12 @@ func try_ground_actions(input: PlayerInput) -> bool:
 
 
 ## Pulo do chão (também usado pelo coyote time e bunny hop): entra no ar como PULO.
-func do_jump(reason: String, enter_jump_state: bool = true) -> void:
+func do_jump(reason: String, enter_jump_state: bool = true, keep_speed: bool = false) -> void:
 	wall_jump_carry = false
+	if config.jump_resets_to_walk_speed and not keep_speed:
+		var horizontal := get_horizontal_velocity().limit_length(get_walk_speed())
+		velocity.x = horizontal.x
+		velocity.z = horizontal.z
 	velocity.y = config.get_jump_velocity()
 	mark_jump_origin()
 	wall_sensor.reset_entry()

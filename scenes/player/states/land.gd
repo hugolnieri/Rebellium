@@ -94,7 +94,7 @@ func _try_bunny_hop(input: PlayerInput) -> bool:
 	player.velocity = Vector3(preserved.x, player.velocity.y, preserved.z)
 	GameEvents.technique_executed.emit(player, MovementRules.TECH_BUNNY_HOP,
 		{"position": player.global_position, "speed": preserved.length()})
-	player.do_jump("bunny hop")
+	player.do_jump("bunny hop", true, true)
 	return true
 
 

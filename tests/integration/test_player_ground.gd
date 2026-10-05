@@ -175,6 +175,14 @@ func test_air_sprint_turns_instantly_to_camera_direction() -> void:
 	assert_gte(v.length(), speed - 0.01)
 
 
+func test_jump_from_sprint_returns_to_walk_speed() -> void:
+	d.step(40, FWD, true)
+	assert_almost_eq(d.player.get_horizontal_speed(), d.player.get_sprint_speed(), 0.1)
+	d.press_jump()
+	d.step(2, FWD)
+	assert_almost_eq(d.player.get_horizontal_speed(), d.player.get_walk_speed(), 0.05, "pulo volta a andar")
+
+
 func test_jump_goes_where_the_camera_looks() -> void:
 	d.step(40, FWD)
 	d.press_jump()
