@@ -35,7 +35,7 @@ extends Resource
 @export var jump_flip_enabled: bool = true
 @export_range(0.1, 2.0, 0.01, "suffix:s") var jump_flip_duration: float = 0.62
 ## Duração do mortal/giro do wall jump.
-@export_range(0.05, 2.0, 0.01, "suffix:s") var flip_duration: float = 0.42
+@export_range(0.05, 2.0, 0.01, "suffix:s") var flip_duration: float = 0.5
 @export_range(0.0, 1.0, 0.01, "suffix:s") var land_crouch_time: float = 0.22
 @export_range(0.0, 0.6, 0.01, "suffix:m") var land_crouch_depth: float = 0.2
 ## Velocidade de impacto que gera o agachamento máximo.

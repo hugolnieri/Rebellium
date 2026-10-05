@@ -68,6 +68,9 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		player.velocity.z = _landing_velocity.z
 		player.apply_gravity(delta)
 	elif rolling:
+		if cfg().air_instant_turn and input.has_move():
+			# A cambalhota vai para onde se olha (como o pulo).
+			_roll_direction = input.get_wish_direction().normalized()
 		var current := maxf(player.get_horizontal_speed(), cfg().roll_min_speed)
 		var roll_speed := maxf(current - cfg().roll_deceleration * delta, cfg().roll_min_speed)
 		player.velocity.x = _roll_direction.x * roll_speed

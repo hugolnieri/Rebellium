@@ -187,6 +187,15 @@ func test_jump_goes_where_the_camera_looks() -> void:
 	assert_gte(v.length(), speed - 0.01, "sem perder velocidade")
 
 
+func test_roll_goes_where_the_camera_looks() -> void:
+	d.player.respawn(Transform3D(Basis(), Vector3(0, 8, 0)))
+	d.step_until(func() -> bool: return d.state() == &"Land", 200)
+	assert_true(d.player.state_machine.current.rolling)
+	d.look_yaw = -PI * 0.5  # olhando para +X
+	d.step(3, FWD)
+	assert_almost_eq(d.player.get_horizontal_velocity().normalized().x, 1.0, 0.01, "rola para onde olha")
+
+
 func test_walking_turns_instantly_with_camera() -> void:
 	d.step(40, FWD)
 	d.look_yaw = PI * 0.5  # olhando para -X

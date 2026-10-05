@@ -43,6 +43,10 @@ var air_dodges_used: int = 0
 var air_action_used: bool = false
 ## A última aterrissagem foi "limpa" (sem animação de impacto).
 var last_landing_soft: bool = false
+## Saiu de um wall jump e ainda não pousou: o ar não vira na hora para a câmera (mantém a distância).
+var wall_jump_carry: bool = false
+## Golpe/dash bloqueados até este tick (o mortal do wall jump vai até o fim).
+var action_lock_until_tick: int = PlayerInput.NEVER
 ## Flag de invencibilidade (dodge). Consultada pelo combate futuro.
 var is_invulnerable: bool = false
 var spawn_transform: Transform3D
@@ -281,6 +285,8 @@ func _consume_attack(input: PlayerInput, heavy: bool) -> void:
 ## Tenta iniciar (ou encadear) um golpe. O tipo sai do contexto:
 ## no dash → golpe de dash; no ar → golpe aéreo; no chão → leve (combo) ou pesado.
 func try_attack(input: PlayerInput) -> bool:
+	if tick < action_lock_until_tick:
+		return false
 	var heavy := has_buffered_attack(input, true)
 	var light := has_buffered_attack(input, false)
 	var weapon := get_weapon()
@@ -476,7 +482,7 @@ func apply_air_movement(input: PlayerInput, delta: float, gravity_scale: float =
 			air_sprinting = false
 		else:
 			redirect_to_wish(input)
-	elif config.air_instant_turn:
+	elif config.air_instant_turn and not wall_jump_carry:
 		# Pulo vai para onde se olha: a velocidade horizontal aponta para o input relativo à câmera.
 		redirect_to_wish(input, true)
 	if input.has_move():
@@ -504,12 +510,14 @@ func try_ground_actions(input: PlayerInput) -> bool:
 
 
 ## Pulo do chão (também usado pelo coyote time e bunny hop): entra no ar como PULO.
-func do_jump(reason: String) -> void:
+func do_jump(reason: String, enter_jump_state: bool = true) -> void:
+	wall_jump_carry = false
 	velocity.y = config.get_jump_velocity()
 	mark_jump_origin()
 	wall_sensor.reset_entry()
 	GameEvents.jumped.emit(self)
-	state_machine.transition_to(&"Jump", reason)
+	if enter_jump_state:
+		state_machine.transition_to(&"Jump", reason)
 
 
 ## Espaço + A/D (lateral puro) pede um dash em vez de pulo.
@@ -520,6 +528,8 @@ func wants_side_dash(input: PlayerInput) -> bool:
 
 ## Dash se houver pedido (Espaço + A/D ou dash explícito) e SP. Em recuperação vira dodge cancel.
 func try_dodge(input: PlayerInput) -> bool:
+	if tick < action_lock_until_tick:
+		return false
 	var side_request := wants_side_dash(input)
 	if not side_request and not has_buffered_dodge(input):
 		return false
@@ -593,6 +603,8 @@ func try_wall_jump(input: PlayerInput) -> bool:
 	back_coming_wall = sensor.collider_id if technique == MovementRules.TECH_BACK_COMING else 0
 	last_wall_jump_collider = sensor.collider_id
 	last_wall_jump_tick = tick
+	wall_jump_carry = true
+	action_lock_until_tick = tick + config.wall_jump_stick_ticks + secs_to_ticks(config.wall_jump_action_lock_time)
 	if config.air_dodge_refresh_on_wall_jump:
 		air_dodges_used = 0
 	mark_jump_origin()
@@ -635,6 +647,8 @@ func touch_down_during_action() -> void:
 ## Limpa memória de paredes ao tocar o chão.
 func on_landed() -> void:
 	air_sprinting = false
+	wall_jump_carry = false
+	action_lock_until_tick = PlayerInput.NEVER
 	air_action_used = false
 	air_dodges_used = 0
 	last_wall_jump_collider = 0

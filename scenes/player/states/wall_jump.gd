@@ -48,8 +48,11 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	if t == 0:
 		player.velocity = _launch
 	var locked := t < player.secs_to_ticks(cfg().wall_jump_lock_time)
-	if not locked and (player.try_wall_jump(input) or player.try_dodge(input)
-			or player.try_attack(input)):
+	var can_chain := t >= player.secs_to_ticks(cfg().wall_jump_chain_time)
+	var can_act := t >= player.secs_to_ticks(cfg().wall_jump_action_lock_time)
+	if can_chain and player.try_wall_jump(input):
+		return
+	if can_act and (player.try_dodge(input) or player.try_attack(input)):
 		return
 	var climbing := _hold_until_clear and player.wall_sensor.has_contact and player.velocity.y > 0.0
 	if locked or climbing:

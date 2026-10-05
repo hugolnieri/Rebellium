@@ -86,6 +86,28 @@ func test_wall_jump_sticks_to_wall_before_launch() -> void:
 	assert_gt(d.player.velocity.z, 0.0, "saiu para longe da parede")
 
 
+func test_wall_jump_flip_cannot_be_cut_by_attack_or_dash() -> void:
+	_world(Vector3(0, 0, 0))
+	var wall := _tall_wall(-3.0)
+	await d.ready_physics(self)
+	d.step(10)
+	d.step(5, FWD)
+	d.press_jump()
+	d.step(1, FWD)
+	assert_gt(d.step_until_wall(wall, 90, FWD), 0)
+	d.press_jump()
+	d.step(4)
+	d.press_attack()
+	d.step(2)
+	assert_ne(d.state(), &"Attack", "golpe não corta o mortal")
+	var lock := d.player.secs_to_ticks(d.player.config.wall_jump_action_lock_time)
+	d.step(lock + 6)
+	assert_true(d.player.wall_jump_carry, "mantém a direção do wall jump até pousar")
+	d.press_attack()
+	d.step(1)
+	assert_eq(d.state(), &"Attack", "depois do mortal pode golpear")
+
+
 func test_wall_jump_reflects_diagonal_entry() -> void:
 	_world(Vector3(0, 0, 0), {"wall_jump_camera_weight": 0.0, "wall_jump_forward_boost": 0.0,
 		"wall_jump_horizontal_multiplier": 1.0})

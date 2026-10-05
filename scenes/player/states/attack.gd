@@ -5,7 +5,7 @@ extends PlayerState
 ## - Na janela de acerto testa os alvos do grupo "hittable" (cada alvo leva no máximo 1 acerto).
 ## - A partir de `chain_after`, um clique guardado encadeia o próximo golpe do combo (ou o pesado).
 ## - A recuperação é cancelável por dash (dodge cancel) e por troca de arma (swap cancel).
-## - No chão, Espaço pula a qualquer momento do golpe (cancela o golpe).
+## - No chão, Espaço pula a qualquer momento do golpe; o golpe continua no ar até o fim.
 ## O tempo do golpe conta em ticks próprios: o hitstop pausa o golpe.
 
 enum Phase { STARTUP, ACTIVE, RECOVERY }
@@ -101,15 +101,15 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		_finish(input)
 
 
-## Pulo durante o golpe (no chão): o golpe é interrompido e o personagem sai pulando.
+## Pulo durante o golpe (no chão): sai pulando SEM interromper o golpe, que segue no ar.
 func _try_jump_cancel(input: PlayerInput) -> bool:
 	if not player.combat_config.attack_jump_cancel or airborne or not player.is_on_floor():
 		return false
 	if not player.consume_jump_press(input, cfg().jump_buffer_ticks):
 		return false
-	player.do_jump("pulo cancelando golpe")
-	machine.transition_to(&"Jump", "pulo cancelou o golpe")
-	return true
+	player.do_jump("pulo durante o golpe", false)
+	airborne = true
+	return false
 
 
 ## Golpe no chão sem perder o passo: anda ou corre (sprint ativo) pelo input.

@@ -85,15 +85,17 @@ extends Resource
 ## Velocidade no INÍCIO do dash; ela cai até `dodge_exit_speed` ao longo de `dodge_duration`.
 @export_range(1.0, 60.0, 0.5, "suffix:m/s") var dodge_speed: float = 24.0
 ## Duração do deslocamento.
-@export_range(0.02, 1.0, 0.01, "suffix:s") var dodge_duration: float = 0.4
+@export_range(0.02, 1.0, 0.01, "suffix:s") var dodge_duration: float = 0.65
 ## Curva da desaceleração (1 = linear; maior = freia mais cedo).
-@export_range(0.5, 5.0, 0.05) var dodge_ease_power: float = 1.8
+@export_range(0.5, 5.0, 0.05) var dodge_ease_power: float = 1.1
 ## Janela de invencibilidade desde o início do dodge (`is_invulnerable`).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var dodge_invulnerability: float = 0.15
 ## Recuperação após o deslocamento (cancelável por outro dodge).
-@export_range(0.0, 1.0, 0.01, "suffix:s") var dodge_recovery: float = 0.12
+@export_range(0.0, 1.0, 0.01, "suffix:s") var dodge_recovery: float = 0.25
+## Desaceleração do deslize no fim do dash no chão (menor = desliza mais).
+@export_range(0.0, 100.0, 0.5, "suffix:m/s²") var dodge_slide_deceleration: float = 14.0
 ## Velocidade no fim do dash (entrando na recuperação).
-@export_range(0.0, 30.0, 0.5, "suffix:m/s") var dodge_exit_speed: float = 4.0
+@export_range(0.0, 30.0, 0.5, "suffix:m/s") var dodge_exit_speed: float = 7.0
 ## Espaço durante o dash cancela o movimento e pula (dash jump).
 @export var dash_jump_enabled: bool = true
 ## Fração da velocidade do dash mantida no pulo do cancelamento.
@@ -124,8 +126,8 @@ extends Resource
 ## Altura ganha pelo impulso vertical do wall jump.
 @export_range(0.0, 10.0, 0.05, "suffix:m") var wall_jump_height: float = 2.35
 ## Multiplicador da velocidade horizontal refletida.
-@export_range(0.1, 3.0, 0.01) var wall_jump_horizontal_multiplier: float = 1.1
-@export_range(0.0, 30.0, 0.1, "suffix:m/s") var wall_jump_min_horizontal_speed: float = 8.0
+@export_range(0.1, 3.0, 0.01) var wall_jump_horizontal_multiplier: float = 1.25
+@export_range(0.0, 30.0, 0.1, "suffix:m/s") var wall_jump_min_horizontal_speed: float = 10.0
 @export_range(1.0, 60.0, 0.1, "suffix:m/s") var wall_jump_max_horizontal_speed: float = 18.0
 ## Empurrão extra ao longo da parede, no sentido em que o jogador já ia (lança mais para frente).
 @export_range(0.0, 20.0, 0.1, "suffix:m/s") var wall_jump_forward_boost: float = 2.0
@@ -135,8 +137,12 @@ extends Resource
 @export_range(0.0, 1.0, 0.01) var wall_jump_camera_weight: float = 0.4
 ## Antes do impulso o personagem fica colado na parede por este tempo (pés plantados).
 @export_range(0, 30, 1, "suffix:ticks") var wall_jump_stick_ticks: int = 6
+## Depois do impulso, por quanto tempo golpe e dash ficam bloqueados (o mortal vai até o fim).
+@export_range(0.0, 2.0, 0.01, "suffix:s") var wall_jump_action_lock_time: float = 0.45
+## Encadear outro wall jump fica liberado a partir deste tempo após o impulso.
+@export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_chain_time: float = 0.08
 ## Tempo sem controle aéreo logo após o wall jump (estado WallJump).
-@export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_lock_time: float = 0.15
+@export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_lock_time: float = 0.3
 ## Proíbe dois wall jumps seguidos na MESMA parede (exceto após back-coming).
 @export var wall_jump_same_wall_lockout: bool = true
 ## Distância extra (além do raio) em que a parede conta como tocada.

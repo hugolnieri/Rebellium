@@ -51,7 +51,7 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		_set_dash_velocity(t)
 	else:
 		var horizontal := player.get_horizontal_velocity().move_toward(Vector3.ZERO,
-			cfg().ground_deceleration * delta)
+			cfg().dodge_slide_deceleration * delta)
 		player.velocity.x = horizontal.x
 		player.velocity.z = horizontal.z
 	player.apply_gravity(delta)

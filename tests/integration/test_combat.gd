@@ -137,15 +137,16 @@ func test_heavy_in_air_with_right_click() -> void:
 	assert_false(d.player.is_on_floor())
 
 
-func test_jump_cancels_ground_attack() -> void:
+func test_jump_during_ground_attack_keeps_attacking_in_the_air() -> void:
 	await _ready_world()
 	d.press_attack()
 	d.step(3)
 	assert_eq(d.state(), &"Attack")
 	d.press_jump()
 	d.step(1)
-	assert_eq(d.state(), &"Jump", "pulo interrompe o golpe")
-	assert_gt(d.player.velocity.y, 0.0)
+	assert_eq(d.state(), &"Attack", "o golpe continua")
+	assert_true(d.player.state_machine.current.airborne)
+	assert_gt(d.player.velocity.y, 0.0, "saiu pulando")
 
 
 func test_heavy_hold_during_dash_cancels_dash() -> void:

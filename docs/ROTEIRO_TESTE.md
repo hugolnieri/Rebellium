@@ -154,7 +154,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`); andando
     o pé fica pouco tempo no chão (`stance_fraction_walk`).
   - O corpo vira **na hora** para a direção do input/câmera, andando ou correndo (`instant_facing`,
-    `walk_instant_turn`). No pulo também: segurando W, ele vai para onde a câmera olha (`air_instant_turn`).
+    `walk_instant_turn`). No pulo e na cambalhota também: segurando W, ele vai para onde a câmera olha
+    (`air_instant_turn`). Depois de um wall jump não: mantém a direção do salto até pousar.
   - Lâmina de Arco: parado e andando a lâmina fica **encostada em cima do ombro direito** (`rest_on_shoulder` na arma); no sprint
     os braços vão para trás como antes. A Presa de Fase continua na mão.
   - Dash: **estrela** (cambalhota lateral) para o lado do dash, com as mãos tocando o chão no meio do giro
@@ -164,6 +165,9 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     a lâmina arrastando atrás. Na corrida no ar a pose é a mesma.
   - Passada acompanha a velocidade; o cabelo balança com o vento.
   - No ar: pose de pulo subindo e braços abertos caindo.
+  - Wall jump: sai mais longe (×1,25, mínimo 10 m/s) e o mortal vai até o fim — golpe e dash ficam bloqueados
+    por `wall_jump_action_lock_time` (encadear outro wall jump continua liberado cedo, `wall_jump_chain_time`).
+  - Dash: desliza bem mais (0,65 s de deslocamento, saída a 7 m/s e deslize final `dodge_slide_deceleration`).
   - Wall jump: o personagem **cola na parede** por um instante (bem encolhido, de frente para ela, ~0,1 s,
     `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.
     Reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
@@ -234,8 +238,8 @@ Ande até os três postes à frente (POSTE).
    acaba ao tocar o chão). Tempo de carga: F2 → Combate → `heavy_hold_ticks`.
 3. **Troca de arma**: 2 (ou Q). Floreio da arma, flash e som de carga. A **Presa de Fase** tem combo de 4
    golpes rápidos, anda ~8% mais rápido e o pesado (lâmina ascendente) lança para cima.
-5. **Pular golpeando**: aperte Espaço no meio de um golpe no chão → o golpe é interrompido e o personagem
-   pula (`attack_jump_cancel`).
+5. **Pular golpeando**: aperte Espaço no meio de um golpe no chão → o personagem pula e o golpe **continua**
+   no ar até o fim (`attack_jump_cancel`).
 6. **Golpe cancela o dash**: durante o dash, clique (leve) ou segure/botão direito (pesado) → o dash para na
    hora e sai o golpe (`attack_cancels_dash_momentum`).
 4. **Golpear andando/correndo**: o golpe não trava o personagem nem o empurra sozinho. Segurando WASD ele

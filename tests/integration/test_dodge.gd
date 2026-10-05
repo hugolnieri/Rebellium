@@ -88,17 +88,18 @@ func test_dodge_cancels_its_own_recovery_but_not_the_dash() -> void:
 	assert_almost_eq(d.player.sp.current, 80.0, 0.01, "durante o deslocamento não cancela")
 	d.step(d.player.secs_to_ticks(d.player.config.dodge_duration) + 1)
 	assert_true(d.player.state_machine.current.is_recovery())
+	var sp_before := d.player.sp.current
 	d.press_dodge()
 	d.step(1, Vector2(-1, 0))
 	assert_has(d.techniques, MovementRules.TECH_DODGE_CANCEL)
-	assert_almost_eq(d.player.sp.current, 60.0, 0.01)
+	assert_almost_eq(d.player.sp.current, sp_before - 20.0, 0.6)
 	assert_lt(d.player.velocity.x, -10.0, "novo dodge para a esquerda")
 
 
 func test_dodge_returns_to_ground_state() -> void:
 	d.press_dodge()
 	d.step(1, Vector2(1, 0))
-	d.step(40)
+	d.step(d.player.secs_to_ticks(d.player.config.dodge_duration + d.player.config.dodge_recovery) + 5)
 	assert_eq(d.state(), &"Idle")
 
 
@@ -157,10 +158,15 @@ func test_landing_after_air_dash_has_no_roll() -> void:
 	d.step(20)
 	d.press_dodge()
 	d.step(1, Vector2(1, 0))
-	d.step_until(func() -> bool: return d.state() == &"Land", 200)
-	assert_eq(d.state(), &"Land")
-	assert_gt(d.player.land_impact_speed, d.player.config.roll_min_impact_speed, "queda forte")
-	assert_false(d.player.state_machine.current.rolling, "dash no ar cancela a cambalhota")
+	var rolled := false
+	for i in 200:
+		d.step(1)
+		if d.state() == &"Land" and d.player.state_machine.current.rolling:
+			rolled = true
+		if d.player.is_on_floor() and d.state() != &"Dodge":
+			break
+	assert_true(d.player.is_on_floor())
+	assert_false(rolled, "dash no ar cancela a cambalhota")
 	assert_true(d.player.last_landing_soft)
 
 

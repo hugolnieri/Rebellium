@@ -134,3 +134,10 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - No ar a direção vira na hora para o input relativo à câmera, sem perder velocidade (`air_instant_turn`).
 - Andando o pé fica menos tempo no chão (`stance_fraction_walk` 0,32).
 
+## Revisão: wall jump completo, dash deslizando e golpe no pulo
+- Cambalhota segue o input/câmera como o pulo.
+- Wall jump mais longo (×1,25, mín. 10 m/s, sem controle por 0,3 s), mortal completo (golpe/dash
+  bloqueados 0,45 s; encadear wall jump liberado em 0,08 s) e direção mantida até pousar.
+- Dash desliza mais (0,65 s, curva 1,1, saída 7 m/s, deslize final 14 m/s²).
+- Pular durante o golpe mantém o golpe (continua no ar).
+
