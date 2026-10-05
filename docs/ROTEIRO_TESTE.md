@@ -152,7 +152,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     Golpe, dash ou wall jump no ar interrompem o mortal.
   - Pernas: passada com calcanhar no contato, joelho de apoio levemente dobrado, impulso na ponta do pé e
     joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`); andando
-    o pé fica pouco tempo no chão (`stance_fraction_walk`).
+    o pé fica pouco tempo no chão (`stance_fraction_walk`). Corpo baixo andando e mais baixo correndo
+    (`gait_crouch_walk`, `gait_crouch_run`).
   - O corpo vira **na hora** para a direção do input/câmera, andando ou correndo (`instant_facing`,
     `walk_instant_turn`). No pulo e na cambalhota também: segurando W, ele vai para onde a câmera olha
     (`air_instant_turn`). Depois de um wall jump não: mantém a direção do salto até pousar.
@@ -165,8 +166,10 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     a lâmina arrastando atrás. Na corrida no ar a pose é a mesma.
   - Passada acompanha a velocidade; o cabelo balança com o vento.
   - No ar: pose de pulo subindo e braços abertos caindo.
-  - Wall jump: sai mais longe (×1,25, mínimo 10 m/s) e o mortal vai até o fim — golpe e dash ficam bloqueados
-    por `wall_jump_action_lock_time` (encadear outro wall jump continua liberado cedo, `wall_jump_chain_time`).
+  - Wall jump: sai mais longe (×1,25, mínimo 10 m/s) e o mortal vai até o fim — o golpe fica bloqueado por
+    `wall_jump_action_lock_time`; o **dash pode cortar o mortal** (e encadear outro wall jump) a partir de
+    `wall_jump_chain_time`.
+  - Reverse: depois de passar da borda dispara para frente a `reverse_clear_speed` (11 m/s).
   - Dash: desliza bem mais (0,65 s de deslocamento, saída a 7 m/s e deslize final `dodge_slide_deceleration`).
   - Wall jump: o personagem **cola na parede** por um instante (bem encolhido, de frente para ela, ~0,1 s,
     `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.

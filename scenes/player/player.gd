@@ -528,8 +528,6 @@ func wants_side_dash(input: PlayerInput) -> bool:
 
 ## Dash se houver pedido (Espaço + A/D ou dash explícito) e SP. Em recuperação vira dodge cancel.
 func try_dodge(input: PlayerInput) -> bool:
-	if tick < action_lock_until_tick:
-		return false
 	var side_request := wants_side_dash(input)
 	if not side_request and not has_buffered_dodge(input):
 		return false

@@ -86,6 +86,7 @@ technique_window_ticks = 6
 reverse_probe_height = 2.0
 reverse_jump_height = 2.3
 reverse_forward_speed = 6.5
+reverse_clear_speed = 11.0
 back_coming_max_feet_height = 1.0
 back_coming_height = 2.6
 back_coming_wall_push_speed = 1.0

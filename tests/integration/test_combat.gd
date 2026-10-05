@@ -149,6 +149,19 @@ func test_jump_during_ground_attack_keeps_attacking_in_the_air() -> void:
 	assert_gt(d.player.velocity.y, 0.0, "saiu pulando")
 
 
+func test_jump_during_attack_has_normal_height() -> void:
+	await _ready_world()
+	var start_y := d.player.global_position.y
+	d.press_attack()
+	d.step(2)
+	d.press_jump()
+	var top := start_y
+	for i in 90:
+		d.step(1)
+		top = maxf(top, d.player.global_position.y)
+	assert_almost_eq(top - start_y, d.player.config.jump_height, 0.1, "pulo no golpe tem a altura normal")
+
+
 func test_heavy_hold_during_dash_cancels_dash() -> void:
 	await _ready_world()
 	d.press_dodge()

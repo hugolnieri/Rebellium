@@ -9,6 +9,9 @@ var _launch: Vector3 = Vector3.ZERO
 var _launch_horizontal: Vector3 = Vector3.ZERO
 var _wall_normal: Vector3 = Vector3.ZERO
 var _hold_until_clear: bool = false
+var _reverse: bool = false
+var _boosted: bool = false
+var _was_climbing: bool = false
 
 
 func enter(_from: StringName, data: Dictionary) -> void:
@@ -18,6 +21,9 @@ func enter(_from: StringName, data: Dictionary) -> void:
 	var technique: StringName = data.get("technique", &"")
 	_hold_until_clear = technique == MovementRules.TECH_REVERSE \
 		or technique == MovementRules.TECH_BACK_COMING
+	_reverse = technique == MovementRules.TECH_REVERSE
+	_boosted = false
+	_was_climbing = false
 	if is_sticking():
 		_stick()
 
@@ -50,11 +56,17 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	var locked := t < player.secs_to_ticks(cfg().wall_jump_lock_time)
 	var can_chain := t >= player.secs_to_ticks(cfg().wall_jump_chain_time)
 	var can_act := t >= player.secs_to_ticks(cfg().wall_jump_action_lock_time)
-	if can_chain and player.try_wall_jump(input):
-		return
-	if can_act and (player.try_dodge(input) or player.try_attack(input)):
+	if can_chain and (player.try_wall_jump(input) or player.try_dodge(input)):
+		return  # o dash pode cortar o mortal; o golpe espera o mortal terminar
+	if can_act and player.try_attack(input):
 		return
 	var climbing := _hold_until_clear and player.wall_sensor.has_contact and player.velocity.y > 0.0
+	_was_climbing = _was_climbing or climbing
+	if _reverse and not _boosted and ((_was_climbing and not climbing) or player.velocity.y <= 0.0):
+		# Passou da borda: agora sim dispara para frente, por cima do topo.
+		_boosted = true
+		var forward := _launch_horizontal.normalized()
+		_launch_horizontal = forward * maxf(_launch_horizontal.length(), cfg().reverse_clear_speed)
 	if locked or climbing:
 		player.velocity.x = _launch_horizontal.x
 		player.velocity.z = _launch_horizontal.z

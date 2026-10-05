@@ -16,6 +16,8 @@ var combo_index: int = 0
 var direction: Vector3 = Vector3.FORWARD
 ## Golpe começou no ar (aéreo ou pesado aéreo): física aérea e termina ao tocar o chão.
 var airborne: bool = false
+## Gravidade no ar: a do golpe se ele começou no ar; gravidade normal se o pulo veio no meio do golpe.
+var _gravity_scale: float = 1.0
 
 var _t: int = 0
 var _startup_ticks: int = 1
@@ -31,6 +33,7 @@ func enter(from: StringName, data: Dictionary) -> void:
 	combo_index = data.get("combo_index", 0)
 	direction = data.get("direction", Vector3.FORWARD)
 	airborne = kind == CombatRules.KIND_AIR or not player.is_on_floor()
+	_gravity_scale = attack.air_gravity_scale if airborne else 1.0
 	if airborne:
 		player.air_action_used = true
 	_t = 0
@@ -88,7 +91,7 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	if airborne:
 		if _t == _startup_ticks + 1 and attack.air_active_vertical_speed != 0.0:
 			player.velocity.y = attack.air_active_vertical_speed
-		player.apply_air_movement(input, delta, attack.air_gravity_scale)
+		player.apply_air_movement(input, delta, _gravity_scale)
 	elif phase != Phase.RECOVERY and attack.lunge_speed > 0.0:
 		player.velocity.x = direction.x * attack.lunge_speed
 		player.velocity.z = direction.z * attack.lunge_speed
@@ -109,7 +112,8 @@ func _try_jump_cancel(input: PlayerInput) -> bool:
 		return false
 	player.do_jump("pulo durante o golpe", false)
 	airborne = true
-	return false
+	_gravity_scale = 1.0  # pulo normal (a gravidade reduzida é só para golpes que começam no ar)
+	return true  # o golpe continua; neste tick só sai o pulo (como no estado Jump)
 
 
 ## Golpe no chão sem perder o passo: anda ou corre (sprint ativo) pelo input.

@@ -108,6 +108,22 @@ func test_wall_jump_flip_cannot_be_cut_by_attack_or_dash() -> void:
 	assert_eq(d.state(), &"Attack", "depois do mortal pode golpear")
 
 
+func test_dash_cuts_the_wall_jump_flip() -> void:
+	_world(Vector3(0, 0, 0))
+	var wall := _tall_wall(-3.0)
+	await d.ready_physics(self)
+	d.step(10)
+	d.step(5, FWD)
+	d.press_jump()
+	d.step(1, FWD)
+	assert_gt(d.step_until_wall(wall, 90, FWD), 0)
+	d.press_jump()
+	d.step(d.player.secs_to_ticks(d.player.config.wall_jump_chain_time) + 2)
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge", "dash corta o mortal do wall jump")
+
+
 func test_wall_jump_reflects_diagonal_entry() -> void:
 	_world(Vector3(0, 0, 0), {"wall_jump_camera_weight": 0.0, "wall_jump_forward_boost": 0.0,
 		"wall_jump_horizontal_multiplier": 1.0})
@@ -192,7 +208,7 @@ func test_chained_wall_jumps_between_parallel_walls_climb() -> void:
 
 func test_reverse_wall_jump_near_top_goes_over_the_ledge() -> void:
 	_world(Vector3(0, 0, 0.3))
-	var ledge := d.add_block(Vector3(0, 1.8, -6.0), Vector3(20, 3.6, 6))  # face z=-3, topo 3,6 m
+	var ledge := d.add_block(Vector3(0, 1.8, -13.0), Vector3(20, 3.6, 20))  # face z=-3, topo 3,6 m
 	await d.ready_physics(self)
 	d.step(10)
 	d.step(8, FWD)  # embalo: chega na parede perto do ápice do pulo
@@ -208,6 +224,7 @@ func test_reverse_wall_jump_near_top_goes_over_the_ledge() -> void:
 	d.step(60)
 	assert_true(d.player.is_on_floor())
 	assert_almost_eq(d.player.global_position.y, 3.6, 0.05, "terminou em cima da borda")
+	assert_lt(d.player.global_position.z, -7.0, "reverse vai bem para frente depois de passar da borda")
 	assert_lt(d.player.global_position.z, -3.0)
 
 

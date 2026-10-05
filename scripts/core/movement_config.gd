@@ -137,9 +137,9 @@ extends Resource
 @export_range(0.0, 1.0, 0.01) var wall_jump_camera_weight: float = 0.4
 ## Antes do impulso o personagem fica colado na parede por este tempo (pés plantados).
 @export_range(0, 30, 1, "suffix:ticks") var wall_jump_stick_ticks: int = 6
-## Depois do impulso, por quanto tempo golpe e dash ficam bloqueados (o mortal vai até o fim).
+## Depois do impulso, por quanto tempo o golpe fica bloqueado (o mortal vai até o fim; o dash pode cortá-lo).
 @export_range(0.0, 2.0, 0.01, "suffix:s") var wall_jump_action_lock_time: float = 0.45
-## Encadear outro wall jump fica liberado a partir deste tempo após o impulso.
+## Encadear outro wall jump (ou dar dash) fica liberado a partir deste tempo após o impulso.
 @export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_chain_time: float = 0.08
 ## Tempo sem controle aéreo logo após o wall jump (estado WallJump).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_lock_time: float = 0.3
@@ -164,6 +164,8 @@ extends Resource
 @export_range(0.0, 10.0, 0.05, "suffix:m") var reverse_jump_height: float = 2.35
 ## Velocidade para FRENTE (por cima da parede) no reverse wall jump.
 @export_range(0.0, 20.0, 0.1, "suffix:m/s") var reverse_forward_speed: float = 6.5
+## Velocidade para frente assim que o reverse passa da borda (vai bem mais longe depois de subir).
+@export_range(0.0, 30.0, 0.5, "suffix:m/s") var reverse_clear_speed: float = 11.0
 ## Distância máxima dos pés ao chão para o contato contar como "base da parede".
 @export_range(0.0, 4.0, 0.05, "suffix:m") var back_coming_max_feet_height: float = 1.0
 @export_range(0.0, 10.0, 0.05, "suffix:m") var back_coming_height: float = 2.6

@@ -141,3 +141,10 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Dash desliza mais (0,65 s, curva 1,1, saída 7 m/s, deslize final 14 m/s²).
 - Pular durante o golpe mantém o golpe (continua no ar).
 
+## Revisão: correções e passada baixa
+- Corrigido: pular no meio de um golpe usava a gravidade reduzida de golpe aéreo (pulo alto demais).
+- Dash pode cortar o mortal do wall jump; golpe continua bloqueado até o fim do mortal.
+- Passada agachada com pernas resolvidas para os pés ficarem no chão (andando 9 cm, correndo 14 cm);
+  pé andando no chão 25% do ciclo.
+- Reverse vai bem mais para frente depois de passar da borda (`reverse_clear_speed`).
+
