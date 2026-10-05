@@ -118,6 +118,8 @@ extends Resource
 @export_range(0.0, 6.0, 0.05) var air_dodge_gravity_multiplier: float = 1.4
 ## Velocidade horizontal mantida ao fim do dash no ar (não há recuperação no ar).
 @export_range(0.0, 30.0, 0.5, "suffix:m/s") var air_dodge_exit_speed: float = 9.0
+## Espaço durante o dash no ar cancela o dash: volta a cair normalmente, na velocidade de andar.
+@export var air_dodge_jump_cancels: bool = true
 ## Dodge pode interromper estados de recuperação (Land, recuperação do dodge).
 @export var dodge_cancel_enabled: bool = true
 @export_range(0, 20, 1, "suffix:ticks") var dodge_buffer_ticks: int = 3

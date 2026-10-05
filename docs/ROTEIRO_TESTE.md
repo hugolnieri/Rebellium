@@ -133,6 +133,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   queda acumulada zera e ele recomeça descendo a 3 m/s, com gravidade ×1,4 durante o dash). Para o dash reto antigo: F2 → `air_dodge_suspends_gravity`.
   - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
   - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
+  - Longe da parede, **Space no meio do dash no ar cancela o dash**: para a estrela e volta a cair normalmente,
+    na velocidade de andar (sem impulso para cima). Desliga em `air_dodge_jump_cancels`.
   - Ao terminar, você continua caindo com 9 m/s na direção do dash (`air_dodge_exit_speed`).
 - **Dodge cancel**:
   - A/D + Space logo ao aterrissar interrompe a recuperação do `Land` (e a cambalhota).
@@ -206,7 +208,7 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 | Controle no ar | `air_acceleration` |
 | Corrida no ar | `air_sprint_enabled`, `air_sprint_acceleration`, `air_sprint_gravity_multiplier`, `air_sprint_sp_cost_per_second` |
 | Sensação de velocidade (aba Câmera) | `speed_fx_start_speed`, `speed_fx_full_speed`, `speed_lines_max_alpha`, `speed_arm_bonus`, `max_speed_fov_bonus`, `speed_shake_trauma` |
-| Dash no ar | `dodge_allow_in_air`, `air_dodge_max_per_air`, `air_dodge_refresh_on_wall_jump`, `air_dodge_suspends_gravity`, `air_dodge_exit_speed` |
+| Dash no ar | `dodge_allow_in_air`, `air_dodge_max_per_air`, `air_dodge_refresh_on_wall_jump`, `air_dodge_suspends_gravity`, `air_dodge_exit_speed`, `air_dodge_jump_cancels` |
 | Sprint por toque duplo | `sprint_double_tap_ticks`, `sprint_forward_threshold` |
 | Força do wall jump (altura 2,6 m; saída ×1,1 + 2 m/s para frente, até 18 m/s) | `wall_jump_forward_boost`, `wall_jump_height`, `wall_jump_horizontal_multiplier`, `wall_jump_min/max_horizontal_speed` |
 | Quanto a câmera influencia o side jump | `wall_jump_camera_weight` |

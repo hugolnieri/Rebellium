@@ -200,6 +200,23 @@ func test_air_dash_continues_after_touching_ground() -> void:
 	assert_eq(d.state(), &"Jump", "pular interrompe o dash")
 
 
+func test_jump_press_cancels_air_dash() -> void:
+	d.press_jump()
+	d.step(8)
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge")
+	d.step(4, Vector2(1, 0))
+	var vy := d.player.velocity.y
+	d.press_jump()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Fall", "pulo cancela o dash no ar")
+	assert_lte(d.player.get_horizontal_speed(), d.player.get_walk_speed() + 0.01, "volta a andar")
+	assert_lt(d.player.velocity.y, vy + 0.01, "sem impulso para cima")
+	d.step_until(func() -> bool: return d.player.is_on_floor(), 120, Vector2(1, 0))
+	assert_true(d.player.is_on_floor())
+
+
 func test_air_dash_keeps_momentum_and_returns_to_fall() -> void:
 	d.player.config.air_dodge_suspends_gravity = true
 	d.press_jump()

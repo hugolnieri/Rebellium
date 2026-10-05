@@ -62,6 +62,7 @@ air_dodge_suspends_gravity = false
 air_dodge_fall_speed = 3.0
 air_dodge_gravity_multiplier = 1.4
 air_dodge_exit_speed = 9.0
+air_dodge_jump_cancels = true
 dodge_cancel_enabled = true
 dodge_buffer_ticks = 3
 wall_jump_sp_cost = 18.0

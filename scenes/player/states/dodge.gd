@@ -5,6 +5,7 @@ extends PlayerState
 ## (dash jump); na recuperação, Espaço + A/D emenda outro dash (dodge cancel).
 ## Ar: o dash acelera a queda (`air_dodge_fall_speed`, gravidade × `air_dodge_gravity_multiplier`), ou
 ## suspende a gravidade se `air_dodge_suspends_gravity` → segue caindo com `air_dodge_exit_speed`.
+## Espaço no meio do dash no ar cancela o dash (`air_dodge_jump_cancels`) e volta a cair.
 ## `player.is_invulnerable` fica true durante `dodge_invulnerability` desde o início.
 
 var _direction: Vector3 = Vector3.FORWARD
@@ -82,6 +83,8 @@ func _try_dash_jump(input: PlayerInput) -> bool:
 func _air_update(input: PlayerInput, delta: float, t: int) -> void:
 	if player.try_wall_jump(input):
 		return
+	if _try_air_cancel(input):
+		return
 	if t < _dash_ticks():
 		_set_dash_velocity(t)
 		if cfg().air_dodge_suspends_gravity:
@@ -94,6 +97,19 @@ func _air_update(input: PlayerInput, delta: float, t: int) -> void:
 	player.velocity.z = exit.z
 	player.apply_gravity(delta)
 	machine.transition_to(&"Jump" if player.velocity.y > 0.0 else &"Fall", "fim do dash no ar")
+
+
+## Espaço no meio do dash no ar: interrompe o dash e cai normalmente, na velocidade de andar.
+func _try_air_cancel(input: PlayerInput) -> bool:
+	if not cfg().air_dodge_jump_cancels:
+		return false
+	if not player.consume_jump_press(input, cfg().jump_buffer_ticks):
+		return false
+	var horizontal := player.get_horizontal_velocity().limit_length(player.get_walk_speed())
+	player.velocity.x = horizontal.x
+	player.velocity.z = horizontal.z
+	machine.transition_to(&"Jump" if player.velocity.y > 0.0 else &"Fall", "pulo cancelou o dash no ar")
+	return true
 
 
 func _set_dash_velocity(t: int) -> void:
