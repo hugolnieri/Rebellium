@@ -240,7 +240,7 @@ func get_sprint_speed() -> float:
 
 
 func _update_attack_charge(input: PlayerInput) -> void:
-	var instant := not is_on_floor() or state_machine.is_in(&"Dodge")
+	var instant := state_machine.is_in(&"Dodge")
 	var step_result := CombatRules.attack_charge_step(_attack_charge_tick, tick,
 		input.is_pressed_this_tick(input.attack_light_pressed_tick), input.attack_light_held,
 		combat_config.heavy_hold_ticks, instant)
@@ -295,10 +295,16 @@ func try_attack(input: PlayerInput) -> bool:
 		kind = CombatRules.KIND_DASH
 		attack = weapon.dash
 	elif not is_on_floor():
-		if not light or current_kind == CombatRules.KIND_AIR:
+		# No ar: segurar/botão direito = pesado aéreo; toque = golpe aéreo (um de cada por vez).
+		if heavy and current_kind != CombatRules.KIND_HEAVY:
+			kind = CombatRules.KIND_HEAVY
+			attack = weapon.heavy
+			use_heavy = true
+		elif light and current_kind not in [CombatRules.KIND_AIR, CombatRules.KIND_HEAVY]:
+			kind = CombatRules.KIND_AIR
+			attack = weapon.air
+		else:
 			return false
-		kind = CombatRules.KIND_AIR
-		attack = weapon.air
 	elif heavy:
 		if current_kind == CombatRules.KIND_HEAVY:
 			return false
@@ -574,7 +580,8 @@ func try_wall_jump(input: PlayerInput) -> bool:
 			horizontal = WallJumpMath.compute_exit_horizontal(v_in, n, input.get_camera_forward(), config)
 			height = config.wall_jump_height
 	wall_jump_entry_velocity = Vector3(v_in.x, velocity.y, v_in.z)
-	velocity = horizontal + Vector3.UP * config.velocity_for_height(height)
+	var launch := horizontal + Vector3.UP * config.velocity_for_height(height)
+	velocity = launch
 	back_coming_wall = sensor.collider_id if technique == MovementRules.TECH_BACK_COMING else 0
 	last_wall_jump_collider = sensor.collider_id
 	last_wall_jump_tick = tick
@@ -584,7 +591,7 @@ func try_wall_jump(input: PlayerInput) -> bool:
 	sensor.reset_entry()
 	var data := {
 		"technique": technique, "position": sensor.contact_point, "normal": n,
-		"velocity_in": v_in, "velocity_out": velocity,
+		"velocity_in": v_in, "velocity_out": launch,
 	}
 	GameEvents.wall_jump_executed.emit(self, data)
 	if technique != MovementRules.TECH_NORMAL:
@@ -663,6 +670,12 @@ func _update_visual(delta: float) -> void:
 		visual.rotation.y = lerp_angle(visual.rotation.y, target_yaw,
 			clampf(feedback_config.model_turn_speed * 2.0 * delta, 0.0, 1.0))
 		return
+	elif state_machine.is_in(&"WallJump") and state_machine.current.call(&"is_sticking"):
+		# Colado na parede: o corpo já mira a saída (o mortal começa de frente para a parede).
+		var launch: Vector3 = state_machine.current.call(&"get_launch_horizontal")
+		if launch.length() < 0.1:
+			return
+		target_yaw = atan2(-launch.x, -launch.z)
 	elif state_machine.is_in(&"Dodge"):
 		# Dash lateral: o corpo continua de frente para a câmera e só se inclina.
 		target_yaw = current_input.look_yaw

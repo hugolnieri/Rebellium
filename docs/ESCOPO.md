@@ -88,3 +88,10 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   degrau suave, luz de borda, rosto quase sem sombra) e contorno. A animação por molas é convertida para
   o esqueleto do modelo (braços da T-pose), com dedos fechados na arma, piscar e sobrancelhas no golpe.
 
+## Revisão: animação natural e ajustes de ar
+- Parado com respiração e peso numa perna; sem inclinação lateral ao trocar de direção.
+- Sprint com corrida "ninja" (tronco inclinado, braços para trás), também na corrida no ar.
+- Dash no ar acelera a queda (`air_dodge_fall_speed`, `air_dodge_gravity_multiplier`).
+- Wall jump cola o personagem na parede por `wall_jump_stick_ticks` antes do impulso.
+- Pesado também no ar (segurar ou botão direito) e com animação mais longa (tempos dos `heavy.tres`).
+

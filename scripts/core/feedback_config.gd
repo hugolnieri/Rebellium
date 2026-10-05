@@ -37,8 +37,15 @@ extends Resource
 @export_range(0.0, 45.0, 0.5, "suffix:°") var dodge_lean_deg: float = 22.0
 
 @export_range(0.0, 45.0, 0.5, "suffix:°") var max_bank_deg: float = 18.0
-## Inclinação nas curvas por (rad/s de giro × m/s).
-@export_range(0.0, 0.2, 0.001) var bank_strength: float = 0.03
+## Inclinação lateral nas curvas por (rad/s de giro × m/s). 0 = não balança ao trocar de direção.
+@export_range(0.0, 0.2, 0.001) var bank_strength: float = 0.0
+## Parado: respiração (período e amplitude no peito) e peso apoiado numa perna.
+@export_range(1.0, 10.0, 0.1, "suffix:s") var breath_period: float = 4.2
+@export_range(0.0, 10.0, 0.1, "suffix:°") var breath_depth_deg: float = 2.2
+@export_range(0.0, 10.0, 0.1, "suffix:°") var idle_weight_shift_deg: float = 2.5
+## Sprint "ninja": tronco bem inclinado e braços esticados para trás.
+@export_range(0.0, 60.0, 0.5, "suffix:°") var ninja_run_lean_deg: float = 30.0
+@export_range(0.0, 110.0, 1.0, "suffix:°") var ninja_arm_back_deg: float = 70.0
 
 @export_group("Molas da animação")
 ## Frequência/amortecimento das articulações na locomoção (menor amortecimento = mais balanço).

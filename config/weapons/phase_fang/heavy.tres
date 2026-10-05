@@ -6,10 +6,10 @@
 script = ExtResource("1")
 display_name = "Lâmina ascendente"
 anim = "rising"
-startup = 0.14
-active = 0.12
-recovery = 0.36
-chain_after = 0.4
+startup = 0.28
+active = 0.2
+recovery = 0.5
+chain_after = 0.7
 damage = 22.0
 reach = 2.0
 arc_deg = 140.0

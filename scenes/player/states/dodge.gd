@@ -3,7 +3,8 @@ extends PlayerState
 ## (`dodge_speed` → `dodge_exit_speed`, curva `dodge_ease_power`) ao longo de `dodge_duration`.
 ## Chão: deslocamento → recuperação (`dodge_recovery`). Espaço no meio do dash cancela e pula
 ## (dash jump); na recuperação, Espaço + A/D emenda outro dash (dodge cancel).
-## Ar: gravidade suspensa durante o dash (se configurado) → volta a cair com `air_dodge_exit_speed`.
+## Ar: o dash acelera a queda (`air_dodge_fall_speed`, gravidade × `air_dodge_gravity_multiplier`), ou
+## suspende a gravidade se `air_dodge_suspends_gravity` → segue caindo com `air_dodge_exit_speed`.
 ## `player.is_invulnerable` fica true durante `dodge_invulnerability` desde o início.
 
 var _direction: Vector3 = Vector3.FORWARD
@@ -15,8 +16,11 @@ func enter(_from: StringName, data: Dictionary) -> void:
 	_airborne = data.get("airborne", false)
 	player.is_invulnerable = cfg().dodge_invulnerability > 0.0
 	_set_dash_velocity(0)
-	if _airborne and cfg().air_dodge_suspends_gravity:
-		player.velocity.y = 0.0
+	if _airborne:
+		if cfg().air_dodge_suspends_gravity:
+			player.velocity.y = 0.0
+		else:
+			player.velocity.y = minf(player.velocity.y, -cfg().air_dodge_fall_speed)
 	GameEvents.dodged.emit(player, _direction)
 
 
@@ -82,7 +86,7 @@ func _air_update(input: PlayerInput, delta: float, t: int) -> void:
 		if cfg().air_dodge_suspends_gravity:
 			player.velocity.y = 0.0
 		else:
-			player.apply_gravity(delta)
+			player.apply_gravity(delta * cfg().air_dodge_gravity_multiplier)
 		return
 	var exit := _direction * maxf(cfg().air_dodge_exit_speed, cfg().dodge_exit_speed)
 	player.velocity.x = exit.x

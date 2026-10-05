@@ -103,6 +103,33 @@ func test_air_attack_dives_and_lands() -> void:
 	assert_gt(landed, 0)
 
 
+func test_heavy_in_air_by_holding_left_click() -> void:
+	await _ready_world()
+	d.press_jump()
+	d.step(6)
+	d.press_attack()
+	d.attack_light_held = true
+	d.step(d.player.combat_config.heavy_hold_ticks + 1)
+	assert_eq(d.state(), &"Attack")
+	var attack: Node = d.player.state_machine.current
+	assert_eq(attack.kind, CombatRules.KIND_HEAVY)
+	assert_true(attack.airborne, "pesado aéreo")
+	d.attack_light_held = false
+	var landed := d.step_until(func() -> bool: return d.state() == &"Land", 120)
+	assert_gt(landed, 0, "termina ao tocar o chão")
+
+
+func test_heavy_in_air_with_right_click() -> void:
+	await _ready_world()
+	d.press_jump()
+	d.step(6)
+	d.press_attack(true)
+	d.step(1)
+	assert_eq(d.state(), &"Attack")
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_HEAVY)
+	assert_false(d.player.is_on_floor())
+
+
 func test_attack_during_dash_is_dash_attack() -> void:
 	await _ready_world()
 	d.press_dodge()

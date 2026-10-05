@@ -100,8 +100,11 @@ extends Resource
 ## Quantos dashes no ar por pulo (recarrega ao aterrissar e, se ligado, a cada wall jump).
 @export_range(0, 5, 1) var air_dodge_max_per_air: int = 1
 @export var air_dodge_refresh_on_wall_jump: bool = true
-## Durante o dash no ar a gravidade é suspensa (dash reto, sem cair).
-@export var air_dodge_suspends_gravity: bool = true
+## Durante o dash no ar a gravidade é suspensa (dash reto, sem cair). Desligado: o dash no ar
+## ACELERA a queda (velocidade inicial para baixo + gravidade multiplicada).
+@export var air_dodge_suspends_gravity: bool = false
+@export_range(0.0, 40.0, 0.5, "suffix:m/s") var air_dodge_fall_speed: float = 6.0
+@export_range(0.0, 6.0, 0.05) var air_dodge_gravity_multiplier: float = 2.5
 ## Velocidade horizontal mantida ao fim do dash no ar (não há recuperação no ar).
 @export_range(0.0, 30.0, 0.5, "suffix:m/s") var air_dodge_exit_speed: float = 9.0
 ## Dodge pode interromper estados de recuperação (Land, recuperação do dodge).
@@ -124,6 +127,8 @@ extends Resource
 @export_range(0.0, 20.0, 0.1, "suffix:m/s") var wall_jump_min_away_speed: float = 3.0
 ## Peso da direção da câmera no ajuste fino da saída (side jump). 0 = reflexão pura.
 @export_range(0.0, 1.0, 0.01) var wall_jump_camera_weight: float = 0.4
+## Antes do impulso o personagem fica colado na parede por este tempo (pés plantados).
+@export_range(0, 30, 1, "suffix:ticks") var wall_jump_stick_ticks: int = 6
 ## Tempo sem controle aéreo logo após o wall jump (estado WallJump).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_lock_time: float = 0.15
 ## Proíbe dois wall jumps seguidos na MESMA parede (exceto após back-coming).

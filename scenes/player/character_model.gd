@@ -101,6 +101,7 @@ var _flash_color: Color = Color.WHITE
 ## Rotações globais (espaço do modelo) da animação de referência, por canal.
 var _global: Dictionary = {}
 var _last_step_side: int = 0
+var _sprint_amount: float = 0.0
 
 
 func _ready() -> void:
@@ -316,6 +317,11 @@ func _on_wall_jump(who: Node, data: Dictionary) -> void:
 	_trick_timer = _fb().flip_duration
 
 
+## O mortal espera enquanto o personagem está colado na parede (antes do impulso).
+func _is_wall_sticking() -> bool:
+	return player.state_machine.is_in(&"WallJump") and player.state_machine.current.call(&"is_sticking")
+
+
 func _on_landed(who: Node, impact_speed: float) -> void:
 	if who != player:
 		return
@@ -364,11 +370,14 @@ func _process(delta: float) -> void:
 	var attack_weight := 0.0
 	match state:
 		&"Attack":
-			_ground_pose(pose, false, accel)
+			if player.state_machine.current.get(&"airborne") == true:
+				_air_pose(pose)
+			else:
+				_ground_pose(pose, false, accel)
 			attack_weight = _attack_pose(pose)
 		&"Jump", &"Fall" when player.air_sprinting:
 			_air_sprint_pose(pose)
-		&"WallJump" when _trick_face_wall and _trick_timer > _fb().flip_duration * 0.6:
+		&"WallJump" when _trick_face_wall and (_is_wall_sticking() or _trick_timer > _fb().flip_duration * 0.75):
 			_wall_kick_pose(pose)
 		&"Jump", &"Fall", &"WallJump":
 			_air_pose(pose)
@@ -422,35 +431,66 @@ func _ground_pose(pose: Dictionary, sprinting: bool, accel: float) -> void:
 	var calm := 1.0 - clampf(amount, 0.0, 1.0)
 	var swing := deg_to_rad(fb.leg_swing_deg) * amount * (1.2 if sprinting else 1.0)
 	var knee_bend := deg_to_rad(fb.knee_bend_deg) * amount
-	var arm_swing := deg_to_rad(fb.arm_swing_deg) * amount * (1.25 if sprinting else 1.0)
+	var arm_swing := deg_to_rad(fb.arm_swing_deg) * amount
+	# Parado: respiração lenta e peso numa perna (a outra relaxada, joelho levemente dobrado).
+	var breath := sin(_time * TAU / maxf(fb.breath_period, 0.1))
+	var depth := deg_to_rad(fb.breath_depth_deg)
+	var shift := deg_to_rad(fb.idle_weight_shift_deg) * calm
 	for i in 2:
 		var side := "l" if i == 0 else "r"
 		var leg_phase := _phase + PI * i
 		var thigh := sin(leg_phase) * swing
 		# Joelho dobra mais na passagem (perna vindo para frente) e estica no contato.
 		var knee := -knee_bend * (0.5 + 0.5 * sin(leg_phase + PI * 0.65)) - 0.1 * amount
-		pose[StringName("thigh_" + side)] = Vector3(thigh, 0, (0.04 if i == 0 else -0.04) * calm)
-		pose[StringName("knee_" + side)] = Vector3(knee - 0.12 * calm, 0, 0)
-		pose[StringName("foot_" + side)] = Vector3(-thigh * 0.35 - knee * 0.25, 0, 0)
-	# Braço livre balança oposto à perna; o braço da arma balança menos.
-	pose[&"shoulder_l"] = Vector3(-sin(_phase) * arm_swing + 0.1, 0, -0.16 - 0.1 * amount)
+		var relaxed := 1.0 if i == 1 else 0.0  # perna direita relaxada
+		pose[StringName("thigh_" + side)] = Vector3(thigh + 0.08 * relaxed * calm, 0,
+			((0.04 if i == 0 else -0.04) + (shift if i == 0 else shift * 0.4)) * calm)
+		pose[StringName("knee_" + side)] = Vector3(knee - (0.06 + 0.14 * relaxed) * calm, 0, 0)
+		pose[StringName("foot_" + side)] = Vector3(-thigh * 0.35 - knee * 0.25 + 0.05 * relaxed * calm, 0, 0)
+	# Braço livre balança oposto à perna; ombros sobem de leve ao inspirar.
+	var lift := breath * depth * 0.8 * calm
+	pose[&"shoulder_l"] = Vector3(-sin(_phase) * arm_swing + 0.1, 0, -0.16 - 0.1 * amount - lift)
 	pose[&"elbow_l"] = Vector3(0.35 + 0.9 * amount, 0, 0)
 	# Correndo, o braço da arma vai para trás e a lâmina "arrasta" atrás do corpo.
 	var run_k := clampf(amount, 0.0, 1.0)
 	pose[&"shoulder_r"] = Vector3(lerpf(0.35, -0.45, run_k) + sin(_phase) * arm_swing * 0.25, 0.05,
-		0.18 + 0.12 * run_k)
+		0.18 + 0.12 * run_k + lift)
 	pose[&"elbow_r"] = Vector3(lerpf(0.75, 0.35, run_k), 0, 0)
 	pose[&"wrist_r"] = Vector3(lerpf(-0.35, 3.3, run_k), 0, 0)
-	# Quadril e tronco em contra-rotação, balanço lateral e sobe-desce de dois tempos.
+	# Quadril e tronco em contra-rotação e sobe-desce de dois tempos (sem balanço lateral).
 	var lean := deg_to_rad(fb.run_lean_deg) * amount + clampf(accel * 0.01, -0.15, 0.2)
-	if sprinting:
-		lean += deg_to_rad(fb.sprint_extra_lean_deg)
-	pose[&"hips"] = Vector3(0, sin(_phase) * 0.22 * amount, sin(_phase * 2.0) * 0.03 * amount
-		+ sin(_time * 0.9) * 0.02 * calm)
-	pose[&"spine"] = Vector3(-lean, -sin(_phase) * 0.14 * amount, 0)
-	pose[&"chest"] = Vector3(sin(_time * 2.1) * 0.025 * calm - lean * 0.3, -sin(_phase) * 0.16 * amount, 0)
-	pose[&"head"] = Vector3(lean * 0.8, sin(_phase) * 0.18 * amount, 0)
-	pose[HIPS_Y] = Vector3(-absf(cos(_phase)) * fb.run_bob_height * amount - 0.02 * calm, 0, 0)
+	pose[&"hips"] = Vector3(0, sin(_phase) * 0.22 * amount, -shift * 0.6)
+	pose[&"spine"] = Vector3(-lean + breath * depth * 0.3 * calm, -sin(_phase) * 0.14 * amount, shift * 0.3)
+	pose[&"chest"] = Vector3(breath * depth * calm - lean * 0.3, -sin(_phase) * 0.16 * amount, shift * 0.2)
+	# Cabeça: compensa a respiração e olha em volta devagar.
+	pose[&"head"] = Vector3(lean * 0.8 - breath * depth * 0.5 * calm,
+		sin(_phase) * 0.18 * amount + sin(_time * 0.23) * 0.07 * calm, 0)
+	pose[HIPS_Y] = Vector3(-absf(cos(_phase)) * fb.run_bob_height * amount - 0.02 * calm
+		- breath * 0.004 * calm, 0, 0)
+	_sprint_amount = move_toward(_sprint_amount, 1.0 if sprinting else 0.0, get_process_delta_time() * 6.0)
+	if _sprint_amount > 0.0:
+		_ninja_run(pose, _sprint_amount)
+
+
+## Corrida "ninja": tronco mergulhado para frente, cabeça erguida, braços esticados para trás.
+func _ninja_run(pose: Dictionary, weight: float) -> void:
+	var fb := _fb()
+	var lean := deg_to_rad(fb.ninja_run_lean_deg)
+	var back := -deg_to_rad(fb.ninja_arm_back_deg)
+	var bounce := sin(_phase * 2.0) * 0.05
+	var target := {
+		&"spine": Vector3(-lean, (pose[&"spine"] as Vector3).y * 0.4, 0),
+		&"chest": Vector3(-lean * 0.25, (pose[&"chest"] as Vector3).y * 0.4, 0),
+		&"head": Vector3(lean * 1.0, 0, 0),
+		&"shoulder_l": Vector3(back + bounce, 0, -0.22),
+		&"shoulder_r": Vector3(back - bounce, 0, 0.22),
+		&"elbow_l": Vector3(0.12, 0, 0),
+		&"elbow_r": Vector3(0.12, 0, 0),
+		&"wrist_l": Vector3(-0.3, 0, 0),
+		&"wrist_r": Vector3(-1.4, 0, 0),  # lâmina alinhada ao braço, arrastando atrás
+	}
+	for key: StringName in target:
+		pose[key] = (pose[key] as Vector3).lerp(target[key], weight)
 
 
 func _air_pose(pose: Dictionary) -> void:
@@ -474,27 +514,26 @@ func _air_pose(pose: Dictionary) -> void:
 ## Corrida no ar: corpo mergulhado para frente, pernas pedalando para trás.
 func _air_sprint_pose(pose: Dictionary) -> void:
 	var cycle := sin(_time * 14.0)
-	pose[&"spine"] = Vector3(-0.55, 0, 0)
-	pose[&"head"] = Vector3(0.45, 0, 0)
 	pose[&"thigh_l"] = Vector3(-0.2 + cycle * 0.6, 0, 0)
 	pose[&"thigh_r"] = Vector3(-0.2 - cycle * 0.6, 0, 0)
 	pose[&"knee_l"] = Vector3(-0.9 - maxf(cycle, 0.0) * 0.6, 0, 0)
 	pose[&"knee_r"] = Vector3(-0.9 - maxf(-cycle, 0.0) * 0.6, 0, 0)
-	pose[&"shoulder_l"] = Vector3(-1.2, 0, -0.35)
-	pose[&"shoulder_r"] = Vector3(-1.1, 0, 0.35)
-	pose[&"elbow_l"] = Vector3(0.2, 0, 0)
-	pose[&"elbow_r"] = Vector3(0.2, 0, 0)
-	pose[&"wrist_r"] = Vector3(-1.4, 0, 0)
+	_ninja_run(pose, 1.0)
+	pose[&"spine"] = Vector3(-0.55, 0, 0)
+	pose[&"head"] = Vector3(0.5, 0, 0)
 
 
-## Pés plantados na parede, joelhos dobrados empurrando, braços abrindo para o mortal.
+## Colado na parede: agachado de frente para ela, um pé plantado alto e o outro embaixo,
+## tronco ereto, braços abrindo para o mortal.
 func _wall_kick_pose(pose: Dictionary) -> void:
-	pose[&"thigh_l"] = Vector3(1.3, 0, 0.1)
-	pose[&"thigh_r"] = Vector3(1.1, 0, -0.1)
-	pose[&"knee_l"] = Vector3(-1.7, 0, 0)
-	pose[&"knee_r"] = Vector3(-1.5, 0, 0)
-	pose[&"spine"] = Vector3(0.35, 0, 0)
-	pose[&"head"] = Vector3(0.3, 0, 0)
+	pose[HIPS_Y] = Vector3(-0.12, 0, 0)
+	pose[&"thigh_l"] = Vector3(1.0, 0, 0.12)
+	pose[&"thigh_r"] = Vector3(0.45, 0, -0.1)
+	pose[&"knee_l"] = Vector3(-1.6, 0, 0)
+	pose[&"knee_r"] = Vector3(-1.0, 0, 0)
+	pose[&"foot_l"] = Vector3(0.4, 0, 0)
+	pose[&"spine"] = Vector3(0.05, 0, 0)
+	pose[&"head"] = Vector3(0.2, 0, 0)
 	pose[&"shoulder_l"] = Vector3(1.6, 0, -0.6)
 	pose[&"shoulder_r"] = Vector3(1.4, 0, 0.6)
 	pose[&"elbow_l"] = Vector3(0.5, 0, 0)
@@ -705,7 +744,10 @@ func _emit_footsteps(speed: float, cfg: MovementConfig) -> void:
 
 func _update_trick(delta: float) -> void:
 	var basis := Basis(Vector3.UP, _spin_angle)
-	if _trick_timer > 0.0:
+	if _trick_timer > 0.0 and _is_wall_sticking():
+		if _trick_face_wall:
+			basis = basis * Basis(Vector3.UP, PI)
+	elif _trick_timer > 0.0:
 		_trick_timer = maxf(_trick_timer - delta, 0.0)
 		var t := 1.0 - _trick_timer / maxf(_fb().flip_duration, 0.001)
 		var eased := t * t * (3.0 - 2.0 * t)

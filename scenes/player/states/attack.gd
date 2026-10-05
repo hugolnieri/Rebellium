@@ -13,6 +13,8 @@ var attack: AttackData
 var kind: StringName = &""
 var combo_index: int = 0
 var direction: Vector3 = Vector3.FORWARD
+## Golpe começou no ar (aéreo ou pesado aéreo): física aérea e termina ao tocar o chão.
+var airborne: bool = false
 
 var _t: int = 0
 var _startup_ticks: int = 1
@@ -27,6 +29,7 @@ func enter(_from: StringName, data: Dictionary) -> void:
 	kind = data.kind
 	combo_index = data.get("combo_index", 0)
 	direction = data.get("direction", Vector3.FORWARD)
+	airborne = kind == CombatRules.KIND_AIR or not player.is_on_floor()
 	_t = 0
 	_hit_ids.clear()
 	_startup_ticks = maxi(player.secs_to_ticks(attack.startup), 0)
@@ -72,7 +75,6 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	if _t >= _chain_ticks and player.try_attack(input):
 		return
 	var phase := get_phase()
-	var airborne := kind == CombatRules.KIND_AIR
 	if airborne:
 		if _t == _startup_ticks + 1 and attack.air_active_vertical_speed != 0.0:
 			player.velocity.y = attack.air_active_vertical_speed
@@ -101,7 +103,7 @@ func _move_on_ground(input: PlayerInput, delta: float) -> void:
 
 
 func post_move(_input: PlayerInput) -> void:
-	if kind == CombatRules.KIND_AIR and _t > 1 and player.is_on_floor():
+	if airborne and _t > 1 and player.is_on_floor():
 		machine.transition_to(&"Land", "golpe aéreo tocou o chão")
 
 

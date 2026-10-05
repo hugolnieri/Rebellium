@@ -8,9 +8,13 @@ const FWD := Vector2(0, 1)
 var d: Driver
 
 
+## A cinemática é testada com o impulso imediato (sem o tempo colado na parede), exceto
+## onde o teste pede `wall_jump_stick_ticks` explicitamente.
 func _world(spawn: Vector3, overrides: Dictionary = {}) -> void:
 	d = Driver.new()
-	d.setup(self, spawn, overrides)
+	var merged := {"wall_jump_stick_ticks": 0}
+	merged.merge(overrides, true)
+	d.setup(self, spawn, merged)
 	d.add_block(Vector3(0, -0.5, 0), Vector3(200, 1, 200))
 
 
@@ -58,6 +62,28 @@ func test_jump_into_wall_allows_wall_jump_and_costs_18_sp() -> void:
 	assert_gt(d.player.velocity.y, 0.0)
 	assert_gt(d.player.velocity.z, 0.0, "refletiu para longe da parede")
 	assert_eq(d.wall_jumps.size(), 1)
+
+
+func test_wall_jump_sticks_to_wall_before_launch() -> void:
+	_world(Vector3(0, 0, 0), {"wall_jump_stick_ticks": 6})
+	var wall := _tall_wall(-3.0)
+	await d.ready_physics(self)
+	d.step(10)
+	d.step(5, FWD)
+	d.press_jump()
+	d.step(1, FWD)
+	assert_gt(d.step_until_wall(wall, 90, FWD), 0)
+	d.press_jump()
+	d.step(1)
+	var stuck_at := d.player.global_position
+	d.step(4)
+	assert_eq(d.state(), &"WallJump")
+	assert_true(d.player.state_machine.current.is_sticking())
+	assert_almost_eq(d.player.global_position.y, stuck_at.y, 0.01, "colado: não cai")
+	d.step(3)
+	assert_false(d.player.state_machine.current.is_sticking())
+	assert_gt(d.player.velocity.y, 5.0, "impulso depois de colar")
+	assert_gt(d.player.velocity.z, 0.0, "saiu para longe da parede")
 
 
 func test_wall_jump_reflects_diagonal_entry() -> void:

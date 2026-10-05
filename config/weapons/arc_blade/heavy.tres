@@ -6,10 +6,10 @@
 script = ExtResource("1")
 display_name = "Giro de arco"
 anim = "spin"
-startup = 0.22
-active = 0.2
-recovery = 0.42
-chain_after = 0.5
+startup = 0.38
+active = 0.3
+recovery = 0.6
+chain_after = 0.85
 damage = 30.0
 reach = 2.8
 arc_deg = 360.0

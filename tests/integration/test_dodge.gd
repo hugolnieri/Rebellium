@@ -103,6 +103,7 @@ func test_dodge_returns_to_ground_state() -> void:
 
 
 func test_air_dash_once_per_jump_flat_and_refilled_on_landing() -> void:
+	d.player.config.air_dodge_suspends_gravity = true
 	d.press_jump()
 	d.step(8)
 	var y_before := d.player.global_position.y
@@ -128,7 +129,22 @@ func test_air_dash_once_per_jump_flat_and_refilled_on_landing() -> void:
 	assert_eq(d.state(), &"Dodge", "recarregou ao aterrissar")
 
 
+func test_air_dash_accelerates_fall() -> void:
+	d.press_jump()
+	d.step(10)
+	assert_gt(d.player.velocity.y, 0.0, "ainda subindo")
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge")
+	assert_lte(d.player.velocity.y, -d.player.config.air_dodge_fall_speed, "mergulha no dash")
+	var vy := d.player.velocity.y
+	d.step(3, Vector2(1, 0))
+	assert_lt(d.player.velocity.y, vy, "cai cada vez mais rápido")
+	assert_gt(d.player.get_horizontal_speed(), 10.0, "continua indo para o lado")
+
+
 func test_air_dash_keeps_momentum_and_returns_to_fall() -> void:
+	d.player.config.air_dodge_suspends_gravity = true
 	d.press_jump()
 	d.step(20)
 	d.press_dodge()

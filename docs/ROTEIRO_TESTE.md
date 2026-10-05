@@ -129,7 +129,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Vira na hora para onde a câmera aponta. Acelera até a velocidade de sprint (10 m/s), mas **cai mais rápido** (gravidade ×1,7) e gasta 12 SP/s.
   - O HUD de debug mostra `CORRIDA NO AR`; o personagem mergulha para frente pedalando.
   - Acaba ao aterrissar, ao soltar o W ou com SP zerado. O sprint que vem do chão **não** acelera a queda.
-- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral reto (sem cair durante o dash).
+- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral que **acelera a queda** (mergulha a 6 m/s
+  e a gravidade fica ×2,5 durante o dash). Para o dash reto antigo: F2 → `air_dodge_suspends_gravity`.
   - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
   - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
   - Ao terminar, você continua caindo com 9 m/s na direção do dash (`air_dodge_exit_speed`).
@@ -141,9 +142,14 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 ## Parte 3b: personagem e polimento (observar)
 - **Personagem**: modelo anime (base VRoid, licença CC0) com traje preto e linhas roxas, cabelo branco,
   olhos verdes, toon shading e contorno. Pisca sozinho e franze a testa ao golpear.
-  - Passada acompanha a velocidade (mais longa e inclinada no sprint); o cabelo balança com o vento.
+  - Parado: respira devagar (peito e ombros sobem e descem), apoia o peso numa perna e olha em volta.
+  - Trocar de direção não inclina o corpo para os lados (`bank_strength` = 0 no F2, aba Visual).
+  - Sprint: **corrida ninja** — tronco bem inclinado para frente, cabeça erguida, braços esticados para trás e
+    a lâmina arrastando atrás. Na corrida no ar a pose é a mesma.
+  - Passada acompanha a velocidade; o cabelo balança com o vento.
   - No ar: pose de pulo subindo e braços abertos caindo.
-  - Wall jump: **mortal para trás** — pisa na parede de frente para ela e gira de costas para longe.
+  - Wall jump: o personagem **cola na parede** por um instante (agachado, de frente para ela, ~0,1 s,
+    `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.
     Reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
   - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente absorvendo o impacto. Dá para cancelar
     com dash (A/D + Space) ou correndo (W, W). Corrida no ar → aterrissa sem cambalhota.
@@ -203,8 +209,9 @@ Ande até os três postes à frente (POSTE).
      e a câmera treme de leve. O HUD da direita conta os hits, o dano do combo e o DPS.
    - Clicar rápido demais não pula etapas: o próximo golpe sai quando o atual permite (clique fica guardado ~0,16 s).
 2. **Pesado** (segure o botão esquerdo ~0,27 s, ou botão direito): a arma brilha enquanto carrega e sai um
-   giro 360° que acerta em volta (teste com um poste atrás de você). Gasta 15 SP. No meio do combo leve,
-   segurar vira finalizador. Tempo de carga: F2 → Combate → `heavy_hold_ticks`.
+   giro 360° mais lento e pesado que acerta em volta (teste com um poste atrás de você). Gasta 15 SP. No meio
+   do combo leve, segurar vira finalizador. **Também funciona no ar** (o personagem flutua girando e o golpe
+   acaba ao tocar o chão). Tempo de carga: F2 → Combate → `heavy_hold_ticks`.
 3. **Troca de arma**: 2 (ou Q). Floreio da arma, flash e som de carga. A **Presa de Fase** tem combo de 4
    golpes rápidos, anda ~8% mais rápido e o pesado (lâmina ascendente) lança para cima.
 4. **Golpear andando/correndo**: o golpe não trava o personagem nem o empurra sozinho. Segurando WASD ele
@@ -212,7 +219,7 @@ Ande até os três postes à frente (POSTE).
    O golpe sai para onde a câmera aponta (mira assistida opcional: F2 → Combate → `aim_assist_enabled`).
 
 ## Parte 7: golpes com movimento
-1. **Golpe aéreo**: pule e clique → corte no ar mantendo o embalo do pulo. Suba na plataforma alta
+1. **Golpe aéreo**: pule e clique → corte no ar (dá para direcionar no ar). Segurando: pesado aéreo. Suba na plataforma alta
    (rampa à esquerda) e golpeie o poste lá em cima.
 2. **Golpe no dash**: A/D + Space e clique durante o dash → golpe de dash.
 3. **Wall jump + golpe**: na chaminé (paredes de metal à direita), faça wall jumps e clique no ar.
