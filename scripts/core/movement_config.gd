@@ -46,8 +46,10 @@ extends Resource
 @export_range(0.1, 1.5, 0.01, "suffix:s") var roll_duration: float = 0.7
 ## Depois de dash ou golpe no ar, aterrissa sem cambalhota nem agachamento de impacto.
 @export var air_action_cancels_landing: bool = true
-## A cambalhota acontece NO LUGAR (o personagem para ao aterrissar). Desligado: rola para frente.
+## A cambalhota acontece NO LUGAR (o personagem para ao aterrissar) a menos que o jogador segure uma
+## direção: aí rola para lá a `roll_steer_speed`. Desligado: sempre rola para frente com o embalo.
 @export var roll_in_place: bool = true
+@export_range(0.0, 15.0, 0.1, "suffix:m/s") var roll_steer_speed: float = 6.0
 ## Velocidade mínima para frente durante a cambalhota (só com roll_in_place desligado).
 @export_range(0.0, 15.0, 0.1, "suffix:m/s") var roll_min_speed: float = 4.0
 @export_range(0.0, 60.0, 0.5, "suffix:m/s²") var roll_deceleration: float = 8.0
@@ -133,7 +135,7 @@ extends Resource
 @export_group("Wall jump")
 @export_range(0.0, 100.0, 1.0) var wall_jump_sp_cost: float = 18.0
 ## Depois de um pulo (ou wall jump), por quanto tempo o wall jump continua liberado mesmo caindo.
-@export_range(0.0, 3.0, 0.01, "suffix:s") var wall_jump_window_after_jump: float = 0.6
+@export_range(0.0, 3.0, 0.01, "suffix:s") var wall_jump_window_after_jump: float = 1.2
 ## Altura ganha pelo impulso vertical do wall jump.
 @export_range(0.0, 10.0, 0.05, "suffix:m") var wall_jump_height: float = 2.35
 ## Multiplicador da velocidade horizontal refletida.

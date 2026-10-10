@@ -539,7 +539,207 @@ def _arms(p):
     return {k: v for k, v in p.items() if k in ARM_CHANNELS}
 
 
+# Golpes leves e pesados feitos à mão, pose por pose (graus). Cada chave sobrepõe a anterior.
+# Tempos: antecipação 0,18 · preparação 0,35 · meio do arco 0,47 · acerto 0,6 · chicote 0,7 · fim 1.
+HAND_ATTACK_TIMES = (0.18, 0.35, 0.47, 0.6, 0.7, 1.0)
+HAND_ATTACKS = {
+    # Lâmina de Arco 1: corte horizontal da direita para a esquerda, avançando a perna esquerda.
+    "slash_r": [
+        pose(hips=(0, -15, 0), spine=(0, -12, 0), chest=(0, -8, 0), neck=(0, 10, 0), head=(0, 15, 0),
+             hips_pos=(0.02, -0.05, 0.03), shoulder_r=(55, -40, 25), elbow_r=(70, 0, 0), wrist_r=(-40, 0, 10),
+             shoulder_l=(30, 0, -25), elbow_l=(80, 0, 0), thigh_l=(8, 0, -10), knee_l=(-15, 0, 0), foot_l=(7, 0, 10),
+             thigh_r=(5, 0, 9), knee_r=(-25, 0, 0), foot_r=(20, 0, -9)),
+        pose(hips=(0, -28, 0), spine=(4, -26, 0), chest=(2, -18, 0), upper_chest=(0, -6, 0), neck=(0, 20, 0),
+             head=(-3, 30, 0), hips_pos=(0.03, -0.09, 0.04), shoulder_r=(75, -85, 15), elbow_r=(35, 0, 0),
+             wrist_r=(-55, 0, 20), clavicle_r=(0, -10, 0), shoulder_l=(45, 0, -15), elbow_l=(85, 0, 0),
+             thigh_l=(22, 0, -12), knee_l=(-38, 0, 0), foot_l=(16, 0, 12), thigh_r=(0, 0, 10), knee_r=(-35, 0, 0),
+             foot_r=(35, 0, -10)),
+        pose(hips=(-4, 5, 0), spine=(-4, -5, 0), chest=(0, -5, 0), upper_chest=(0, 0, 0), neck=(0, 0, 0),
+             head=(2, 5, 0), hips_pos=(0, -0.11, -0.08), shoulder_r=(85, -10, 5), elbow_r=(12, 0, 0),
+             wrist_r=(-75, 0, 5), clavicle_r=(0, 0, 0), shoulder_l=(25, 0, -35), elbow_l=(60, 0, 0),
+             thigh_l=(38, 0, -8), knee_l=(-50, 0, 0), foot_l=(16, 0, 8), thigh_r=(-15, 0, 8), knee_r=(-25, 0, 0),
+             foot_r=(44, 0, -8), toe_r=(20, 0, 0)),
+        pose(hips=(-6, 30, 0), spine=(-6, 25, 0), chest=(0, 20, 0), upper_chest=(0, 6, 0), neck=(0, -25, 0),
+             head=(4, -30, 0), hips_pos=(0, -0.13, -0.14), shoulder_r=(85, 65, 0), elbow_r=(5, 0, 0),
+             wrist_r=(-82, 0, -12), clavicle_r=(0, 12, 0), shoulder_l=(10, 0, -70), elbow_l=(25, 0, 0),
+             wrist_l=(0, 0, -10), thigh_l=(48, 0, -6), knee_l=(-62, 0, 0), foot_l=(20, 0, 6),
+             thigh_r=(-28, 0, 8), knee_r=(-14, 0, 0), foot_r=(48, 0, -8), toe_r=(35, 0, 0)),
+        pose(hips=(-6, 36, 0), spine=(-6, 32, 0), chest=(0, 24, 0), neck=(0, -30, 0), head=(4, -34, 0),
+             shoulder_r=(75, 90, 5), elbow_r=(12, 0, 0), wrist_r=(-70, 0, -15), shoulder_l=(5, 0, -75)),
+        pose(hips=(-4, 30, 0), spine=(-4, 28, 0), chest=(0, 18, 0), upper_chest=(0, 4, 0), neck=(0, -24, 0),
+             head=(3, -28, 0), hips_pos=(0, -0.1, -0.12), shoulder_r=(55, 85, 10), elbow_r=(35, 0, 0),
+             wrist_r=(-50, 0, -5), clavicle_r=(0, 6, 0), shoulder_l=(15, 0, -45), elbow_l=(45, 0, 0),
+             thigh_l=(40, 0, -6), knee_l=(-50, 0, 0), foot_l=(14, 0, 6), thigh_r=(-22, 0, 8), knee_r=(-16, 0, 0),
+             foot_r=(42, 0, -8), toe_r=(28, 0, 0)),
+    ],
+    # Lâmina de Arco 2: corte de volta, da esquerda para a direita, avançando a perna direita.
+    "slash_l": [
+        pose(hips=(0, 12, 0), spine=(0, 10, 0), chest=(0, 8, 0), neck=(0, -8, 0), head=(0, -12, 0),
+             hips_pos=(-0.02, -0.05, 0.02), shoulder_r=(60, 50, 5), elbow_r=(85, 0, 0), wrist_r=(-40, 0, -15),
+             shoulder_l=(20, 0, -30), elbow_l=(60, 0, 0)),
+        pose(hips=(0, 26, 0), spine=(4, 24, 0), chest=(2, 16, 0), upper_chest=(0, 6, 0), neck=(0, -20, 0),
+             head=(-3, -28, 0), hips_pos=(-0.03, -0.09, 0.03), shoulder_r=(80, 82, 0), elbow_r=(80, 0, 0),
+             wrist_r=(-45, 0, -25), clavicle_r=(0, 10, 0), shoulder_l=(10, 0, -50), elbow_l=(40, 0, 0),
+             thigh_r=(20, 0, 12), knee_r=(-38, 0, 0), foot_r=(18, 0, -12), thigh_l=(0, 0, -10), knee_l=(-34, 0, 0),
+             foot_l=(34, 0, 10)),
+        pose(hips=(-4, -5, 0), spine=(-4, 5, 0), chest=(0, 5, 0), upper_chest=(0, 0, 0), neck=(0, 0, 0),
+             head=(2, -4, 0), hips_pos=(0, -0.11, -0.08), shoulder_r=(88, 15, 0), elbow_r=(25, 0, 0),
+             wrist_r=(-70, 0, 0), clavicle_r=(0, 0, 0), shoulder_l=(20, 0, -40), elbow_l=(50, 0, 0),
+             thigh_r=(38, 0, 8), knee_r=(-50, 0, 0), foot_r=(16, 0, -8), thigh_l=(-15, 0, -8), knee_l=(-25, 0, 0),
+             foot_l=(44, 0, 8), toe_l=(20, 0, 0)),
+        pose(hips=(-6, -30, 0), spine=(-6, -25, 0), chest=(0, -20, 0), upper_chest=(0, -6, 0), neck=(0, 25, 0),
+             head=(4, 30, 0), hips_pos=(0, -0.13, -0.14), shoulder_r=(85, -72, 10), elbow_r=(6, 0, 0),
+             wrist_r=(-84, 0, 15), clavicle_r=(0, -12, 0), shoulder_l=(30, 0, -25), elbow_l=(90, 0, 0),
+             thigh_r=(48, 0, 6), knee_r=(-62, 0, 0), foot_r=(20, 0, -6), thigh_l=(-28, 0, -8), knee_l=(-14, 0, 0),
+             foot_l=(48, 0, 8), toe_l=(35, 0, 0)),
+        pose(hips=(-6, -36, 0), spine=(-6, -32, 0), chest=(0, -24, 0), neck=(0, 30, 0), head=(4, 34, 0),
+             shoulder_r=(78, -95, 15), elbow_r=(10, 0, 0), wrist_r=(-72, 0, 18)),
+        pose(hips=(-4, -28, 0), spine=(-4, -26, 0), chest=(0, -18, 0), upper_chest=(0, -4, 0), neck=(0, 22, 0),
+             head=(3, 26, 0), hips_pos=(0, -0.1, -0.12), shoulder_r=(55, -80, 20), elbow_r=(35, 0, 0),
+             wrist_r=(-50, 0, 10), clavicle_r=(0, -6, 0), shoulder_l=(20, 0, -35), elbow_l=(70, 0, 0),
+             thigh_r=(40, 0, 6), knee_r=(-50, 0, 0), foot_r=(14, 0, -6), thigh_l=(-22, 0, -8), knee_l=(-16, 0, 0),
+             foot_l=(42, 0, 8), toe_l=(28, 0, 0)),
+    ],
+    # Lâmina de Arco 3: golpe de cima para baixo, sobe na ponta dos pés e desce agachando fundo.
+    "overhead": [
+        pose(hips=(4, 0, 0), spine=(6, -5, 0), chest=(6, 0, 0), head=(-4, 0, 0), hips_pos=(0, -0.03, 0.04),
+             shoulder_r=(110, 5, 15), elbow_r=(80, 0, 0), wrist_r=(-30, 0, 0), shoulder_l=(90, 0, -10),
+             elbow_l=(90, 0, 0)),
+        pose(hips=(6, -8, 0), spine=(12, -8, 0), chest=(10, 0, 0), upper_chest=(4, 0, 0), neck=(-4, 0, 0),
+             head=(-10, 0, 0), hips_pos=(0, 0.02, 0.05), shoulder_r=(165, 5, 10), elbow_r=(70, 0, 0),
+             wrist_r=(-25, 0, 0), clavicle_r=(0, 0, 10), shoulder_l=(150, 0, -12), elbow_l=(85, 0, 0),
+             clavicle_l=(0, 0, -10), thigh_l=(10, 0, -10), knee_l=(-8, 0, 0), foot_l=(-8, 0, 10),
+             thigh_r=(-12, 0, 9), knee_r=(-6, 0, 0), foot_r=(12, 0, -9), toe_r=(25, 0, 0)),
+        pose(hips=(-15, 0, 0), spine=(-12, 0, 0), chest=(-6, 0, 0), upper_chest=(0, 0, 0), neck=(4, 0, 0),
+             head=(10, 0, 0), hips_pos=(0, -0.06, -0.08), shoulder_r=(120, 8, 5), elbow_r=(25, 0, 0),
+             wrist_r=(-60, 0, 0), clavicle_r=(0, 0, 4), shoulder_l=(100, 0, -8), elbow_l=(40, 0, 0),
+             clavicle_l=(0, 0, -4), thigh_l=(45, 0, -8), knee_l=(-55, 0, 0), foot_l=(25, 0, 8),
+             thigh_r=(-10, 0, 8), knee_r=(-25, 0, 0), foot_r=(50, 0, -8), toe_r=(25, 0, 0)),
+        pose(hips=(-22, 0, 0), spine=(-22, 4, 0), chest=(-12, 0, 0), upper_chest=(-4, 0, 0), neck=(8, 0, 0),
+             head=(22, 0, 0), hips_pos=(0, -0.22, -0.16), shoulder_r=(55, 8, 0), elbow_r=(3, 0, 0),
+             wrist_r=(-85, 0, 0), clavicle_r=(0, 0, 0), shoulder_l=(40, 0, -15), elbow_l=(30, 0, 0),
+             clavicle_l=(0, 0, 0), thigh_l=(70, 0, -8), knee_l=(-95, 0, 0), foot_l=(47, 0, 8),
+             thigh_r=(-10, 0, 10), knee_r=(-45, 0, 0), foot_r=(45, 0, -10), toe_r=(40, 0, 0)),
+        pose(hips=(-24, 0, 0), spine=(-25, 4, 0), chest=(-14, 0, 0), head=(24, 0, 0), hips_pos=(0, -0.24, -0.17),
+             shoulder_r=(45, 8, 0), elbow_r=(5, 0, 0), wrist_r=(-80, 0, 0)),
+        pose(hips=(-18, 0, 0), spine=(-16, 3, 0), chest=(-8, 0, 0), upper_chest=(-2, 0, 0), head=(18, 0, 0),
+             hips_pos=(0, -0.18, -0.15), shoulder_r=(40, 10, 5), elbow_r=(20, 0, 0), wrist_r=(-70, 0, 0),
+             shoulder_l=(20, 0, -30), elbow_l=(40, 0, 0), thigh_l=(62, 0, -8), knee_l=(-82, 0, 0), foot_l=(38, 0, 8)),
+    ],
+    # Lâmina de Arco pesado: enrola o tronco para a esquerda e solta um giro completo para a direita,
+    # lâmina estendida na altura do ombro, base larga e baixa (o giro do corpo vem do código).
+    "spin": [
+        pose(hips=(0, 20, 0), spine=(0, 15, 0), chest=(0, 10, 0), neck=(0, -12, 0), head=(0, -18, 0),
+             hips_pos=(0, -0.08, 0), shoulder_r=(30, 40, 40), elbow_r=(60, 0, 0), wrist_r=(-60, 0, 0),
+             shoulder_l=(30, 0, -40), elbow_l=(50, 0, 0), thigh_l=(15, 0, -18), knee_l=(-30, 0, 0),
+             foot_l=(15, 0, 18), thigh_r=(10, 0, 18), knee_r=(-30, 0, 0), foot_r=(20, 0, -18)),
+        pose(hips=(0, 40, 0), spine=(6, 32, 0), chest=(2, 20, 0), upper_chest=(0, 8, 0), neck=(0, -25, 0),
+             head=(0, -35, 0), hips_pos=(0, -0.2, 0), shoulder_r=(35, 70, 40), elbow_r=(55, 0, 0),
+             wrist_r=(-70, 0, 0), clavicle_r=(0, 12, 0), shoulder_l=(20, 0, -70), elbow_l=(30, 0, 0),
+             thigh_l=(35, 0, -22), knee_l=(-70, 0, 0), foot_l=(35, 0, 22), thigh_r=(30, 0, 22), knee_r=(-70, 0, 0),
+             foot_r=(40, 0, -22)),
+        pose(hips=(0, 15, 0), spine=(0, 10, 0), chest=(0, 5, 0), upper_chest=(0, 2, 0), neck=(0, -8, 0),
+             head=(0, -10, 0), hips_pos=(0, -0.16, 0), shoulder_r=(15, 20, 75), elbow_r=(15, 0, 0),
+             wrist_r=(-85, 0, 0), clavicle_r=(0, 4, 0), shoulder_l=(10, 0, -80), elbow_l=(15, 0, 0)),
+        pose(hips=(0, 0, 0), spine=(-6, 0, 0), chest=(0, 0, 0), upper_chest=(0, 0, 0), neck=(0, 0, 0),
+             head=(0, 0, 0), hips_pos=(0, -0.15, 0), shoulder_r=(8, 0, 85), elbow_r=(3, 0, 0), wrist_r=(-88, 0, 0),
+             clavicle_r=(0, 0, 6), shoulder_l=(5, 0, -80), elbow_l=(8, 0, 0), clavicle_l=(0, 0, -6),
+             thigh_l=(20, 0, -22), knee_l=(-45, 0, 0), foot_l=(25, 0, 22), thigh_r=(20, 0, 22), knee_r=(-45, 0, 0),
+             foot_r=(25, 0, -22)),
+        pose(hips=(0, -15, 0), spine=(-6, -15, 0), chest=(0, -10, 0), neck=(0, 10, 0), head=(0, 14, 0),
+             shoulder_r=(15, -25, 75), elbow_r=(10, 0, 0), wrist_r=(-80, 0, 0)),
+        pose(hips=(0, -20, 0), spine=(-6, -20, 0), chest=(0, -12, 0), neck=(0, 15, 0), head=(0, 20, 0),
+             hips_pos=(0, -0.1, 0), shoulder_r=(40, -45, 40), elbow_r=(30, 0, 0), wrist_r=(-60, 0, 0),
+             clavicle_r=(0, 0, 0), shoulder_l=(20, 0, -45), elbow_l=(40, 0, 0), clavicle_l=(0, 0, 0),
+             thigh_l=(14, 0, -16), knee_l=(-30, 0, 0), foot_l=(16, 0, 16), thigh_r=(10, 0, 16), knee_r=(-30, 0, 0),
+             foot_r=(20, 0, -16)),
+    ],
+    # Presa de Fase 1/3: estocada rápida, puxando o braço esquerdo para trás.
+    "jab": [
+        pose(hips=(0, -10, 0), spine=(0, -10, 0), chest=(0, -6, 0), head=(0, 12, 0), shoulder_r=(45, -15, 20),
+             elbow_r=(100, 0, 0), wrist_r=(-85, 0, 0), shoulder_l=(55, 0, -10), elbow_l=(85, 0, 0)),
+        pose(hips=(0, -22, 0), spine=(2, -20, 0), chest=(0, -12, 0), neck=(0, 15, 0), head=(0, 22, 0),
+             hips_pos=(0.02, -0.07, 0.04), shoulder_r=(50, -25, 25), elbow_r=(115, 0, 0), wrist_r=(-88, 0, 0),
+             clavicle_r=(0, -8, 0), shoulder_l=(65, 0, -5), elbow_l=(90, 0, 0), thigh_l=(18, 0, -10),
+             knee_l=(-30, 0, 0), foot_l=(12, 0, 10), thigh_r=(-2, 0, 9), knee_r=(-28, 0, 0), foot_r=(30, 0, -9)),
+        pose(hips=(-2, 0, 0), spine=(-4, 0, 0), chest=(0, 0, 0), neck=(0, 0, 0), head=(2, 0, 0),
+             hips_pos=(0, -0.09, -0.07), shoulder_r=(75, -5, 10), elbow_r=(55, 0, 0), clavicle_r=(0, 0, 0),
+             thigh_l=(32, 0, -8), knee_l=(-42, 0, 0), foot_l=(12, 0, 8), thigh_r=(-14, 0, 8), knee_r=(-20, 0, 0),
+             foot_r=(36, 0, -8), toe_r=(15, 0, 0)),
+        pose(hips=(-4, 22, 0), spine=(-6, 20, 0), chest=(0, 12, 0), neck=(0, -18, 0), head=(3, -20, 0),
+             hips_pos=(0, -0.1, -0.14), shoulder_r=(88, 8, 0), elbow_r=(2, 0, 0), wrist_r=(-90, 0, 0),
+             clavicle_r=(0, 14, 0), shoulder_l=(25, 0, -35), elbow_l=(95, 0, 0), thigh_l=(42, 0, -6),
+             knee_l=(-50, 0, 0), foot_l=(12, 0, 6), thigh_r=(-25, 0, 8), knee_r=(-12, 0, 0), foot_r=(41, 0, -8),
+             toe_r=(30, 0, 0)),
+        pose(hips=(-4, 25, 0), spine=(-6, 24, 0), shoulder_r=(90, 12, 0), clavicle_r=(0, 18, 0)),
+        pose(hips=(-3, 15, 0), spine=(-4, 12, 0), chest=(0, 8, 0), neck=(0, -12, 0), head=(2, -14, 0),
+             hips_pos=(0, -0.07, -0.1), shoulder_r=(65, 5, 10), elbow_r=(40, 0, 0), wrist_r=(-85, 0, 0),
+             clavicle_r=(0, 6, 0), shoulder_l=(40, 0, -20), elbow_l=(85, 0, 0), thigh_l=(30, 0, -6),
+             knee_l=(-36, 0, 0), foot_l=(9, 0, 6), thigh_r=(-18, 0, 8), knee_r=(-14, 0, 0), foot_r=(35, 0, -8),
+             toe_r=(20, 0, 0)),
+    ],
+    # Presa de Fase 2: corte de revés, da esquerda para a direita, avançando a perna direita.
+    "backhand": [
+        pose(hips=(0, 12, 0), spine=(0, 12, 0), chest=(0, 8, 0), head=(0, -12, 0), shoulder_r=(55, 45, 0),
+             elbow_r=(100, 0, 0), wrist_r=(-60, 0, -20), shoulder_l=(30, 0, -30), elbow_l=(70, 0, 0)),
+        pose(hips=(0, 25, 0), spine=(3, 22, 0), chest=(0, 14, 0), neck=(0, -18, 0), head=(0, -24, 0),
+             hips_pos=(-0.02, -0.07, 0.03), shoulder_r=(65, 70, 0), elbow_r=(105, 0, 0), wrist_r=(-55, 0, -25),
+             clavicle_r=(0, 10, 0), shoulder_l=(20, 0, -45), elbow_l=(55, 0, 0), thigh_r=(18, 0, 10),
+             knee_r=(-30, 0, 0), foot_r=(12, 0, -10), thigh_l=(-2, 0, -9), knee_l=(-28, 0, 0), foot_l=(30, 0, 9)),
+        pose(hips=(-2, 5, 0), spine=(-3, 5, 0), chest=(0, 3, 0), neck=(0, -3, 0), head=(2, -4, 0),
+             hips_pos=(0, -0.09, -0.07), shoulder_r=(80, 20, 5), elbow_r=(40, 0, 0), wrist_r=(-75, 0, 0),
+             clavicle_r=(0, 0, 0), thigh_r=(32, 0, 8), knee_r=(-42, 0, 0), foot_r=(12, 0, -8), thigh_l=(-14, 0, -8),
+             knee_l=(-20, 0, 0), foot_l=(36, 0, 8), toe_l=(15, 0, 0)),
+        pose(hips=(-4, -25, 0), spine=(-5, -22, 0), chest=(0, -14, 0), neck=(0, 18, 0), head=(3, 22, 0),
+             hips_pos=(0, -0.1, -0.12), shoulder_r=(82, -60, 12), elbow_r=(8, 0, 0), wrist_r=(-80, 0, 18),
+             clavicle_r=(0, -12, 0), shoulder_l=(45, 0, -15), elbow_l=(95, 0, 0), thigh_r=(42, 0, 6),
+             knee_r=(-50, 0, 0), foot_r=(12, 0, -6), thigh_l=(-25, 0, -8), knee_l=(-12, 0, 0), foot_l=(41, 0, 8),
+             toe_l=(30, 0, 0)),
+        pose(hips=(-4, -30, 0), spine=(-5, -27, 0), chest=(0, -18, 0), shoulder_r=(75, -80, 15)),
+        pose(hips=(-3, -20, 0), spine=(-4, -18, 0), chest=(0, -10, 0), neck=(0, 14, 0), head=(2, 18, 0),
+             hips_pos=(0, -0.07, -0.1), shoulder_r=(55, -70, 18), elbow_r=(35, 0, 0), wrist_r=(-60, 0, 10),
+             clavicle_r=(0, -6, 0), shoulder_l=(35, 0, -25), elbow_l=(80, 0, 0), thigh_r=(30, 0, 6),
+             knee_r=(-36, 0, 0), foot_r=(9, 0, -6), thigh_l=(-18, 0, -8), knee_l=(-14, 0, 0), foot_l=(35, 0, 8),
+             toe_l=(20, 0, 0)),
+    ],
+    # Presa de Fase pesado: agacha fundo com a lâmina baixa atrás e explode para cima num corte vertical.
+    "rising": [
+        pose(hips=(-8, -10, 0), spine=(-12, -10, 0), chest=(-4, -5, 0), head=(14, 10, 0), hips_pos=(0, -0.12, 0.02),
+             shoulder_r=(-10, -15, 25), elbow_r=(40, 0, 0), wrist_r=(-70, 0, 0), shoulder_l=(40, 0, -20),
+             elbow_l=(80, 0, 0), thigh_l=(40, 0, -10), knee_l=(-62, 0, 0), foot_l=(30, 0, 10),
+             thigh_r=(25, 0, 9), knee_r=(-62, 0, 0), foot_r=(45, 0, -9)),
+        pose(hips=(-12, -20, 0), spine=(-18, -18, 0), chest=(-6, -8, 0), neck=(8, 10, 0), head=(18, 12, 0),
+             hips_pos=(0, -0.26, 0.03), shoulder_r=(-30, -20, 30), elbow_r=(25, 0, 0), wrist_r=(-75, 0, 0),
+             shoulder_l=(55, 0, -15), elbow_l=(90, 0, 0), thigh_l=(70, 0, -10), knee_l=(-110, 0, 0),
+             foot_l=(52, 0, 10), thigh_r=(45, 0, 9), knee_r=(-105, 0, 0), foot_r=(55, 0, -9), toe_r=(25, 0, 0)),
+        pose(hips=(-2, 0, 0), spine=(0, 0, 0), chest=(4, 0, 0), neck=(0, 0, 0), head=(4, 0, 0),
+             hips_pos=(0, -0.08, -0.04), shoulder_r=(80, 5, 10), elbow_r=(20, 0, 0), wrist_r=(-85, 0, 0),
+             shoulder_l=(30, 0, -40), elbow_l=(60, 0, 0), thigh_l=(30, 0, -8), knee_l=(-35, 0, 0), foot_l=(7, 0, 8),
+             thigh_r=(5, 0, 8), knee_r=(-30, 0, 0), foot_r=(27, 0, -8), toe_r=(10, 0, 0)),
+        pose(hips=(6, 15, 0), spine=(12, 15, 0), chest=(10, 5, 0), upper_chest=(4, 0, 0), neck=(-6, 0, 0),
+             head=(-14, -10, 0), hips_pos=(0, 0.06, -0.06), shoulder_r=(172, 10, 5), elbow_r=(5, 0, 0),
+             wrist_r=(-88, 0, 0), clavicle_r=(0, 0, 14), shoulder_l=(20, 0, -60), elbow_l=(30, 0, 0),
+             thigh_l=(20, 0, -8), knee_l=(-25, 0, 0), foot_l=(-15, 0, 8), toe_l=(30, 0, 0),
+             thigh_r=(-12, 0, 8), knee_r=(-8, 0, 0), foot_r=(-10, 0, -8), toe_r=(30, 0, 0)),
+        pose(spine=(15, 18, 0), chest=(12, 6, 0), hips_pos=(0, 0.07, -0.06), shoulder_r=(178, 10, 5)),
+        pose(hips=(2, 10, 0), spine=(6, 10, 0), chest=(4, 4, 0), upper_chest=(0, 0, 0), neck=(-2, 0, 0),
+             head=(-6, -8, 0), hips_pos=(0, -0.04, -0.05), shoulder_r=(145, 10, 8), elbow_r=(25, 0, 0),
+             wrist_r=(-80, 0, 0), clavicle_r=(0, 0, 4), shoulder_l=(25, 0, -45), elbow_l=(40, 0, 0),
+             thigh_l=(15, 0, -9), knee_l=(-20, 0, 0), foot_l=(3, 0, 9), toe_l=(0, 0, 0), thigh_r=(-5, 0, 8),
+             knee_r=(-15, 0, 0), foot_r=(18, 0, -8), toe_r=(0, 0, 0)),
+    ],
+}
+
+
 def attack_keys(name):
+    f = ATTACK_FRAMES
+    if name in HAND_ATTACKS:
+        keys = [(0, READY)]
+        current = READY
+        for t, layer in zip(HAND_ATTACK_TIMES, HAND_ATTACKS[name]):
+            current = over(current, layer)
+            keys.append((round(f * t), current))
+        return keys
     windup_p, hit_p, follow_p = ATTACKS[name]
     body_w, body_h, body_f = (attack_body(*b) for b in ATTACK_BODY[name])
     windup = over(READY, body_w, _arms(windup_p))
@@ -553,15 +753,11 @@ def attack_keys(name):
                    pose(hips_pos=(0, 0, 0), foot_l=(-25, 0, 0), foot_r=(-25, 0, 0), toe_r=(0, 0, 0)))
         follow = over(follow, {k: hit[k] for k in ("thigh_l", "thigh_r", "knee_l", "knee_r", "foot_l", "foot_r",
                                                     "hips_pos", "toe_r")})
-    # Antecipação: começa a recuar o corpo e o braço para a preparação.
     anticipation = lerp_pose(READY, windup, 0.55)
-    # Meio do arco: corpo a meio caminho, braço já adiantado (a lâmina passa à frente do corpo).
     mid = lerp_pose(windup, hit, 0.45)
     rs = mid.get("shoulder_r", (0, 0, 0))
     mid["shoulder_r"] = (rs[0] + 12, rs[1], rs[2])
-    # Chicote: passa um pouco do acerto antes de assentar.
     overshoot = lerp_pose(hit, follow, 1.25)
-    f = ATTACK_FRAMES
     t0, t1, t2 = ATTACK_KEY_TIMES
     return [
         (0, READY), (round(f * 0.18), anticipation), (round(f * t0), windup),

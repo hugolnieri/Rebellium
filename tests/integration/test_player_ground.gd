@@ -232,9 +232,13 @@ func test_landing_roll_stays_in_place() -> void:
 	assert_true(d.player.state_machine.current.rolling, "cambalhota ao aterrissar")
 	d.step(d.player.config.bunny_hop_window_ticks)
 	var before := d.player.global_position
-	d.step(15, FWD)
+	d.step(15)
 	assert_lt(Vector2(d.player.global_position.x - before.x, d.player.global_position.z - before.z).length(), 0.05,
-		"fica no lugar, mesmo segurando W")
+		"sem input fica no lugar")
+	d.look_yaw = -PI * 0.5  # olhando para +X
+	d.step(10, FWD)
+	assert_true(d.player.state_machine.current.get(&"rolling") == true, "ainda na cambalhota")
+	assert_gt(d.player.global_position.x - before.x, 0.5, "segurando a direção, rola para lá")
 
 
 func test_landing_rolls_forward_keeping_momentum_when_not_in_place() -> void:

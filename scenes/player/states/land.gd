@@ -69,9 +69,12 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		player.velocity.z = _landing_velocity.z
 		player.apply_gravity(delta)
 	elif rolling and cfg().roll_in_place:
-		# Fica no lugar: o impacto é absorvido sem sair rolando para nenhuma direção.
-		player.velocity.x = 0.0
-		player.velocity.z = 0.0
+		# Sem input fica no lugar (não sai rolando sozinho); com o direcional, rola para onde se aponta.
+		var horizontal := Vector3.ZERO
+		if input.has_move():
+			horizontal = input.get_wish_direction() * cfg().roll_steer_speed * minf(input.move.length(), 1.0)
+		player.velocity.x = horizontal.x
+		player.velocity.z = horizontal.z
 		player.apply_gravity(delta)
 	elif rolling:
 		if cfg().air_instant_turn and input.has_move():

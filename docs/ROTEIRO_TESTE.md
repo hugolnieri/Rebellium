@@ -174,7 +174,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.
     Back-coming: sem acrobacia (sobe colado na parede).
   - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota no lugar** (0,7 s, `roll_duration`), com as costas no
-    chão (`roll_ball_height`): o personagem para e não sai rolando para nenhuma direção (`roll_in_place`). Dá para cancelar
+    chão (`roll_ball_height`): sem input o personagem fica no lugar; segurando uma direção, rola para lá
+    (`roll_in_place`, `roll_steer_speed`). Dá para cancelar
     com dash (A/D + Space) ou correndo (W, W). Corrida no ar, **dash no ar** ou **golpe no ar** → aterrissa
     limpo, sem cambalhota nem agachamento (`air_action_cancels_landing`).
   - Tocar o chão no meio de um **dash no ar** ou de um **golpe no ar** não interrompe nada: o dash continua no

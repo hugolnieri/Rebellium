@@ -184,3 +184,11 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   larga (4,5 m) para os saltos mais rápidos ganharem altura.
 - Dash: 30 m/s no começo, perdendo força rápido; no ar plana na primeira metade e depois cai.
 - Aterrissagem forte: cambalhota no lugar (`roll_in_place`).
+
+## Revisão: golpes feitos à mão, mais intervalo, wall jump descendo
+- Golpes leves e pesados das duas armas refeitos do zero no Blender, pose por pose (antecipação,
+  preparação, meio do arco, acerto, chicote e acomodação).
+- Mais intervalo entre os golpes: recuperação ×1,4 e próximo golpe só depois de 80% dela.
+- Wall jump continua liberado por 1,2 s depois do pulo (antes 0,6 s): dá para pular para baixo e ainda
+  acertar uma parede abaixo da altura de onde saiu.
+- Cambalhota no lugar, mas segurando uma direção ela rola para lá (`roll_steer_speed`).
