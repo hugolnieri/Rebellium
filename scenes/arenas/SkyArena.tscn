@@ -100,11 +100,11 @@ shadow_enabled = true
 
 [node name="Platform" parent="." instance=ExtResource("platform")]
 
-[node name="HologramLight" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, 0)
+[node name="CenterLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 light_color = Color(0.3, 0.9, 1, 1)
-light_energy = 2.5
-omni_range = 14.0
+light_energy = 1.5
+omni_range = 12.0
 
 [node name="WallLightA" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -13)

@@ -5,13 +5,15 @@ Gera:
   assets/arena/sky_arena.glb  — o que o Godot carrega (scenes/arenas/SkyArena.tscn)
 
 Tudo é feito por código (malhas, UVs e texturas geradas com numpy), sem assets de terceiros.
-Objetos com sufixo "-col" viram colisão no Godot (StaticBody3D com trimesh, mantendo a malha).
-Os nós "Hologram", "Drone_*", "Beacon_*" e "Flame_*" são animados por scenes/arenas/sky_arena.gd.
+Colisão: peças convexas simples com sufixo "-convcolonly" (um bloco por segmento de muro, um prisma
+para o chão), sem malha visível; o Godot cria um StaticBody3D com ConvexPolygonShape3D para cada uma.
+Isso evita as emendas de uma colisão por triângulos (personagem enganchando, normal da parede pulando).
+Os nós "Drone_*", "Beacon_*" e "Flame_*" são animados por scenes/arenas/sky_arena.gd.
 
 Medidas (metros, chão da plataforma em z = 0):
   anel externo   r 17–24,5   passarela, com mureta de 1,4 m na borda (r 24,5–26)
-  muro interno   r 15,5–17   6 m de altura (bom para wall jump), 4 passagens nas diagonais
-  centro         r < 15,5    chão liso, palco com holograma
+  muro interno   r 15,5–17   5 m de altura (bom para wall jump); nas 4 diagonais um muro baixo de 2,5 m
+  centro         r < 15,5    chão liso, palco com anéis de neon
 
 Uso:  blender -b -P tools/blender/build_sky_arena.py    ou    python3 tools/blender/build_sky_arena.py
 """
@@ -32,7 +34,8 @@ TAU = math.tau
 SEG = 96  # segmentos de um círculo completo
 
 R_RIM_OUT, R_RIM_IN, RIM_H = 26.0, 24.5, 1.4
-R_WALL_OUT, R_WALL_IN, WALL_H = 17.0, 15.5, 6.0
+R_WALL_OUT, R_WALL_IN, WALL_H = 17.0, 15.5, 5.0
+GATE_H = WALL_H * 0.5  # muro baixo que fecha cada passagem
 TIERS = []  # arquibancada (r_in, r_out, altura) — removida: o centro é plano
 GATE_ANGLES = [TAU / 8, 3 * TAU / 8, 5 * TAU / 8, 7 * TAU / 8]
 GATE_HALF = 0.15  # rad (≈ 4,7 m de passagem no muro)
@@ -155,8 +158,6 @@ def make_materials():
     m["orange"] = material("M_Neon_Orange", (1.0, 0.5, 0.1), emission=(1.0, 0.5, 0.1), strength=2.2)
     m["red"] = material("M_Beacon_Red", (1.0, 0.1, 0.05), emission=(1.0, 0.1, 0.05), strength=8.0)
     m["blue"] = material("M_Neon_Blue", (0.2, 0.4, 1.0), emission=(0.2, 0.4, 1.0), strength=2.5)
-    m["holo"] = material("M_Hologram", (0.2, 0.9, 1.0), emission=(0.2, 0.9, 1.0), strength=0.9, alpha=0.18)
-    m["holo_line"] = material("M_HologramLine", (0.4, 1.0, 1.0), emission=(0.4, 1.0, 1.0), strength=2.5)
     m["flame_o"] = material("M_Flame_Orange", (1.0, 0.55, 0.15), emission=(1.0, 0.55, 0.15), strength=2.5,
                             alpha=0.35)
     m["flame_b"] = material("M_Flame_Blue", (0.3, 0.6, 1.0), emission=(0.3, 0.6, 1.0), strength=2.5, alpha=0.35)
@@ -324,27 +325,64 @@ def gaps(r_in, r_out):
 
 # --- Peças ---------------------------------------------------------------------------------------
 
+def _collider(name, verts, faces, parent):
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts, [], faces)
+    obj = bpy.data.objects.new(name + "-convcolonly", mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    obj.parent = parent
+    return obj
+
+
+def convex_ring(name, r_in, r_out, z0, z1, parent, a0=0.0, a1=TAU):
+    """Um bloco convexo por segmento do anel (setor estreito = convexo)."""
+    n = max(1, int(round(SEG * (a1 - a0) / TAU)))
+    for i in range(n):
+        a, b = a0 + (a1 - a0) * i / n, a0 + (a1 - a0) * (i + 1) / n
+        pts = [(r * math.cos(t), r * math.sin(t)) for r, t in ((r_in, a), (r_out, a), (r_out, b), (r_in, b))]
+        verts = [(x, y, z0) for x, y in pts] + [(x, y, z1) for x, y in pts]
+        faces = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+        _collider("%s_%02d" % (name, i), verts, faces, parent)
+
+
+def convex_disc(name, r, z0, z1, parent):
+    n = SEG
+    verts = [(r * math.cos(TAU * i / n), r * math.sin(TAU * i / n), z) for z in (z0, z1) for i in range(n)]
+    faces = [tuple(range(n - 1, -1, -1)), tuple(range(n, 2 * n))]
+    faces += [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
+    _collider(name, verts, faces, parent)
+
+
+def gate_ranges():
+    return [(g - GATE_HALF, g + GATE_HALF) for g in GATE_ANGLES]
+
+
 def build_platform(m, root):
-    # Chão + casco (com colisão).
+    # Chão + casco.
     b = Builder()
     b.disc(R_RIM_OUT, BASE_TOP, m["floor"])
     b.ring(0.0, R_RIM_OUT, BASE_BOTTOM, BASE_TOP, m["hull"], top=False, bottom=True, inner=False)
-    b.finish("Deck-col", root)
+    b.finish("Deck", root)
+    convex_disc("DeckCol", R_RIM_OUT, BASE_BOTTOM, BASE_TOP, root)
     # Mureta da borda.
     b = Builder()
     b.ring(R_RIM_IN, R_RIM_OUT, BASE_TOP, RIM_H, m["wall"], side_mat=m["hull"], tile=3.0)
-    b.finish("Rim-col", root)
-    # Muro interno com 4 passagens (bom para wall jump) e arquibancada.
+    b.finish("Rim", root)
+    convex_ring("RimCol", R_RIM_IN, R_RIM_OUT, BASE_TOP, RIM_H, root)
+    # Muro interno (bom para wall jump) e, nas passagens, um muro baixo com metade da altura.
     b = Builder()
     for a0, a1 in gaps(R_WALL_IN, R_WALL_OUT):
         b.ring(R_WALL_IN, R_WALL_OUT, BASE_TOP, WALL_H, m["wall"], a0, a1, tile=3.0)
-        for r_in, r_out, h in TIERS:
-            b.ring(r_in, r_out, BASE_TOP, h, m["floor"], a0, a1, outer=False, side_mat=m["wall"], tile=3.0)
-    b.finish("InnerRing-col", root)
+        convex_ring("WallCol%d" % int(a0 * 100), R_WALL_IN, R_WALL_OUT, BASE_TOP, WALL_H, root, a0, a1)
+    for a0, a1 in gate_ranges():
+        b.ring(R_WALL_IN, R_WALL_OUT, BASE_TOP, GATE_H, m["wall"], a0, a1, tile=3.0)
+        convex_ring("GateCol%d" % int(a0 * 100), R_WALL_IN, R_WALL_OUT, BASE_TOP, GATE_H, root, a0, a1)
+    b.finish("InnerWall", root)
     # Palco central.
     b = Builder()
     b.ring(0.0, 3.2, BASE_TOP, 0.35, m["wall"], inner=False, tile=2.0)
-    b.finish("Dais-col", root)
+    b.finish("Dais", root)
+    convex_disc("DaisCol", 3.2, BASE_TOP, 0.35, root)
 
 
 def build_neon(m, root):
@@ -366,6 +404,11 @@ def build_neon(m, root):
         for k, (r_in, r_out, h) in enumerate(TIERS):
             mat = m["magenta"] if k % 2 == 0 else m["cyan"]
             b.ring(r_in - 0.05, r_in - eps, h - 0.14, h - 0.06, mat, a0, a1, top=True, outer=False)
+    for a0, a1 in gate_ranges():
+        b.ring(R_WALL_IN - 0.02, R_WALL_IN + 0.1, GATE_H, GATE_H + 0.02, m["cyan"], a0, a1, inner=False,
+               outer=False, caps=False)
+        b.ring(R_WALL_OUT + eps, R_WALL_OUT + 0.06, 1.5, 1.6, m["orange"], a0, a1, inner=False)
+        b.ring(R_WALL_IN - 0.06, R_WALL_IN - eps, 1.5, 1.6, m["magenta"], a0, a1, outer=False)
     # Chão: faixa zebrada perto do muro e anéis no centro.
     b.ring(R_WALL_OUT + 0.4, R_WALL_OUT + 0.9, BASE_TOP, BASE_TOP + 0.01, m["hazard"], inner=False, outer=False,
            tile=1.0)
@@ -490,46 +533,6 @@ def build_antennas(m, root):
         obj.location = (x, y, RIM_H + h + 0.12)
 
 
-def build_hologram(m, root):
-    holo = bpy.data.objects.new("Hologram", None)
-    bpy.context.scene.collection.objects.link(holo)
-    holo.parent = root
-    holo.location = (0, 0, 3.6)
-    b = Builder()
-    rings = 16
-    seg = 32
-    r = 1.8
-    for i in range(rings):
-        p0, p1 = math.pi * i / rings - math.pi / 2, math.pi * (i + 1) / rings - math.pi / 2
-        for j in range(seg):
-            t0, t1 = TAU * j / seg, TAU * (j + 1) / seg
-
-            def pt(p, t):
-                return Vector((r * math.cos(p) * math.cos(t), r * math.cos(p) * math.sin(t), r * math.sin(p)))
-            b.quad([pt(p0, t0), pt(p0, t1), pt(p1, t1), pt(p1, t0)], [(0, 0), (1, 0), (1, 1), (0, 1)], m["holo"])
-    b.finish("HoloSphere", holo)
-    lines = Builder()
-    for k in range(6):  # meridianos e paralelos brilhantes
-        t = TAU * k / 6
-        pts = [Vector((r * 1.01 * math.cos(p) * math.cos(t), r * 1.01 * math.cos(p) * math.sin(t), r * 1.01 * math.sin(p)))
-               for p in np.linspace(-math.pi / 2, math.pi / 2, 24)]
-        lines.tube(pts, 0.015, m["holo_line"], sides=4)
-    for p in (-0.6, 0.0, 0.6):
-        rr = r * 1.01 * math.cos(p)
-        pts = [Vector((rr * math.cos(t), rr * math.sin(t), r * 1.01 * math.sin(p))) for t in np.linspace(0, TAU, 40)]
-        lines.tube(pts, 0.015, m["holo_line"], sides=4)
-    lines.finish("HoloLines", holo)
-    for k, (tilt, rad) in enumerate(((0.4, 2.6), (-0.7, 3.0))):
-        o = Builder()
-        pts = [Vector((rad * math.cos(t), rad * math.sin(t) * math.cos(tilt), rad * math.sin(t) * math.sin(tilt)))
-               for t in np.linspace(0, TAU, 64)]
-        o.tube(pts, 0.03, m["holo_line"] if k == 0 else m["orange"], sides=5)
-        o.finish("HoloOrbit_%d" % k, holo)
-    beam = Builder()
-    beam.cylinder((0, 0, 0.36), 1.4, 1.5, m["holo"], sides=24, r_top=0.4, cap_top=False, cap_bottom=False)
-    beam.finish("HoloBeam", root)
-
-
 def build_drones(m, root):
     for i in range(3):
         drone = bpy.data.objects.new("Drone_%d" % i, None)
@@ -560,7 +563,6 @@ def main():
     build_underside(m, root)
     build_thrusters(m, root)
     build_antennas(m, root)
-    build_hologram(m, root)
     build_drones(m, root)
     os.makedirs(os.path.dirname(OUT_BLEND), exist_ok=True)
     os.makedirs(os.path.dirname(OUT_GLB), exist_ok=True)

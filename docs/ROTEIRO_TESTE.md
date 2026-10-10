@@ -292,9 +292,10 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 - Plataforma circular sobre as nuvens, à noite, com a cidade lá embaixo. Modelo feito no Blender
   (`art/arena/sky_arena.blend`, gerado por `tools/blender/build_sky_arena.py`).
 - **Passarela externa** com mureta de 1,4 m na borda; dá para pular a mureta e cair (volta ao spawn).
-- **Muro interno** de 6 m com 4 passagens nas diagonais: bom para wall jump (faixas de neon nos dois lados).
-- Centro plano com os postes de treino em volta do palco.
-- **Holograma** girando no palco central, drones em órbita, luzes vermelhas piscando nas antenas,
+- **Muro interno** de 5 m (bom para wall jump); nas 4 diagonais um **muro baixo** de 2,5 m fecha a passagem
+  (pule com wall jump ou suba por ele). Colisão por blocos convexos: desliza no muro curvo sem enganchar.
+- Centro plano com os postes de treino em volta do palco de neon.
+- Drones em órbita, luzes vermelhas piscando nas antenas,
   propulsores com chama embaixo da plataforma.
 - R reinicia (postes e posição), como na arena de combate.
 

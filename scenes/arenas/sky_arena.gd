@@ -1,7 +1,7 @@
 extends "res://scenes/arenas/combat_arena.gd"
 ## Arena flutuante (modelo feito no Blender: tools/blender/build_sky_arena.py → assets/arena/sky_arena.glb).
 ## Herda da arena de combate (spawn, postes, R reinicia, queda volta ao spawn) e só anima o cenário:
-## holograma girando, drones em órbita, luzes das antenas piscando, chamas dos propulsores tremendo e
+## drones em órbita, luzes das antenas piscando, chamas dos propulsores tremendo e
 ## prédios da cidade lá embaixo. Nada aqui altera gameplay.
 
 const TOWER_SHADER: Shader = preload("res://scenes/arenas/sky/tower.gdshader")
@@ -11,13 +11,10 @@ const TOWER_SHADER: Shader = preload("res://scenes/arenas/sky/tower.gdshader")
 @export var tower_min_distance: float = 140.0
 @export var tower_max_distance: float = 650.0
 @export var city_level: float = -260.0
-@export var hologram_spin: float = 0.35
 @export var drone_orbit_speed: float = 0.12
 @export var beacon_period: float = 1.4
 
 var _time: float = 0.0
-var _hologram: Node3D
-var _orbits: Array[Node3D] = []
 var _drones: Array[Node3D] = []
 var _drone_bases: Array[Vector3] = []
 var _beacons: Array[Node3D] = []
@@ -27,12 +24,9 @@ var _flames: Array[Node3D] = []
 func _ready() -> void:
 	super()
 	var platform := $Platform as Node3D
-	_hologram = platform.find_child("Hologram", true, false) as Node3D
 	for node in platform.find_children("*", "Node3D", true, false):
 		var node_name := String(node.name)
-		if node_name.begins_with("HoloOrbit"):
-			_orbits.append(node)
-		elif node_name.begins_with("Drone_"):
+		if node_name.begins_with("Drone_"):
 			_drones.append(node)
 			_drone_bases.append(node.position)
 		elif node_name.begins_with("Beacon_"):
@@ -44,10 +38,6 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
-	if _hologram != null:
-		_hologram.rotate_y(hologram_spin * delta)
-	for i in _orbits.size():
-		_orbits[i].rotate_object_local(Vector3.UP, (0.6 + 0.4 * i) * delta * (1.0 if i % 2 == 0 else -1.0))
 	for i in _drones.size():
 		var base := _drone_bases[i]
 		var angle := _time * drone_orbit_speed * (1.0 + 0.2 * i)

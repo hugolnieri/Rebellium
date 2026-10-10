@@ -204,3 +204,8 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Arena flutuante: arquibancada e telas removidas; muro interno sobe para 6 m.
 - Lâmina de Arco usa o modelo 3D enviado pelo jogador (convertido no Blender, malha reduzida).
 - Braço livre com sobreposição (ombro → cotovelo → mão atrasados), cotovelo variando e mão relaxada.
+
+## Revisão: muro com meia altura nas passagens e colisão convexa
+- Muro interno com 5 m; as passagens ganham um muro de 2,5 m. Globo holográfico removido do centro.
+- Colisão da arena refeita: um bloco convexo por segmento de muro/mureta e prismas para chão e palco
+  (antes era uma malha de triângulos, com emendas onde o personagem enganchava).

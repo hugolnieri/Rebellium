@@ -66,7 +66,7 @@ scenes/player/     Player.tscn, câmera, input, estados, sensor de parede, VFX, 
 assets/character/  personagem exportado (hero.glb: malha + esqueleto + animações; ver CREDITS.md)
 art/character/     hero.blend — fonte editável do personagem e das animações (Actions); `.gdignore`
 art/arena/         sky_arena.blend — fonte editável da arena flutuante
-assets/arena/      sky_arena.glb (objetos com sufixo "-col" viram colisão no Godot)
+assets/arena/      sky_arena.glb (objetos "-convcolonly" viram colisão convexa no Godot)
 scenes/arenas/     arena de combate, postes de treino, percurso de treino, arena livre
 scenes/ui/         HUD, HUD de debug (F1), menu de debug (F2)
 scripts/core/      eventos, configs, regras puras, utilitários
@@ -80,7 +80,7 @@ tools/             scripts de instalação e de teste
 ## Cenas
 - `scenes/arenas/CombatArena.tscn`: postes de treino, HUD de combate, R reinicia.
 - `scenes/arenas/SkyArena.tscn` (principal): arena flutuante sobre as nuvens (modelo do Blender), postes de treino;
-  `sky_arena.gd` herda da arena de combate e anima holograma, drones, luzes e chamas.
+  `sky_arena.gd` herda da arena de combate e anima drones, luzes e chamas.
 - `scenes/arenas/TrainingCourse.tscn`: percurso de movimento, cronômetro, checkpoints.
 - `scenes/arenas/Arena.tscn`: arena livre para experimentar.
 - Todas incluem HUD, DebugHUD (F1) e DebugMenu (F2). F3 (autoload `SceneCycler`) alterna entre elas.
