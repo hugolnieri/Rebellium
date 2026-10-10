@@ -310,17 +310,10 @@ func _on_wall_jump(who: Node, data: Dictionary) -> void:
 	match technique:
 		MovementRules.TECH_BACK_COMING:
 			return
-		MovementRules.TECH_REVERSE:
-			_trick_axis = Vector3.RIGHT
-			_trick_angle = -TAU
-		_:
-			# Mortal para trás: pisa na parede (de frente para ela) e gira de costas para longe.
-			_trick_axis = Vector3.RIGHT
-			_trick_angle = TAU
-			_trick_face_wall = true
-			_start_trick(_fb().flip_duration, false)
-			return
-	_trick_face_wall = false
+	# Mortal para trás: pisa na parede (de frente para ela) e gira de costas para longe.
+	_trick_axis = Vector3.RIGHT
+	_trick_angle = TAU
+	_trick_face_wall = true
 	_start_trick(_fb().flip_duration, false)
 
 

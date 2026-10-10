@@ -162,21 +162,17 @@ extends Resource
 @export_range(0.0, 89.0, 1.0, "suffix:°") var side_jump_min_incidence_deg: float = 30.0
 
 @export_group("Técnicas avançadas")
-## Janela justa (reverse/back-coming): Space até N ticks do contato com a parede.
+## Janela justa (back-coming): Space até N ticks do contato com a parede.
 @export_range(0, 30, 1, "suffix:ticks") var technique_window_ticks: int = 6
-## Altura (acima dos pés) do raio que procura o topo da parede.
-@export_range(0.5, 4.0, 0.05, "suffix:m") var reverse_probe_height: float = 2.0
-@export_range(0.0, 10.0, 0.05, "suffix:m") var reverse_jump_height: float = 2.35
-## Velocidade para FRENTE (por cima da parede) no reverse wall jump.
-@export_range(0.0, 20.0, 0.1, "suffix:m/s") var reverse_forward_speed: float = 6.5
-## Velocidade para frente assim que o reverse passa da borda (vai bem mais longe depois de subir).
-@export_range(0.0, 30.0, 0.5, "suffix:m/s") var reverse_clear_speed: float = 11.0
 ## Distância máxima dos pés ao chão para o contato contar como "base da parede".
 @export_range(0.0, 4.0, 0.05, "suffix:m") var back_coming_max_feet_height: float = 1.0
 @export_range(0.0, 10.0, 0.05, "suffix:m") var back_coming_height: float = 2.6
 ## Leve empurrão de volta PARA a parede no back-coming: o jogador sobe colado nela e ganha
 ## um segundo wall jump na mesma parede (sem precisar de nova janela justa).
 @export_range(0.0, 10.0, 0.1, "suffix:m/s") var back_coming_wall_push_speed: float = 1.0
+## Back-coming encadeado: depois de um back-coming, Space com o direcional apontando para a parede
+## (cosseno mínimo entre o input e a direção da parede) sobe mais um lance em vez de se afastar.
+@export_range(-1.0, 1.0, 0.05) var back_coming_chain_min_dot: float = 0.5
 ## Cancel: troca de arma até N ticks do wall jump.
 @export_range(0, 20, 1, "suffix:ticks") var cancel_window_ticks: int = 4
 ## Fração da velocidade de entrada preservada pelo cancel.

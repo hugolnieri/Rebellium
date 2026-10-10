@@ -21,7 +21,7 @@ size = Vector3(8.5, 3, 13)
 size = Vector3(8.5, 3, 10)
 
 [sub_resource type="BoxShape3D" id="box4"]
-size = Vector3(8.25, 3, 8)
+size = Vector3(12.25, 3, 8)
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -115,13 +115,13 @@ script = ExtResource("greybox")
 size = Vector3(8.5, 1, 13)
 surface = 0
 
-[node name="ReverseLedge" type="StaticBody3D" parent="Geometry"]
+[node name="ClimbLedge" type="StaticBody3D" parent="Geometry"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 1.8, -65)
 script = ExtResource("greybox")
 size = Vector3(8.5, 3.6, 10)
 surface = 2
 
-[node name="ReverseLedgeLip" type="StaticBody3D" parent="Geometry"]
+[node name="ClimbLedgeLip" type="StaticBody3D" parent="Geometry"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 3.61, -60.15)
 script = ExtResource("greybox")
 size = Vector3(8.5, 0.02, 0.3)
@@ -140,9 +140,9 @@ size = Vector3(8.5, 0.02, 0.3)
 surface = 7
 
 [node name="TowerA" type="StaticBody3D" parent="Geometry"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 12.5, -86)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.875, 12.25, -86)
 script = ExtResource("greybox")
-size = Vector3(8.25, 9, 8)
+size = Vector3(12.25, 8.5, 8)
 surface = 3
 
 [node name="TowerB" type="StaticBody3D" parent="Geometry"]
@@ -152,9 +152,9 @@ size = Vector3(1, 14, 8)
 surface = 3
 
 [node name="FinishPad" type="StaticBody3D" parent="Geometry"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 17.01, -86)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.875, 16.51, -86)
 script = ExtResource("greybox")
-size = Vector3(8.25, 0.02, 8)
+size = Vector3(12.25, 0.02, 8)
 surface = 4
 
 [node name="Checkpoints" type="Node3D" parent="."]
@@ -177,12 +177,12 @@ metadata/label = "Vão de side jump"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -8.5)
 shape = SubResource("box1")
 
-[node name="CP2_Reverse" type="Area3D" parent="Checkpoints"]
+[node name="CP2_Borda" type="Area3D" parent="Checkpoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0, -51)
 monitorable = false
-metadata/label = "Borda de reverse"
+metadata/label = "Borda (back-coming duplo)"
 
-[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP2_Reverse"]
+[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP2_Borda"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.5)
 shape = SubResource("box2")
 
@@ -205,7 +205,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3)
 shape = SubResource("box3")
 
 [node name="FinishZone" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 18.5, -86)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.875, 18, -86)
 monitorable = false
 
 [node name="Shape" type="CollisionShape3D" parent="FinishZone"]
@@ -242,7 +242,7 @@ pixel_size = 0.006
 modulate = Color(0.86, 0.84, 0.79, 1)
 outline_modulate = Color(0.04, 0.04, 0.05, 1)
 text = "3 · BORDA
-reverse wall jump perto do topo"
+back-coming + Space segurando W"
 font_size = 64
 outline_size = 12
 
@@ -253,7 +253,7 @@ pixel_size = 0.006
 modulate = Color(0.86, 0.84, 0.79, 1)
 outline_modulate = Color(0.04, 0.04, 0.05, 1)
 text = "4 · PAREDE LISA
-back-coming + reverse"
+back-coming duplo"
 font_size = 64
 outline_size = 12
 
@@ -269,7 +269,7 @@ font_size = 64
 outline_size = 12
 
 [node name="Sign5" type="Label3D" parent="Signs"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 19.5, -86)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.875, 19, -86)
 billboard = 1
 pixel_size = 0.006
 modulate = Color(0.86, 0.84, 0.79, 1)

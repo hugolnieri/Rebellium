@@ -7,7 +7,6 @@ enum AirOrigin { NONE, JUMP, FALL }
 
 const TECH_NORMAL: StringName = &"normal"
 const TECH_SIDE_JUMP: StringName = &"side_jump"
-const TECH_REVERSE: StringName = &"reverse_wall_jump"
 const TECH_BACK_COMING: StringName = &"back_coming"
 const TECH_CANCEL: StringName = &"cancel"
 const TECH_DODGE_CANCEL: StringName = &"dodge_cancel"
@@ -50,12 +49,11 @@ static func is_within_window(press_tick: int, event_tick: int, window_ticks: int
 	return absi(press_tick - event_tick) <= window_ticks
 
 
-## Classifica o wall jump. Topo tem prioridade sobre base (parede baixa = reverse).
-static func classify_wall_jump(in_technique_window: bool, near_top: bool, near_base: bool,
+## Classifica o wall jump. Back-coming: Space na janela justa com os pés perto da base da parede, ou
+## de novo na mesma parede logo depois de um back-coming (`chained`: sobe mais um lance colado nela).
+static func classify_wall_jump(in_technique_window: bool, near_base: bool, chained: bool,
 		incidence_deg: float, side_min_deg: float) -> StringName:
-	if in_technique_window and near_top:
-		return TECH_REVERSE
-	if in_technique_window and near_base:
+	if in_technique_window and (near_base or chained):
 		return TECH_BACK_COMING
 	if incidence_deg >= side_min_deg:
 		return TECH_SIDE_JUMP

@@ -8,7 +8,7 @@ extends Node
 signal state_changed(player: Node, from_state: StringName, to_state: StringName, reason: String)
 ## Wall jump executado (qualquer variante). data: position, normal, velocity, technique.
 signal wall_jump_executed(player: Node, data: Dictionary)
-## Técnica avançada acertada: side_jump, reverse_wall_jump, back_coming, cancel, dodge_cancel, bunny_hop.
+## Técnica avançada acertada: side_jump, back_coming, cancel, dodge_cancel, bunny_hop.
 signal technique_executed(player: Node, technique: StringName, data: Dictionary)
 ## Dodge iniciado. direction em espaço do mundo.
 signal dodged(player: Node, direction: Vector3)

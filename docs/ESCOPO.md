@@ -13,9 +13,9 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
    andar 6 m/s, sprint 10 m/s, pulo 2,2 m, sistema de SP (100 máx, regen 25/s após 0,6 s,
    sprint 12/s, exaustão até 20), HUD e HUD de debug (F1).
 3. **Movimentação avançada** — dodge (8 direções, 20 SP, 0,15 s de invencibilidade), wall jump por
-   reflexão (18 SP, só após pulo), side jump, reverse wall jump, back-coming, cancel, dodge cancel,
+   reflexão (18 SP, só após pulo), side jump, back-coming, cancel, dodge cancel,
    bunny hop. Testes GUT de reflexão, SP, regra "só após pulo" e janela do bunny hop.
-4. **Modo treino** — percurso (corredor, vão de side jump, torre, borda de reverse, parede lisa de
+4. **Modo treino** — percurso (corredor, vão de side jump, torre, borda, parede lisa de
    back-coming), cronômetro, melhor tempo, reset (R), contador de técnicas, menu F2 que edita e
    salva o `MovementConfig`.
 
@@ -25,11 +25,11 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   vezes seguidas (exceto após back-coming).
 - **Reflexão:** `v_out = v_in - 2 (v_in·n) n` no plano horizontal; impulso vertical somado à parte.
   A câmera ajusta a direção de saída com peso configurável (padrão 0,3), sem apontar para a parede.
-- **Reverse wall jump:** raio acima da cabeça não acha parede → lançamento para dentro/por cima (−n).
 - **Back-coming:** contato perto da base (na janela justa) → sobe quase na vertical com um leve empurrão
   de volta para a parede, colado nela, e ganha um segundo wall jump na mesma parede. Esse segundo salto
-  dispensa a janela justa; se estiver perto do topo, vira reverse e passa por cima.
-- **Janela justa** (reverse/back-coming): Space até N ticks do contato com a parede.
+  dispensa a janela justa; segurando o direcional para a parede, vira um segundo back-coming (um
+  lance extra por parede), senão se afasta da parede.
+- **Janela justa** (back-coming): Space até N ticks do contato com a parede.
 - **Cancel:** tecla 1/2 até N ticks do wall jump zera o lançamento e mantém uma fração da velocidade
   de entrada. O SP gasto não volta.
 - **Bunny hop:** pulo pressionado nos primeiros 3 ticks após aterrissar preserva a velocidade horizontal.
@@ -122,7 +122,7 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 ## Revisão: trote, mortal no pulo e giro para a direita
 - Andar como trote (passada 3,4 m, fase de voo), sem giro de quadril que balançava o corpo inclinado.
 - Pulo do chão com mortal para frente; altura do pulo 2,35 m (o máximo que mantém a parede lisa de
-  4,4 m do percurso exigindo back-coming + reverse).
+  4,4 m do percurso exigindo back-coming duplo).
 - Pesado da Lâmina de Arco gira para a direita.
 
 ## Revisão: ações que continuam no chão, giro imediato e passada agachada
@@ -164,3 +164,9 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   `hero.glb` e amostradas pelo jogo por tempo normalizado (`scenes/player/hero_clips.gd`).
 - Os parâmetros de forma da passada/poses saíram do F2 (agora se edita a pose no Blender); ritmo,
   giros, agachamento e molas continuam no F2.
+
+## Revisão: reverse wall jump removido
+- O reverse wall jump saiu do jogo. No lugar, o back-coming pode ser encadeado uma vez na mesma parede
+  (Space segurando o direcional para a parede; `back_coming_chain_min_dot`): é assim que se sobe a borda
+  de 3,6 m e a parede lisa de 4,4 m. Sem segurar, o segundo salto se afasta da parede, como antes.
+- Torre: a parede de chegada baixou para 16,5 m e ficou mais larga; o último wall jump cai em cima dela.

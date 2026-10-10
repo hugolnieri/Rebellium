@@ -7,8 +7,6 @@ extends Node3D
 const PROBE_DIRECTIONS: int = 8
 ## Alturas das sondas horizontais, como fração da altura do corpo.
 const PROBE_HEIGHT_RATIOS: Array[float] = [0.3, 0.7]
-## Tolerâncias geométricas das sondas (não são valores de gameplay).
-const TOP_PROBE_EXTRA_REACH: float = 0.1
 const FEET_PROBE_LIFT: float = 0.05
 
 var player: Player
@@ -66,16 +64,6 @@ func clear() -> void:
 	reset_entry()
 	has_contact = false
 	collider_id = 0
-
-
-## Raio acima da cabeça em direção à parede: true se NÃO encontra parede (perto do topo).
-func is_near_top() -> bool:
-	if not has_contact:
-		return false
-	var cfg := player.config
-	var from := player.global_position + Vector3.UP * cfg.reverse_probe_height
-	var to := from - normal * (cfg.body_radius + cfg.wall_detect_distance + TOP_PROBE_EXTRA_REACH)
-	return _ray(from, to).is_empty()
 
 
 ## Raio para baixo a partir dos pés: true se há chão perto (perto da base da parede).

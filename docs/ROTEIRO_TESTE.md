@@ -24,8 +24,8 @@ Para rodar: `godot --path .` ou abra o projeto no editor e aperte F5. Abre a **a
 ## HUD de debug (F1): o que cada linha diz
 - **estado**: estado atual da máquina (Idle, Run, Sprint, Jump, Fall, WallJump, Dodge, Land) e há quantos ticks.
 - **vel horiz / vel vertical / altura pés**: para conferir 6 m/s andando, 10 m/s em sprint e pulo de 2,35 m.
-- **na parede**: normal da parede, há quantos ticks foi a entrada no contato, e se o topo/base estão perto.
-  "topo: perto" significa que o reverse está disponível; "base: perto" significa que o back-coming está disponível.
+- **na parede**: normal da parede, há quantos ticks foi a entrada no contato, e se a base está perto
+  ("base: perto" significa que o back-coming está disponível).
 - **wall jump**: `LIBERADO` ou o motivo do bloqueio (`sem parede`, `não veio de pulo`, `janela pós-pulo expirou`,
   `mesma parede`, `SP insuficiente`, `SP exausto`).
 - **origem do ar**: `JUMP` (pulou) ou `FALL` (caiu de borda). Wall jump só com `JUMP`.
@@ -79,34 +79,29 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 - **Ajuste fino**: o peso da câmera é `wall_jump_camera_weight` (padrão 0,3). Olhar para a frente no salto
   estica a distância.
 
-### Trecho 3: borda de 3,6 m → **reverse wall jump**
-- **Como passar**: corra até a borda e pule a ~2 m dela, para tocar a parede perto do **ápice**. Aperte Space
-  **logo que encostar** (janela justa: 6 ticks ≈ 0,1 s).
-- **O que observar**:
-  - Com os pés perto do topo, o HUD de debug mostra `topo: perto`.
-  - O salto vai **para a frente e por cima** da borda.
-  - A cor é **violeta** e o banner mostra `REVERSE WALL JUMP`.
-- **Testes negativos**:
-  - Encostar e apertar Space **tarde** dá um wall jump normal, que quica para trás.
-  - Pular de longe e tocar baixo também dá o salto normal.
-
-### Trecho 4: parede lisa de 4,4 m → **back-coming** + reverse
+### Trecho 3: borda de 3,6 m → **back-coming duplo**
 - **Como passar**:
-  1. Encoste na parede segurando W. Pule e aperte Space de novo **logo em seguida** (pés a menos de 1 m do
-     chão, janela de 6 ticks). Isso é o **back-coming**, com cor **verde ácido**: você sobe colado na parede.
-  2. Perto do alto (o HUD mostra `topo: perto`), aperte Space mais uma vez. Esse segundo wall jump na
-     **mesma parede** é liberado pelo back-coming e, perto do topo, vira **reverse**, que leva por cima.
-- **O que observar**: o segundo salto acontece mesmo sendo a mesma parede. Sem o back-coming, o HUD mostra
-  `bloqueado: mesma parede`.
-- **Teste negativo**: um pulo + wall jump normal não sobe. O pulo simples nunca chega perto do topo de 4,4 m.
+  1. Encoste na borda segurando W. Pule e aperte Space de novo **logo em seguida** (pés a menos de 1 m do
+     chão, janela de 6 ticks). Isso é o **back-coming** (cor **verde ácido**): você sobe colado na parede.
+  2. Ainda subindo colado, aperte Space **segurando W** (direcional para a parede): sai um **segundo
+     back-coming** na mesma parede, que leva por cima da borda.
+- **O que observar**: o banner mostra `BACK-COMING` duas vezes. Só vale **um lance extra** por parede.
+- **Testes negativos**:
+  - Um back-coming sozinho sobe ≈ 2,8 m: não chega no topo e você escorrega de volta.
+  - No segundo Space **sem segurar W**, o salto se afasta da parede (wall jump normal).
+  - Encostar e apertar Space **tarde** dá um wall jump normal, que quica para trás.
+
+### Trecho 4: parede lisa de 4,4 m → **back-coming duplo**
+- **Como passar**: igual ao trecho 3 (back-coming na base, depois Space segurando W).
+- **Teste negativo**: um pulo + wall jump normal não sobe.
 
 ### Trecho 5: torre (chaminé) → **wall jumps encadeados**
 - **Como passar**: entre na chaminé (entre a parede de metal baixa à esquerda e a alta à direita). Pule em
   direção a uma parede e aperte Space a cada contato, alternando entre as duas.
 - **O que observar**:
   - Você sobe ≈ 1,7 m por salto.
-  - Ao chegar perto do topo da parede da esquerda, um Space rápido vira reverse e coloca você na **zona
-    vermelha (chegada)**.
+  - A parede da esquerda é mais baixa (16,5 m): o último wall jump, saindo da parede da direita, passa por
+    cima dela e cai na **zona vermelha (chegada)**.
   - O banner mostra `CHEGADA` com o tempo; um recorde da sessão aparece em verde.
 - **SP**: são 3–4 wall jumps (54–72 SP). Se chegar com pouco SP, espere regenerar antes de entrar.
 
@@ -170,11 +165,10 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Wall jump: sai mais longe (×1,25, mínimo 10 m/s) e o mortal vai até o fim — o golpe fica bloqueado por
     `wall_jump_action_lock_time`; o **dash pode cortar o mortal** (e encadear outro wall jump) a partir de
     `wall_jump_chain_time`.
-  - Reverse: depois de passar da borda dispara para frente a `reverse_clear_speed` (11 m/s).
   - Dash: desliza bem mais (0,65 s de deslocamento, saída a 7 m/s e deslize final `dodge_slide_deceleration`).
   - Wall jump: o personagem **cola na parede** por um instante (bem encolhido, de frente para ela, ~0,1 s,
     `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.
-    Reverse: mortal para frente por cima da parede; back-coming: sem acrobacia.
+    Back-coming: sem acrobacia (sobe colado na parede).
   - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente (0,7 s, `roll_duration`), rolando com as
     costas no chão (`roll_ball_height`). Dá para cancelar
     com dash (A/D + Space) ou correndo (W, W). Corrida no ar, **dash no ar** ou **golpe no ar** → aterrissa
@@ -213,11 +207,11 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 | Força do wall jump (altura 2,6 m; saída ×1,1 + 2 m/s para frente, até 18 m/s) | `wall_jump_forward_boost`, `wall_jump_height`, `wall_jump_horizontal_multiplier`, `wall_jump_min/max_horizontal_speed` |
 | Quanto a câmera influencia o side jump | `wall_jump_camera_weight` |
 | Facilidade das técnicas | `technique_window_ticks`, `cancel_window_ticks`, `bunny_hop_window_ticks` |
-| Altura do reverse / back-coming | `reverse_probe_height`, `reverse_jump_height`, `back_coming_height`, `back_coming_max_feet_height` |
+| Back-coming | `back_coming_height`, `back_coming_max_feet_height`, `back_coming_chain_min_dot` |
 | Economia de SP | `sp_*`, `dodge_sp_cost`, `wall_jump_sp_cost`, `sprint_sp_cost_per_second` |
 
 ## Checklist do critério de pronto
-- [ ] Completei o percurso usando wall jump (corredor/torre), side jump (vão), reverse (borda) e back-coming (parede lisa).
+- [ ] Completei o percurso usando wall jump (corredor/torre), side jump (vão) e back-coming duplo (borda e parede lisa).
 - [ ] Todos os números relevantes aparecem no F2 e no `config/movement_config.tres`.
 - [ ] `tools/run_tests.sh` passa.
 

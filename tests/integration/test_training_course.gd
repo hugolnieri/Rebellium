@@ -103,33 +103,32 @@ func test_wide_gap_cannot_be_crossed_with_sprint_jump() -> void:
 	assert_lt(d.player.global_position.y, -1.0, "sprint + pulo não alcança o outro lado")
 
 
-func test_reverse_wall_jump_climbs_the_ledge() -> void:
-	await _teleport(Vector3(1.75, 0, -52))
-	d.step_until(func() -> bool: return d.player.global_position.z < -57.4, 120, FWD)
-	d.press_jump()
-	d.step(1, FWD)
-	assert_gt(d.step_until_wall(_block("ReverseLedge"), 60, FWD), 0)
-	d.press_jump()
-	d.step(1)
-	assert_has(d.techniques, MovementRules.TECH_REVERSE)
-	d.step(60)
-	assert_almost_eq(d.player.global_position.y, 3.6, 0.05, "em cima da borda")
-
-
-func test_back_coming_then_reverse_climbs_the_smooth_wall() -> void:
-	await _teleport(Vector3(1.75, 3.6, -67))
+## Encosta na parede, pula, back-coming na base e, segurando W, o segundo back-coming leva ao topo.
+func _double_back_coming() -> void:
 	d.step_until(func() -> bool: return d.player.wall_sensor.has_contact, 120, FWD)
 	d.step(5, FWD)
 	d.press_jump()
 	d.step(3, FWD)
 	d.press_jump()
-	d.step(1)
+	d.step(1, FWD)
 	assert_has(d.techniques, MovementRules.TECH_BACK_COMING)
-	assert_gt(d.step_until(func() -> bool: return d.player.wall_sensor.is_near_top(), 40), 0)
+	d.step_until(func() -> bool: return d.player.velocity.y > 1.0, 20, FWD)  # sai da parede (fim do colado)
+	d.step_until(func() -> bool: return d.player.velocity.y < 1.0, 40, FWD)
 	d.press_jump()
-	d.step(1)
-	assert_eq(d.techniques.count(MovementRules.TECH_REVERSE), 1)
-	d.step(60)
+	d.step(1, FWD)
+	assert_eq(d.techniques.count(MovementRules.TECH_BACK_COMING), 2, "back-coming encadeado")
+	d.step(60, FWD)
+
+
+func test_double_back_coming_climbs_the_ledge() -> void:
+	await _teleport(Vector3(1.75, 0, -56))
+	await _double_back_coming()
+	assert_almost_eq(d.player.global_position.y, 3.6, 0.05, "em cima da borda")
+
+
+func test_double_back_coming_climbs_the_smooth_wall() -> void:
+	await _teleport(Vector3(1.75, 3.6, -67))
+	await _double_back_coming()
 	assert_almost_eq(d.player.global_position.y, 8.0, 0.05, "em cima da parede lisa")
 
 
@@ -150,7 +149,7 @@ func test_tower_is_climbed_with_chained_wall_jumps() -> void:
 	d.step(1, Vector2(-0.7, 0), true)  # A puro + Espaço seria dash
 	var jumps := _auto_wall_jump_until_landed(400)
 	assert_gte(jumps, 3, "wall jumps encadeados: %d" % jumps)
-	assert_almost_eq(d.player.global_position.y, 17.0, 0.05, "chegou no topo da torre")
+	assert_almost_eq(d.player.global_position.y, 16.5, 0.05, "chegou no topo da torre")
 	await wait_physics_frames(3)
 	assert_true(course.finished, "zona de chegada alcançada")
 

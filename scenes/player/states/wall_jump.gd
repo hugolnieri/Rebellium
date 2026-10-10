@@ -1,17 +1,14 @@
 extends PlayerState
 ## Wall jump: primeiro o personagem fica colado na parede por `wall_jump_stick_ticks` (pés
 ## plantados, sem cair), depois sai o impulso. Mantém a direção do lançamento sem controle aéreo por
-## `wall_jump_lock_time`. No reverse wall jump e no back-coming o empurrão contra a parede
-## continua enquanto sobe colado nela (senão a colisão comeria a velocidade horizontal).
+## `wall_jump_lock_time`. No back-coming o empurrão contra a parede continua enquanto sobe colado
+## nela (senão a colisão comeria a velocidade horizontal) e, ao passar do topo, leva por cima da borda.
 ## Cancel: troca de arma (1/2) até `cancel_window_ticks` do wall jump desfaz o lançamento.
 
 var _launch: Vector3 = Vector3.ZERO
 var _launch_horizontal: Vector3 = Vector3.ZERO
 var _wall_normal: Vector3 = Vector3.ZERO
 var _hold_until_clear: bool = false
-var _reverse: bool = false
-var _boosted: bool = false
-var _was_climbing: bool = false
 
 
 func enter(_from: StringName, data: Dictionary) -> void:
@@ -19,11 +16,7 @@ func enter(_from: StringName, data: Dictionary) -> void:
 	_launch_horizontal = WallJumpMath.horizontal(_launch)
 	_wall_normal = data.get("normal", Vector3.ZERO)
 	var technique: StringName = data.get("technique", &"")
-	_hold_until_clear = technique == MovementRules.TECH_REVERSE \
-		or technique == MovementRules.TECH_BACK_COMING
-	_reverse = technique == MovementRules.TECH_REVERSE
-	_boosted = false
-	_was_climbing = false
+	_hold_until_clear = technique == MovementRules.TECH_BACK_COMING
 	if is_sticking():
 		_stick()
 
@@ -61,12 +54,6 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	if can_act and player.try_attack(input):
 		return
 	var climbing := _hold_until_clear and player.wall_sensor.has_contact and player.velocity.y > 0.0
-	_was_climbing = _was_climbing or climbing
-	if _reverse and not _boosted and ((_was_climbing and not climbing) or player.velocity.y <= 0.0):
-		# Passou da borda: agora sim dispara para frente, por cima do topo.
-		_boosted = true
-		var forward := _launch_horizontal.normalized()
-		_launch_horizontal = forward * maxf(_launch_horizontal.length(), cfg().reverse_clear_speed)
 	if locked or climbing:
 		player.velocity.x = _launch_horizontal.x
 		player.velocity.z = _launch_horizontal.z

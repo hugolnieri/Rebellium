@@ -155,9 +155,8 @@ func get_wall_debug_text() -> String:
 		return "não"
 	var since_entry := str(ticks_since(wall_sensor.entry_tick)) \
 		if wall_sensor.entry_tick > PlayerInput.NEVER else "-"
-	return "sim  n=(%.2f, %.2f)  entrada há %s ticks  topo:%s base:%s" % [
+	return "sim  n=(%.2f, %.2f)  entrada há %s ticks  base:%s" % [
 		wall_sensor.normal.x, wall_sensor.normal.z, since_entry,
-		"perto" if wall_sensor.is_near_top() else "longe",
 		"perto" if wall_sensor.is_near_base() else "longe"]
 
 
@@ -581,18 +580,18 @@ func try_wall_jump(input: PlayerInput) -> bool:
 	var has_entry := sensor.entry_tick > PlayerInput.NEVER
 	var v_in := sensor.entry_velocity if has_entry else WallJumpMath.horizontal(pre_slide_velocity)
 	# O segundo wall jump liberado pelo back-coming dispensa a janela justa (contato contínuo).
+	# Depois de um back-coming, Space segurando na direção da parede sobe mais um lance colado nela;
+	# sem segurar, o segundo salto se afasta da parede (wall jump normal).
+	var chained := sensor.collider_id == back_coming_wall \
+		and input.get_wish_direction().dot(-n) > config.back_coming_chain_min_dot
 	var in_window := (has_entry and MovementRules.is_within_window(
 		input.jump_pressed_tick, sensor.entry_tick, config.technique_window_ticks)) \
 		or sensor.collider_id == back_coming_wall
-	var technique := MovementRules.classify_wall_jump(in_window, sensor.is_near_top(),
-		sensor.is_near_base(), WallJumpMath.incidence_angle_deg(v_in, n),
-		config.side_jump_min_incidence_deg)
+	var technique := MovementRules.classify_wall_jump(in_window, sensor.is_near_base(), chained,
+		WallJumpMath.incidence_angle_deg(v_in, n), config.side_jump_min_incidence_deg)
 	var horizontal: Vector3
 	var height: float
 	match technique:
-		MovementRules.TECH_REVERSE:
-			horizontal = -n * config.reverse_forward_speed
-			height = config.reverse_jump_height
 		MovementRules.TECH_BACK_COMING:
 			horizontal = -n * config.back_coming_wall_push_speed
 			height = config.back_coming_height
@@ -602,7 +601,8 @@ func try_wall_jump(input: PlayerInput) -> bool:
 	wall_jump_entry_velocity = Vector3(v_in.x, velocity.y, v_in.z)
 	var launch := horizontal + Vector3.UP * config.velocity_for_height(height)
 	velocity = launch
-	back_coming_wall = sensor.collider_id if technique == MovementRules.TECH_BACK_COMING else 0
+	# Só um lance extra por parede: depois do back-coming encadeado, o próximo salto se afasta.
+	back_coming_wall = sensor.collider_id if technique == MovementRules.TECH_BACK_COMING and not chained else 0
 	last_wall_jump_collider = sensor.collider_id
 	last_wall_jump_tick = tick
 	wall_jump_carry = true

@@ -98,7 +98,6 @@ extends Resource
 @export_group("Técnicas (cores)")
 @export var color_wall_jump: Color = Color(0.86, 0.84, 0.79)
 @export var color_side_jump: Color = Color(0.12, 0.62, 1.0)
-@export var color_reverse_wall_jump: Color = Color(0.58, 0.28, 0.98)
 @export var color_back_coming: Color = Color(0.62, 1.0, 0.12)
 @export var color_cancel: Color = Color(0.92, 0.12, 0.15)
 @export var color_dodge_cancel: Color = Color(0.4, 0.85, 1.0)
@@ -124,7 +123,6 @@ extends Resource
 func get_technique_color(technique: StringName) -> Color:
 	match technique:
 		&"side_jump": return color_side_jump
-		&"reverse_wall_jump": return color_reverse_wall_jump
 		&"back_coming": return color_back_coming
 		&"cancel": return color_cancel
 		&"dodge_cancel": return color_dodge_cancel

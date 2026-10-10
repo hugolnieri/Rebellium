@@ -47,10 +47,11 @@ func test_technique_window_is_symmetric() -> void:
 
 func test_classification_priorities() -> void:
 	var side := 30.0
-	assert_eq(MovementRules.classify_wall_jump(true, true, true, 0.0, side), MovementRules.TECH_REVERSE)
-	assert_eq(MovementRules.classify_wall_jump(true, false, true, 0.0, side), MovementRules.TECH_BACK_COMING)
-	assert_eq(MovementRules.classify_wall_jump(false, true, true, 0.0, side), MovementRules.TECH_NORMAL,
-		"fora da janela justa não há técnica de topo/base")
+	assert_eq(MovementRules.classify_wall_jump(true, true, false, 0.0, side), MovementRules.TECH_BACK_COMING)
+	assert_eq(MovementRules.classify_wall_jump(true, false, true, 0.0, side), MovementRules.TECH_BACK_COMING,
+		"back-coming encadeado na mesma parede")
+	assert_eq(MovementRules.classify_wall_jump(false, true, false, 0.0, side), MovementRules.TECH_NORMAL,
+		"fora da janela justa não há back-coming")
 	assert_eq(MovementRules.classify_wall_jump(false, false, false, 45.0, side), MovementRules.TECH_SIDE_JUMP)
 	assert_eq(MovementRules.classify_wall_jump(false, false, false, 10.0, side), MovementRules.TECH_NORMAL)
 

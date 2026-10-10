@@ -3,7 +3,6 @@ extends CanvasLayer
 
 const TECHNIQUE_LABELS: Dictionary = {
 	&"side_jump": "Side jump",
-	&"reverse_wall_jump": "Reverse wall jump",
 	&"back_coming": "Back-coming",
 	&"cancel": "Cancel",
 	&"dodge_cancel": "Dodge cancel",
