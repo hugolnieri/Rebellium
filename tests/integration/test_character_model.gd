@@ -1,5 +1,5 @@
 extends GutTest
-## Personagem: modelo com esqueleto carregado, ossos movidos pelas molas, arma na mão e piscar.
+## Personagem: modelo com esqueleto, clipes do Blender tocados nos ossos, arma na mão e piscar.
 
 const Driver = preload("res://tests/helpers/player_driver.gd")
 
@@ -26,11 +26,14 @@ func _skeleton() -> Skeleton3D:
 	return d.player.model.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
 
 
-func test_skeleton_has_all_joints() -> void:
+func test_clips_animate_body_bones_but_not_root_or_hair() -> void:
 	var skeleton := _skeleton()
-	for joint in CharacterModel.JOINTS:
-		if joint != &"lean":
-			assert_true(skeleton.find_bone(CharacterModel.BONE_MAP[joint]) >= 0, "osso %s" % joint)
+	var names := Array(HeroClips.bones).map(func(b: int) -> String: return skeleton.get_bone_name(b))
+	for bone_name in ["J_Bip_C_Hips", "J_Bip_C_Spine", "J_Bip_L_UpperLeg", "J_Bip_R_LowerLeg", "J_Bip_R_Hand",
+			"J_Bip_L_ToeBase", "J_Bip_R_Index1"]:
+		assert_has(names, bone_name)
+	assert_does_not_have(names, "Root", "o Root é só prévia no Blender")
+	assert_false(names.any(func(n: String) -> bool: return n.begins_with("HairJoint")), "cabelo fica com a mola")
 
 
 func test_weapon_socket_follows_right_hand() -> void:
@@ -39,7 +42,7 @@ func test_weapon_socket_follows_right_hand() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var skeleton := _skeleton()
-	var wrist := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone(CharacterModel.BONE_MAP[&"wrist_r"]))
+	var wrist := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone(CharacterModel.RIGHT_HAND_BONE))
 	var weapon: Node3D = d.player.model.weapon_visual
 	assert_not_null(weapon)
 	assert_lt(weapon.global_position.distance_to(wrist.origin), 0.1)
@@ -58,8 +61,8 @@ func test_blinks_over_time() -> void:
 func test_running_swings_the_leg_bones() -> void:
 	_animate(30, FWD)
 	var skeleton := _skeleton()
-	var thigh_l := skeleton.find_bone(CharacterModel.BONE_MAP[&"thigh_l"])
-	var thigh_r := skeleton.find_bone(CharacterModel.BONE_MAP[&"thigh_r"])
+	var thigh_l := skeleton.find_bone("J_Bip_L_UpperLeg")
+	var thigh_r := skeleton.find_bone("J_Bip_R_UpperLeg")
 	var widest := 0.0
 	for i in 40:
 		_animate(1, FWD)
@@ -68,30 +71,53 @@ func test_running_swings_the_leg_bones() -> void:
 	assert_gt(widest, 0.4, "pernas em fases opostas ao longo da passada")
 
 
-func _near(a: Vector3, b: Vector3, msg: String, tolerance: float = 0.02) -> void:
-	assert_lt(a.distance_to(b), tolerance, "%s: %s ≈ %s" % [msg, a, b])
+func _slot(bone_name: String) -> int:
+	return HeroClips.bones.find(_skeleton().find_bone(bone_name))
 
 
 func test_blender_clips_are_loaded() -> void:
 	for clip in [&"idle", &"walk", &"sprint", &"air", &"air_sprint", &"jump_flip", &"wall_stick", &"wall_flip",
-			&"roll", &"cartwheel", &"hurt", &"sword_rest", &"atk_slash_r", &"atk_spin", &"atk_air_slam"]:
+			&"roll", &"cartwheel", &"dash", &"land", &"hurt", &"sword_rest", &"atk_slash_r", &"atk_spin",
+			&"atk_air_slam"]:
 		assert_true(HeroClips.has_clip(clip), "clipe %s no hero.glb" % clip)
 
 
-## As poses escritas em tools/blender/hero_animations.py voltam iguais (ida ao Blender e volta).
-func test_blender_clips_round_trip_reference_angles() -> void:
-	var stick := HeroClips.sample(&"wall_stick", 0.0)
-	_near(stick[&"thigh_l"], Vector3(1.75, 0, 0.1), "wall_stick coxa")
-	assert_almost_eq((stick[&"hips_y"] as Vector3).x, -0.28, 0.01, "wall_stick quadril baixo")
-	var rest := HeroClips.sample(&"sword_rest", 0.0)
-	_near(rest[&"shoulder_r"], Vector3(0.25, 0.07, 0.1), "sword_rest ombro")
-	_near(rest[&"wrist_r"], Vector3(1.1, -0.1, -0.39), "sword_rest pulso")
-	# Braço acima da cabeça (x > 90°): o Euler escolhido continua o autorado, sem trocar de ramo.
-	var slam := HeroClips.sample(&"atk_air_slam", CharacterModel.ATTACK_KEYS[0])
-	_near(slam[&"shoulder_r"], Vector3(3.0, 0, 0.1), "air_slam ombro")
-
-
 func test_walk_clip_alternates_legs() -> void:
+	var l := _slot("J_Bip_L_UpperLeg")
+	var r := _slot("J_Bip_R_UpperLeg")
 	var a := HeroClips.sample(&"walk", 0.0, true)
 	var b := HeroClips.sample(&"walk", 0.5, true)
-	_near(a[&"thigh_l"], b[&"thigh_r"], "meio ciclo depois a perna direita repete a esquerda", 0.05)
+	assert_gt((a[l] as Quaternion).angle_to(b[l]), 0.6, "a coxa esquerda vai da frente para trás")
+	assert_almost_eq((a[l] as Quaternion).get_angle(), (b[r] as Quaternion).get_angle(), 0.05,
+		"meio ciclo depois a direita repete a esquerda")
+
+
+func test_walk_bobs_the_hips() -> void:
+	var n := HeroClips.bones.size()
+	var low := INF
+	var high := -INF
+	for i in 20:
+		var y: float = (HeroClips.sample(&"walk", i / 20.0, true)[n] as Vector3).y
+		low = minf(low, y)
+		high = maxf(high, y)
+	assert_gt(high - low, 0.08, "sobe e desce a cada passo (pulinho)")
+
+
+func test_sword_rest_only_changes_right_arm_in_game() -> void:
+	var model: CharacterModel = d.player.model
+	var arm := _slot("J_Bip_R_LowerArm")
+	var leg := _slot("J_Bip_L_UpperLeg")
+	assert_gt(model._sword_arm_weights[arm], 0.0)
+	assert_eq(model._sword_arm_weights[leg], 0.0)
+
+
+func test_state_change_crossfades_instead_of_snapping() -> void:
+	_animate(30)
+	var skeleton := _skeleton()
+	var thigh := skeleton.find_bone("J_Bip_L_UpperLeg")
+	var before := skeleton.get_bone_pose_rotation(thigh)
+	d.press_jump()
+	_animate(1)
+	var after := skeleton.get_bone_pose_rotation(thigh)
+	var target: Quaternion = HeroClips.sample(&"air", 0.0)[_slot("J_Bip_L_UpperLeg")]
+	assert_lt(before.angle_to(after), before.angle_to(target), "primeiro quadro do pulo ainda está misturando")

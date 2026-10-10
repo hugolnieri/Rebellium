@@ -43,13 +43,10 @@ extends Resource
 ## Dash como estrela (cambalhota lateral): giro completo durante o deslocamento do dash.
 @export var dash_cartwheel: bool = true
 
-@export_group("Molas da animação")
-## Frequência/amortecimento das articulações na locomoção (menor amortecimento = mais balanço).
-@export_range(0.5, 30.0, 0.1, "suffix:Hz") var anim_spring_frequency: float = 6.5
-@export_range(0.05, 2.0, 0.01) var anim_spring_damping: float = 0.6
-## Nos golpes as articulações respondem mais rápido.
-@export_range(0.5, 40.0, 0.1, "suffix:Hz") var attack_spring_frequency: float = 15.0
-@export_range(0.05, 2.0, 0.01) var attack_spring_damping: float = 0.8
+@export_group("Transições da animação")
+## Crossfade ao trocar de animação (estado/clipe); nos golpes a entrada é mais rápida.
+@export_range(0.0, 0.6, 0.01, "suffix:s") var anim_blend_time: float = 0.14
+@export_range(0.0, 0.6, 0.01, "suffix:s") var attack_blend_time: float = 0.06
 ## Cabelo: mola mole para movimento secundário.
 @export_range(0.2, 15.0, 0.1, "suffix:Hz") var hair_spring_frequency: float = 2.8
 @export_range(0.05, 2.0, 0.01) var hair_spring_damping: float = 0.3
@@ -71,9 +68,6 @@ extends Resource
 ## Contorno (casco invertido) estilo anime.
 @export var outline_color: Color = Color(0.03, 0.025, 0.05)
 @export_range(0.0, 0.03, 0.0005, "suffix:m") var outline_thickness: float = 0.004
-## Dedos: mão direita fechada na arma, mão esquerda relaxada.
-@export_range(0.0, 2.0, 0.01, "suffix:rad") var grip_curl: float = 1.25
-@export_range(0.0, 2.0, 0.01, "suffix:rad") var relaxed_curl: float = 0.4
 ## Piscar.
 @export_range(0.5, 10.0, 0.1, "suffix:s") var blink_interval: float = 3.6
 @export_range(0.05, 0.5, 0.01, "suffix:s") var blink_duration: float = 0.14

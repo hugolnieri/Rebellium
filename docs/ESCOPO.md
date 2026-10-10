@@ -170,3 +170,9 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   (Space segurando o direcional para a parede; `back_coming_chain_min_dot`): é assim que se sobe a borda
   de 3,6 m e a parede lisa de 4,4 m. Sem segurar, o segundo salto se afasta da parede, como antes.
 - Torre: a parede de chegada baixou para 16,5 m e ficou mais larga; o último wall jump cai em cima dela.
+
+## Revisão: animações refeitas do zero no Blender
+- Todas as animações refeitas como poses-chave no Blender (Bezier, ciclos sem emenda, clavículas, dedos dos
+  pés e das mãos), com antecipação e acompanhamento nos golpes.
+- O jogo toca os clipes direto nos ossos (sem as molas que amorteciam o movimento); trocas de estado viram
+  um crossfade curto. Pouso forte mistura o clipe `land`.
