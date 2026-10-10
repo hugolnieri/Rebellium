@@ -195,7 +195,8 @@ func test_jump_goes_where_the_camera_looks() -> void:
 	assert_gte(v.length(), speed - 0.01, "sem perder velocidade")
 
 
-func test_roll_goes_where_the_camera_looks() -> void:
+func test_roll_goes_where_the_camera_looks_when_not_in_place() -> void:
+	d.player.config.roll_in_place = false
 	d.player.respawn(Transform3D(Basis(), Vector3(0, 8, 0)))
 	d.step_until(func() -> bool: return d.state() == &"Land", 200)
 	assert_true(d.player.state_machine.current.rolling)
@@ -223,7 +224,21 @@ func test_walking_turn_can_be_gradual_when_disabled() -> void:
 	assert_lt(dir.x, -0.05, "mas já começou a virar")
 
 
-func test_landing_rolls_forward_keeping_momentum() -> void:
+func test_landing_roll_stays_in_place() -> void:
+	d.step(30, FWD)
+	d.press_jump()
+	d.step(1, FWD)
+	d.step_until(func() -> bool: return d.player.get_state_name() == &"Land", 90, FWD)
+	assert_true(d.player.state_machine.current.rolling, "cambalhota ao aterrissar")
+	d.step(d.player.config.bunny_hop_window_ticks)
+	var before := d.player.global_position
+	d.step(15, FWD)
+	assert_lt(Vector2(d.player.global_position.x - before.x, d.player.global_position.z - before.z).length(), 0.05,
+		"fica no lugar, mesmo segurando W")
+
+
+func test_landing_rolls_forward_keeping_momentum_when_not_in_place() -> void:
+	d.player.config.roll_in_place = false
 	d.step(30, FWD)
 	d.press_jump()
 	d.step(1, FWD)

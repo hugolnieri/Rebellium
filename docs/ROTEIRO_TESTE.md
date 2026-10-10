@@ -124,8 +124,9 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Vira na hora para onde a câmera aponta. Acelera até a velocidade de sprint (10 m/s), mas **cai mais rápido** (gravidade ×1,7) e gasta 12 SP/s.
   - O HUD de debug mostra `CORRIDA NO AR`; o personagem mergulha para frente pedalando.
   - Acaba ao aterrissar, ao soltar o W ou com SP zerado. O sprint que vem do chão **não** acelera a queda.
-- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral que **corta a queda** (a velocidade de
-  queda acumulada zera e ele recomeça descendo a 3 m/s, com gravidade ×1,4 durante o dash). Para o dash reto antigo: F2 → `air_dodge_suspends_gravity`.
+- **Dash no ar**: depois de pular, A/D + Space dá um dash lateral que **corta a queda** e **plana**: na primeira
+  metade do dash quase não cai (`air_dodge_glide_fraction`, `air_dodge_glide_gravity`), depois volta a cair.
+  O impulso sai forte e vai perdendo força (`dodge_speed` 30 m/s, curva `dodge_ease_power`).
   - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
   - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
   - Longe da parede, **Space no meio do dash no ar cancela o dash**: para a estrela e volta a cair normalmente,
@@ -164,15 +165,16 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     a lâmina arrastando atrás. Na corrida no ar a pose é a mesma.
   - Passada acompanha a velocidade; o cabelo balança com o vento.
   - No ar: pose de pulo subindo e braços abertos caindo.
-  - Wall jump: sai mais longe (×1,25, mínimo 10 m/s) e o mortal vai até o fim — o golpe fica bloqueado por
+  - Wall jump: **impulso inicial forte** (×1,6, `wall_jump_initial_boost`) que vai perdendo força até a
+    velocidade normal em 0,6 s (`wall_jump_boost_decay_time`); vai bem mais longe. O mortal vai até o fim — o golpe fica bloqueado por
     `wall_jump_action_lock_time`; o **dash pode cortar o mortal** (e encadear outro wall jump) a partir de
     `wall_jump_chain_time`.
   - Dash: desliza bem mais (0,65 s de deslocamento, saída a 7 m/s e deslize final `dodge_slide_deceleration`).
   - Wall jump: o personagem **cola na parede** por um instante (bem encolhido, de frente para ela, ~0,1 s,
     `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.
     Back-coming: sem acrobacia (sobe colado na parede).
-  - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota** para frente (0,7 s, `roll_duration`), rolando com as
-    costas no chão (`roll_ball_height`). Dá para cancelar
+  - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota no lugar** (0,7 s, `roll_duration`), com as costas no
+    chão (`roll_ball_height`): o personagem para e não sai rolando para nenhuma direção (`roll_in_place`). Dá para cancelar
     com dash (A/D + Space) ou correndo (W, W). Corrida no ar, **dash no ar** ou **golpe no ar** → aterrissa
     limpo, sem cambalhota nem agachamento (`air_action_cancels_landing`).
   - Tocar o chão no meio de um **dash no ar** ou de um **golpe no ar** não interrompe nada: o dash continua no

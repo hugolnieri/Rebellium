@@ -166,7 +166,8 @@ func test_wall_jump_blocked_after_window_expires() -> void:
 
 func test_same_wall_twice_in_a_row_is_blocked() -> void:
 	# Saída lenta para conseguir voltar à mesma parede ainda no ar.
-	_world(Vector3(0, 0, -2.4), {"wall_jump_min_horizontal_speed": 1.5, "wall_jump_min_away_speed": 1.5})
+	_world(Vector3(0, 0, -2.4), {"wall_jump_min_horizontal_speed": 1.5, "wall_jump_min_away_speed": 1.5,
+		"wall_jump_initial_boost": 1.0})
 	var wall := _tall_wall(-3.0)
 	await d.ready_physics(self)
 	d.step(10)
@@ -326,3 +327,22 @@ func test_back_coming_chain_is_limited_to_one_extra() -> void:
 		assert_ne(d.wall_jumps[2].technique, MovementRules.TECH_BACK_COMING, "terceiro lance não escala")
 	d.step(120, FWD)
 	assert_lt(d.player.global_position.y, 1.0, "não escala parede alta sem fim")
+
+
+func test_wall_jump_starts_strong_and_slows_down() -> void:
+	_world(Vector3(0, 0, 0))
+	var wall := _tall_wall(-3.0)
+	await d.ready_physics(self)
+	d.step(10)
+	d.step(5, FWD)
+	d.press_jump()
+	d.step(1, FWD)
+	assert_gt(d.step_until_wall(wall, 90, FWD), 0)
+	d.press_jump()
+	d.step(2)
+	var cruise := d.player.wall_jump_cruise_speed
+	assert_gt(cruise, 0.0)
+	assert_almost_eq(d.player.get_horizontal_speed(), cruise * d.player.config.wall_jump_initial_boost, 0.6,
+		"sai com o impulso inicial")
+	d.step(d.player.secs_to_ticks(d.player.config.wall_jump_boost_decay_time) + 2)
+	assert_almost_eq(d.player.get_horizontal_speed(), cruise, 0.3, "e volta à velocidade normal")

@@ -45,6 +45,8 @@ var air_action_used: bool = false
 var last_landing_soft: bool = false
 ## Saiu de um wall jump e ainda não pousou: o ar não vira na hora para a câmera (mantém a distância).
 var wall_jump_carry: bool = false
+## Velocidade horizontal "de cruzeiro" do último wall jump: o impulso sai maior e decai até ela.
+var wall_jump_cruise_speed: float = 0.0
 ## Golpe/dash bloqueados até este tick (o mortal do wall jump vai até o fim).
 var action_lock_until_tick: int = PlayerInput.NEVER
 ## Flag de invencibilidade (dodge). Consultada pelo combate futuro.
@@ -493,7 +495,28 @@ func apply_air_movement(input: PlayerInput, delta: float, gravity_scale: float =
 		horizontal = horizontal.move_toward(target, accel * delta)
 		velocity.x = horizontal.x
 		velocity.z = horizontal.z
+	if wall_jump_carry and wall_jump_boost_active():
+		# O excesso do impulso decai; o controle aéreo normal (até a velocidade de andar) continua livre.
+		var capped := get_horizontal_velocity().limit_length(maxf(wall_jump_speed_cap(), get_walk_speed()))
+		velocity.x = capped.x
+		velocity.z = capped.z
 	apply_gravity(delta * gravity_scale)
+
+
+## O impulso inicial do último wall jump ainda está decaindo.
+func wall_jump_boost_active() -> bool:
+	var launched := ticks_since(last_wall_jump_tick) - config.wall_jump_stick_ticks
+	return wall_jump_cruise_speed > 0.0 \
+		and launched < secs_to_ticks(config.wall_jump_boost_decay_time)
+
+
+## Velocidade horizontal máxima agora, depois de um wall jump: começa em cruzeiro × impulso inicial e
+## cai (rápido no começo, devagar no fim) até a de cruzeiro em `wall_jump_boost_decay_time`.
+func wall_jump_speed_cap() -> float:
+	var launched := ticks_since(last_wall_jump_tick) - config.wall_jump_stick_ticks
+	var s := clampf(launched / float(Engine.physics_ticks_per_second) / config.wall_jump_boost_decay_time, 0.0, 1.0)
+	var extra := wall_jump_cruise_speed * (config.wall_jump_initial_boost - 1.0)
+	return wall_jump_cruise_speed + extra * (1.0 - s) * (1.0 - s)
 
 
 ## Ações disponíveis em qualquer estado de chão. Retorna true se transicionou.
@@ -598,6 +621,11 @@ func try_wall_jump(input: PlayerInput) -> bool:
 		_:
 			horizontal = WallJumpMath.compute_exit_horizontal(v_in, n, input.get_camera_forward(), config)
 			height = config.wall_jump_height
+	# Impulso inicial forte que vai perdendo força (ver wall_jump_speed_cap).
+	wall_jump_cruise_speed = 0.0
+	if technique != MovementRules.TECH_BACK_COMING:
+		wall_jump_cruise_speed = horizontal.length()
+		horizontal *= config.wall_jump_initial_boost
 	wall_jump_entry_velocity = Vector3(v_in.x, velocity.y, v_in.z)
 	var launch := horizontal + Vector3.UP * config.velocity_for_height(height)
 	velocity = launch

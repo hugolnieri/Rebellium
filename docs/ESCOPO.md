@@ -176,3 +176,11 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   pés e das mãos), com antecipação e acompanhamento nos golpes.
 - O jogo toca os clipes direto nos ossos (sem as molas que amorteciam o movimento); trocas de estado viram
   um crossfade curto. Pouso forte mistura o clipe `land`.
+
+## Revisão: golpes com o corpo todo, impulsos que decaem e pouso parado
+- Golpes refeitos no Blender: giro do quadril puxando o tronco, investida com a perna da frente, agachamento
+  no impacto, cabeça olhando o alvo, braço livre equilibrando e chicote da lâmina.
+- Wall jump sai com impulso ×1,6 que decai até a velocidade normal em 0,6 s. A chaminé da torre ficou mais
+  larga (4,5 m) para os saltos mais rápidos ganharem altura.
+- Dash: 30 m/s no começo, perdendo força rápido; no ar plana na primeira metade e depois cai.
+- Aterrissagem forte: cambalhota no lugar (`roll_in_place`).

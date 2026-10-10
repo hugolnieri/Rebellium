@@ -55,8 +55,11 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		return
 	var climbing := _hold_until_clear and player.wall_sensor.has_contact and player.velocity.y > 0.0
 	if locked or climbing:
-		player.velocity.x = _launch_horizontal.x
-		player.velocity.z = _launch_horizontal.z
+		var horizontal := _launch_horizontal
+		if player.wall_jump_boost_active():
+			horizontal = horizontal.limit_length(player.wall_jump_speed_cap())
+		player.velocity.x = horizontal.x
+		player.velocity.z = horizontal.z
 		player.apply_gravity(delta)
 		return
 	player.apply_air_movement(input, delta)

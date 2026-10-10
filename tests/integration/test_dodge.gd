@@ -130,18 +130,22 @@ func test_air_dash_once_per_jump_flat_and_refilled_on_landing() -> void:
 	assert_eq(d.state(), &"Dodge", "recarregou ao aterrissar")
 
 
-func test_air_dash_accelerates_fall() -> void:
-	d.press_jump()
-	d.step(10)
-	assert_gt(d.player.velocity.y, 0.0, "ainda subindo")
+func test_air_dash_glides_then_falls() -> void:
+	d.player.respawn(Transform3D(Basis(), Vector3(0, 14, 0)))
+	d.step(20)
+	assert_lt(d.player.velocity.y, -5.0, "caindo")
 	d.press_dodge()
 	d.step(1, Vector2(1, 0))
 	assert_eq(d.state(), &"Dodge")
-	assert_lte(d.player.velocity.y, -d.player.config.air_dodge_fall_speed, "mergulha no dash")
+	var start_speed := d.player.get_horizontal_speed()
+	d.step(8, Vector2(1, 0))
+	assert_gt(d.player.velocity.y, -1.5, "planando: quase não cai no começo do dash")
+	assert_lt(d.player.get_horizontal_speed(), start_speed, "impulso forte no começo, perdendo força")
+	var glide_ticks := int(d.player.secs_to_ticks(d.player.config.dodge_duration) * d.player.config.air_dodge_glide_fraction)
+	d.step(glide_ticks, Vector2(1, 0))
 	var vy := d.player.velocity.y
-	d.step(3, Vector2(1, 0))
-	assert_lt(d.player.velocity.y, vy, "cai cada vez mais rápido")
-	assert_gt(d.player.get_horizontal_speed(), 10.0, "continua indo para o lado")
+	d.step(6, Vector2(1, 0))
+	assert_lt(d.player.velocity.y, vy - 1.0, "depois de planar volta a cair")
 
 
 func test_air_dash_cancels_accumulated_fall() -> void:

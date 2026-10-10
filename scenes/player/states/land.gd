@@ -1,6 +1,7 @@
 extends PlayerState
-## Aterrissagem. Com impacto suficiente vira uma CAMBALHOTA que absorve o impacto e mantém o
-## embalo para frente (cancelável por dash, por corrida — toque duplo em W — por golpe e por pulo).
+## Aterrissagem. Com impacto suficiente vira uma CAMBALHOTA que absorve o impacto — no lugar
+## (`roll_in_place`) ou rolando para frente (cancelável por dash, por corrida — toque duplo em W — por
+## golpe e por pulo).
 ## Sem impacto (ou chegando correndo no ar) é só uma recuperação curta.
 ## - Bunny hop: pulo nos primeiros `bunny_hop_window_ticks` preserva a velocidade horizontal.
 ## - É um estado de recuperação: dash aqui = dodge cancel.
@@ -66,6 +67,11 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	if player.ticks_since(player.land_tick) < cfg().bunny_hop_window_ticks:
 		player.velocity.x = _landing_velocity.x
 		player.velocity.z = _landing_velocity.z
+		player.apply_gravity(delta)
+	elif rolling and cfg().roll_in_place:
+		# Fica no lugar: o impacto é absorvido sem sair rolando para nenhuma direção.
+		player.velocity.x = 0.0
+		player.velocity.z = 0.0
 		player.apply_gravity(delta)
 	elif rolling:
 		if cfg().air_instant_turn and input.has_move():

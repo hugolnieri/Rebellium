@@ -46,7 +46,9 @@ extends Resource
 @export_range(0.1, 1.5, 0.01, "suffix:s") var roll_duration: float = 0.7
 ## Depois de dash ou golpe no ar, aterrissa sem cambalhota nem agachamento de impacto.
 @export var air_action_cancels_landing: bool = true
-## Velocidade mínima para frente durante a cambalhota.
+## A cambalhota acontece NO LUGAR (o personagem para ao aterrissar). Desligado: rola para frente.
+@export var roll_in_place: bool = true
+## Velocidade mínima para frente durante a cambalhota (só com roll_in_place desligado).
 @export_range(0.0, 15.0, 0.1, "suffix:m/s") var roll_min_speed: float = 4.0
 @export_range(0.0, 60.0, 0.5, "suffix:m/s²") var roll_deceleration: float = 8.0
 
@@ -86,11 +88,11 @@ extends Resource
 ## |input lateral| mínimo para Espaço virar dash (1 = só A/D puros; W+A continua sendo pulo).
 @export_range(0.1, 1.0, 0.01) var dodge_side_input_threshold: float = 0.75
 ## Velocidade no INÍCIO do dash; ela cai até `dodge_exit_speed` ao longo de `dodge_duration`.
-@export_range(1.0, 60.0, 0.5, "suffix:m/s") var dodge_speed: float = 24.0
+@export_range(1.0, 60.0, 0.5, "suffix:m/s") var dodge_speed: float = 30.0
 ## Duração do deslocamento.
 @export_range(0.02, 1.0, 0.01, "suffix:s") var dodge_duration: float = 0.65
 ## Curva da desaceleração (1 = linear; maior = freia mais cedo).
-@export_range(0.5, 5.0, 0.05) var dodge_ease_power: float = 1.1
+@export_range(0.5, 5.0, 0.05) var dodge_ease_power: float = 2.2
 ## Janela de invencibilidade desde o início do dodge (`is_invulnerable`).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var dodge_invulnerability: float = 0.15
 ## Recuperação após o deslocamento (cancelável por outro dodge).
@@ -111,11 +113,15 @@ extends Resource
 ## Quantos dashes no ar por pulo (recarrega ao aterrissar e, se ligado, a cada wall jump).
 @export_range(0, 5, 1) var air_dodge_max_per_air: int = 1
 @export var air_dodge_refresh_on_wall_jump: bool = true
-## Durante o dash no ar a gravidade é suspensa (dash reto, sem cair). Desligado: o dash no ar
-## ACELERA a queda (velocidade inicial para baixo + gravidade multiplicada).
+## Durante o dash no ar a gravidade é suspensa (dash reto, sem cair). Desligado: o dash zera a queda
+## (velocidade para baixo inicial = air_dodge_fall_speed), PLANA com gravidade reduzida na primeira parte
+## (air_dodge_glide_fraction do dash, gravidade × air_dodge_glide_gravity) e depois volta a cair
+## (gravidade × air_dodge_gravity_multiplier).
 @export var air_dodge_suspends_gravity: bool = false
-@export_range(0.0, 40.0, 0.5, "suffix:m/s") var air_dodge_fall_speed: float = 3.0
-@export_range(0.0, 6.0, 0.05) var air_dodge_gravity_multiplier: float = 1.4
+@export_range(0.0, 40.0, 0.5, "suffix:m/s") var air_dodge_fall_speed: float = 0.0
+@export_range(0.0, 1.0, 0.01) var air_dodge_glide_fraction: float = 0.55
+@export_range(0.0, 1.0, 0.01) var air_dodge_glide_gravity: float = 0.12
+@export_range(0.0, 6.0, 0.05) var air_dodge_gravity_multiplier: float = 1.0
 ## Velocidade horizontal mantida ao fim do dash no ar (não há recuperação no ar).
 @export_range(0.0, 30.0, 0.5, "suffix:m/s") var air_dodge_exit_speed: float = 9.0
 ## Espaço durante o dash no ar cancela o dash: volta a cair normalmente, na velocidade de andar.
@@ -146,6 +152,10 @@ extends Resource
 @export_range(0.0, 2.0, 0.01, "suffix:s") var wall_jump_action_lock_time: float = 0.45
 ## Encadear outro wall jump (ou dar dash) fica liberado a partir deste tempo após o impulso.
 @export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_chain_time: float = 0.08
+## Impulso inicial do wall jump: a velocidade horizontal sai multiplicada por este valor e volta ao
+## normal ao longo de wall_jump_boost_decay_time (forte no começo, perdendo força com o tempo).
+@export_range(1.0, 3.0, 0.05) var wall_jump_initial_boost: float = 1.6
+@export_range(0.05, 2.0, 0.01, "suffix:s") var wall_jump_boost_decay_time: float = 0.6
 ## Tempo sem controle aéreo logo após o wall jump (estado WallJump).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_lock_time: float = 0.3
 ## Proíbe dois wall jumps seguidos na MESMA parede (exceto após back-coming).

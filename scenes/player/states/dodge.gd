@@ -3,8 +3,8 @@ extends PlayerState
 ## (`dodge_speed` → `dodge_exit_speed`, curva `dodge_ease_power`) ao longo de `dodge_duration`.
 ## Chão: deslocamento → recuperação (`dodge_recovery`). Espaço no meio do dash cancela e pula
 ## (dash jump); na recuperação, Espaço + A/D emenda outro dash (dodge cancel).
-## Ar: o dash acelera a queda (`air_dodge_fall_speed`, gravidade × `air_dodge_gravity_multiplier`), ou
-## suspende a gravidade se `air_dodge_suspends_gravity` → segue caindo com `air_dodge_exit_speed`.
+## Ar: o dash corta a queda e PLANA um pouco (gravidade × `air_dodge_glide_gravity` na primeira parte),
+## depois volta a cair; ou suspende a gravidade se `air_dodge_suspends_gravity` → segue com `air_dodge_exit_speed`.
 ## Espaço no meio do dash no ar cancela o dash (`air_dodge_jump_cancels`) e volta a cair.
 ## `player.is_invulnerable` fica true durante `dodge_invulnerability` desde o início.
 
@@ -89,6 +89,8 @@ func _air_update(input: PlayerInput, delta: float, t: int) -> void:
 		_set_dash_velocity(t)
 		if cfg().air_dodge_suspends_gravity:
 			player.velocity.y = 0.0
+		elif t < _dash_ticks() * cfg().air_dodge_glide_fraction:
+			player.apply_gravity(delta * cfg().air_dodge_glide_gravity)  # planando
 		else:
 			player.apply_gravity(delta * cfg().air_dodge_gravity_multiplier)
 		return

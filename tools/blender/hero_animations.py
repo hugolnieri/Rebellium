@@ -492,24 +492,81 @@ ATTACK_KEY_TIMES = (0.35, 0.6, 1.0)
 ATTACK_SPIN = {"spin": -TAU}
 
 
+# Corpo de cada golpe: (giro do tronco em graus, investida 0–1, agachamento em m, inclinação em graus)
+# na preparação, no acerto e no acompanhamento. Giro > 0 vira para a esquerda.
+ATTACK_BODY = {
+    "slash_r": ((-50, 0.2, 0.06, 0), (45, 1.0, 0.12, 10), (60, 0.8, 0.08, 8)),
+    "slash_l": ((50, 0.2, 0.06, 0), (-45, 1.0, 0.12, 10), (-60, 0.8, 0.08, 8)),
+    "overhead": ((-15, 0.1, 0.0, -15), (5, 1.0, 0.16, 35), (5, 0.9, 0.14, 30)),
+    "thrust": ((-35, 0.3, 0.08, 5), (25, 1.2, 0.14, 20), (20, 1.0, 0.1, 15)),
+    "spin": ((45, 0.0, 0.2, 5), (0, 0.3, 0.15, 5), (-30, 0.2, 0.1, 5)),
+    "rising": ((-20, 0.4, 0.25, 20), (20, 0.0, -0.04, -15), (15, 0.1, 0.0, -10)),
+    "air_slam": ((0, 0.0, 0.0, -20), (0, 0.0, 0.0, 45), (0, 0.0, 0.0, 40)),
+    "dash_thrust": ((-25, 0.5, 0.18, 15), (15, 1.3, 0.22, 35), (10, 1.0, 0.12, 25)),
+    "jab": ((-25, 0.2, 0.03, 0), (20, 0.8, 0.06, 10), (15, 0.6, 0.04, 8)),
+    "backhand": ((35, 0.1, 0.03, 0), (-35, 0.6, 0.06, 8), (-45, 0.5, 0.05, 6)),
+}
+ARM_CHANNELS = ("shoulder_l", "shoulder_r", "elbow_l", "elbow_r", "wrist_l", "wrist_r")
+
+
+def attack_body(twist, lunge, crouch, lean):
+    """Tronco e pernas: o quadril puxa o giro, a cabeça segue olhando para frente, a perna esquerda
+    avança (investida) e a direita estica atrás na ponta do pé; pés planos no chão."""
+    hips_x = -lean * 0.4
+    p = pose(
+        hips=(hips_x, twist * 0.4, 0), spine=(-lean * 0.4, twist * 0.35, 0), chest=(-lean * 0.2, twist * 0.25, 0),
+        upper_chest=(0, 0, 0), neck=(lean * 0.2, -twist * 0.35, 0), head=(lean * 0.4, -twist * 0.35, 0),
+        hips_pos=(0, -0.025 - crouch, -0.16 * lunge),
+        clavicle_r=(0, twist * 0.08, 0), clavicle_l=(0, twist * 0.08, 0),
+    )
+    bend = crouch * 220.0
+    thigh_l = 6 + 38 * lunge + bend * 0.55 - hips_x
+    knee_l = -(10 + 42 * lunge + bend)
+    thigh_r = -(4 + 26 * lunge) + bend * 0.45 - hips_x
+    knee_r = -(12 + 6 * lunge + bend * 0.8)
+    p["thigh_l"] = (thigh_l, 0, -8)
+    p["knee_l"] = (knee_l, 0, 0)
+    p["foot_l"] = (-(hips_x + thigh_l + knee_l), 0, 8)
+    p["thigh_r"] = (thigh_r, 0, 8)
+    p["knee_r"] = (knee_r, 0, 0)
+    p["foot_r"] = (-(hips_x + thigh_r + knee_r) + 22 * lunge, 0, -8)
+    p["toe_r"] = (32 * lunge, 0, 0)
+    p["toe_l"] = (0, 0, 0)
+    return p
+
+
+def _arms(p):
+    return {k: v for k, v in p.items() if k in ARM_CHANNELS}
+
+
 def attack_keys(name):
     windup_p, hit_p, follow_p = ATTACKS[name]
-    windup = over(READY, windup_p)
-    hit = over(windup, hit_p)
-    follow = over(hit, follow_p)
-    # Antecipação: recua um pouco além da preparação; meio do arco: lâmina passando à frente.
-    anticipation = lerp_pose(READY, windup, 0.45)
-    overshoot = lerp_pose(hit, windup, -0.12)  # passa um pouco do acerto (chicote)
-    mid = lerp_pose(windup, hit, 0.5)
+    body_w, body_h, body_f = (attack_body(*b) for b in ATTACK_BODY[name])
+    windup = over(READY, body_w, _arms(windup_p))
+    hit = over(windup, body_h, _arms(hit_p))
+    follow = over(hit, body_f, _arms(follow_p))
+    if name == "air_slam":
+        # No ar: pernas encolhidas (preparação) e chutando para trás no golpe.
+        windup = over(windup, {k: v for k, v in windup_p.items() if k.startswith(("thigh", "knee"))},
+                      pose(hips_pos=(0, 0, 0), foot_l=(-20, 0, 0), foot_r=(-20, 0, 0), toe_r=(0, 0, 0)))
+        hit = over(hit, {k: v for k, v in hit_p.items() if k.startswith(("thigh", "knee"))},
+                   pose(hips_pos=(0, 0, 0), foot_l=(-25, 0, 0), foot_r=(-25, 0, 0), toe_r=(0, 0, 0)))
+        follow = over(follow, {k: hit[k] for k in ("thigh_l", "thigh_r", "knee_l", "knee_r", "foot_l", "foot_r",
+                                                    "hips_pos", "toe_r")})
+    # Antecipação: começa a recuar o corpo e o braço para a preparação.
+    anticipation = lerp_pose(READY, windup, 0.55)
+    # Meio do arco: corpo a meio caminho, braço já adiantado (a lâmina passa à frente do corpo).
+    mid = lerp_pose(windup, hit, 0.45)
     rs = mid.get("shoulder_r", (0, 0, 0))
-    mid["shoulder_r"] = (rs[0] + 10, rs[1], rs[2])
-    settle = lerp_pose(hit, follow, 0.6)
+    mid["shoulder_r"] = (rs[0] + 12, rs[1], rs[2])
+    # Chicote: passa um pouco do acerto antes de assentar.
+    overshoot = lerp_pose(hit, follow, 1.25)
     f = ATTACK_FRAMES
     t0, t1, t2 = ATTACK_KEY_TIMES
     return [
-        (0, READY), (round(f * 0.15), anticipation), (round(f * t0), windup),
-        (round(f * (t0 + t1) / 2), mid), (round(f * t1), hit), (round(f * (t1 + 0.06)), overshoot),
-        (round(f * 0.8), settle), (round(f * t2), follow),
+        (0, READY), (round(f * 0.18), anticipation), (round(f * t0), windup),
+        (round(f * (t0 + t1) / 2), mid), (round(f * t1), hit), (round(f * (t1 + 0.1)), overshoot),
+        (round(f * t2), follow),
     ]
 
 
