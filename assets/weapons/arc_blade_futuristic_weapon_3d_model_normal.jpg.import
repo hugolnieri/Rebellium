@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://drc26vqodf5m4"
-path="res://.godot/imported/sky_arena_T_Screen2.png-4b37be966defd2d024261d90070e6bc0.ctex"
+uid="uid://ci6t4wmhohucu"
+path="res://.godot/imported/arc_blade_futuristic_weapon_3d_model_normal.jpg-1602a4356e6ce92cc26d3a24bda24ae1.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "1aa1478c3e6c38c8b2d0b933a8bf37b2"
+"md5": "f39bc845b3dd6a58d5d9a8134976430b"
 }
 
 [deps]
 
-source_file="res://assets/arena/sky_arena_T_Screen2.png"
-dest_files=["res://.godot/imported/sky_arena_T_Screen2.png-4b37be966defd2d024261d90070e6bc0.ctex"]
+source_file="res://assets/weapons/arc_blade_futuristic_weapon_3d_model_normal.jpg"
+dest_files=["res://.godot/imported/arc_blade_futuristic_weapon_3d_model_normal.jpg-1602a4356e6ce92cc26d3a24bda24ae1.ctex"]
 
 [params]
 

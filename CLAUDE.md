@@ -20,6 +20,7 @@ python3 tools/blender/build_hero.py   # recria art/character/hero.blend + hero.g
                                      # ou bpy do pip: pip install bpy==4.2.0). APAGA edições manuais do .blend
 python3 tools/blender/export_hero.py  # só exporta o hero.blend editado → assets/character/hero.glb
 python3 tools/blender/build_sky_arena.py  # recria a arena flutuante (art/arena/sky_arena.blend + assets/arena/sky_arena.glb)
+python3 tools/blender/build_sword.py      # converte art/weapons/arc_blade_source.usdz → assets/weapons/arc_blade.glb
 ```
 Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`.
 

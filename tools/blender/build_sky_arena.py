@@ -10,9 +10,8 @@ Os nós "Hologram", "Drone_*", "Beacon_*" e "Flame_*" são animados por scenes/a
 
 Medidas (metros, chão da plataforma em z = 0):
   anel externo   r 17–24,5   passarela, com mureta de 1,4 m na borda (r 24,5–26)
-  muro interno   r 15,5–17   3,2 m de altura (bom para wall jump), 4 passagens nas diagonais
-  arquibancada   r 10–15,5   4 degraus de 0,5 m descendo até o centro, com neon nos espelhos
-  centro         r < 10      chão liso, palco com holograma
+  muro interno   r 15,5–17   6 m de altura (bom para wall jump), 4 passagens nas diagonais
+  centro         r < 15,5    chão liso, palco com holograma
 
 Uso:  blender -b -P tools/blender/build_sky_arena.py    ou    python3 tools/blender/build_sky_arena.py
 """
@@ -33,8 +32,8 @@ TAU = math.tau
 SEG = 96  # segmentos de um círculo completo
 
 R_RIM_OUT, R_RIM_IN, RIM_H = 26.0, 24.5, 1.4
-R_WALL_OUT, R_WALL_IN, WALL_H = 17.0, 15.5, 3.2
-TIERS = [(14.0, 15.5, 2.0), (12.5, 14.0, 1.5), (11.0, 12.5, 1.0), (10.0, 11.0, 0.5)]  # (r_in, r_out, altura)
+R_WALL_OUT, R_WALL_IN, WALL_H = 17.0, 15.5, 6.0
+TIERS = []  # arquibancada (r_in, r_out, altura) — removida: o centro é plano
 GATE_ANGLES = [TAU / 8, 3 * TAU / 8, 5 * TAU / 8, 7 * TAU / 8]
 GATE_HALF = 0.15  # rad (≈ 4,7 m de passagem no muro)
 BASE_TOP, BASE_BOTTOM = 0.0, -1.2
@@ -114,34 +113,6 @@ def tex_hazard():
     return _image("T_Hazard", np.concatenate([rgb, np.ones((n, n, 1))], axis=2))
 
 
-def tex_screen(name, accent, seed):
-    """Tela de interface fictícia: moldura, gráficos de barras, linhas de "texto" e um mapa de pontos."""
-    w, h = 512, 256
-    rng = np.random.default_rng(seed)
-    y, x = np.mgrid[0:h, 0:w]
-    rgb = np.zeros((h, w, 3), np.float32) + np.array([0.01, 0.02, 0.04])
-    acc = np.array(accent, np.float32)
-    frame = (x < 4) | (x > w - 5) | (y < 4) | (y > h - 5)
-    rgb[frame] = acc
-    # Linhas de "texto" à esquerda.
-    for row in range(14, h - 20, 14):
-        length = rng.integers(40, 150)
-        sel = (y >= row) & (y < row + 5) & (x > 16) & (x < 16 + length)
-        rgb[sel] = acc * rng.uniform(0.5, 1.0)
-    # Barras à direita.
-    for i in range(12):
-        bh = rng.integers(20, 150)
-        sel = (x >= 300 + i * 16) & (x < 310 + i * 16) & (y > h - 20 - bh) & (y < h - 20)
-        rgb[sel] = acc[::-1] * 0.4 + acc * 0.6
-    # "Mapa" de pontos no meio.
-    blob = _noise(256, 4, seed)
-    blob = np.pad(blob, ((0, 0), (0, 256)))[:h, :w]
-    dots = ((x % 6) < 2) & ((y % 6) < 2) & (blob > 0.55) & (x > 190) & (x < 290)
-    rgb[dots] = acc
-    rgb *= 0.9 + 0.1 * ((y % 3) == 0)[..., None]  # linhas de varredura
-    return _image(name, np.concatenate([rgb, np.ones((h, w, 1))], axis=2))
-
-
 # --- Materiais ---------------------------------------------------------------------------------------
 
 def material(name, color=(0.2, 0.2, 0.2), metallic=0.0, roughness=0.6, image=None, emission=None,
@@ -184,10 +155,6 @@ def make_materials():
     m["orange"] = material("M_Neon_Orange", (1.0, 0.5, 0.1), emission=(1.0, 0.5, 0.1), strength=2.2)
     m["red"] = material("M_Beacon_Red", (1.0, 0.1, 0.05), emission=(1.0, 0.1, 0.05), strength=8.0)
     m["blue"] = material("M_Neon_Blue", (0.2, 0.4, 1.0), emission=(0.2, 0.4, 1.0), strength=2.5)
-    for i, (accent, seed) in enumerate((((0.1, 0.9, 1.0), 1), ((1.0, 0.2, 0.8), 2), ((0.2, 1.0, 0.6), 3))):
-        img = tex_screen("T_Screen%d" % i, accent, seed)
-        m["screen%d" % i] = material("M_Screen%d" % i, (1, 1, 1), 0.0, 0.3, img, (1, 1, 1), 1.6,
-                                     emission_image=True)
     m["holo"] = material("M_Hologram", (0.2, 0.9, 1.0), emission=(0.2, 0.9, 1.0), strength=0.9, alpha=0.18)
     m["holo_line"] = material("M_HologramLine", (0.4, 1.0, 1.0), emission=(0.4, 1.0, 1.0), strength=2.5)
     m["flame_o"] = material("M_Flame_Orange", (1.0, 0.55, 0.15), emission=(1.0, 0.55, 0.15), strength=2.5,
@@ -390,6 +357,9 @@ def build_neon(m, root):
     for a0, a1 in gaps(R_WALL_IN, R_WALL_OUT):
         # Muro interno: faixa laranja no meio da face externa e ciano no topo.
         b.ring(R_WALL_OUT + eps, R_WALL_OUT + 0.06, 1.5, 1.6, m["orange"], a0, a1, inner=False)
+        b.ring(R_WALL_IN - 0.06, R_WALL_IN - eps, 1.5, 1.6, m["magenta"], a0, a1, outer=False)
+        b.ring(R_WALL_OUT + eps, R_WALL_OUT + 0.06, 4.2, 4.28, m["cyan"], a0, a1, inner=False)
+        b.ring(R_WALL_IN - 0.06, R_WALL_IN - eps, 4.2, 4.28, m["cyan"], a0, a1, outer=False)
         b.ring(R_WALL_IN - 0.02, R_WALL_IN + 0.1, WALL_H, WALL_H + 0.02, m["cyan"], a0, a1, inner=False,
                outer=False, caps=False)
         # Espelhos dos degraus: magenta e ciano alternados por setor.
@@ -407,45 +377,6 @@ def build_neon(m, root):
     b.ring(1.6, 1.75, 0.35, 0.37, m["magenta"], inner=False, outer=False)
     b.ring(2.4, 2.5, 0.35, 0.37, m["cyan"], inner=False, outer=False)
     b.finish("Neon", root)
-
-
-def build_screens(m, root):
-    """Telas no topo do muro interno (viradas para o centro) e consoles na arquibancada."""
-    b = Builder()
-    frame = Builder()
-    sectors = gaps(R_WALL_IN, R_WALL_OUT)
-    for s, (a0, a1) in enumerate(sectors):
-        count = 5
-        for k in range(count):
-            a = a0 + (a1 - a0) * (k + 0.5) / count
-            r = R_WALL_IN + 0.3
-            c = Vector((r * math.cos(a), r * math.sin(a), WALL_H + 0.95))
-            inward = -Vector((math.cos(a), math.sin(a), 0))
-            side = Vector((-math.sin(a), math.cos(a), 0))
-            w, h = 2.6, 1.5
-            pts = [c - side * w / 2 - Vector((0, 0, h / 2)) + inward * 0.02, c + side * w / 2 - Vector((0, 0, h / 2))
-                   + inward * 0.02, c + side * w / 2 + Vector((0, 0, h / 2)) + inward * 0.02,
-                   c - side * w / 2 + Vector((0, 0, h / 2)) + inward * 0.02]
-            b.quad(pts, [(1, 0), (0, 0), (0, 1), (1, 1)], m["screen%d" % ((s + k) % 3)])
-            # Verso: outra tela virada para a passarela.
-            back = [q - inward * 0.16 for q in pts[::-1]]
-            b.quad(back, [(1, 0), (0, 0), (0, 1), (1, 1)], m["screen%d" % ((s + k + 2) % 3)])
-            frame.box(c - inward * 0.06, (0.12, w + 0.16, h + 0.16), m["trim"], rot_z=a)
-            frame.box(Vector((c.x, c.y, WALL_H + 0.1)) - inward * 0.06, (0.2, 0.3, 0.2), m["trim"], rot_z=a)
-        # Consoles na arquibancada de cima (mesas com tela).
-        for k in range(2):
-            a = a0 + (a1 - a0) * (0.3 + 0.4 * k)
-            r = 14.6
-            c = Vector((r * math.cos(a), r * math.sin(a), TIERS[0][2] + 0.45))
-            frame.box(c, (0.9, 1.6, 0.9), m["trim"], rot_z=a)
-            top = c + Vector((0, 0, 0.47))
-            inward = -Vector((math.cos(a), math.sin(a), 0))
-            side = Vector((-math.sin(a), math.cos(a), 0))
-            pts = [top - side * 0.7 + inward * 0.35, top + side * 0.7 + inward * 0.35, top + side * 0.7 - inward * 0.3,
-                   top - side * 0.7 - inward * 0.3]
-            b.quad(pts, [(1, 0), (0, 0), (0, 1), (1, 1)], m["screen%d" % ((s + k + 1) % 3)])
-    b.finish("Screens", root)
-    frame.finish("ScreenFrames", root)
 
 
 def build_underside(m, root):
@@ -626,7 +557,6 @@ def main():
     bpy.context.scene.collection.objects.link(root)
     build_platform(m, root)
     build_neon(m, root)
-    build_screens(m, root)
     build_underside(m, root)
     build_thrusters(m, root)
     build_antennas(m, root)

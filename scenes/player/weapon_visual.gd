@@ -1,7 +1,13 @@
 class_name WeaponVisual
 extends Node3D
-## Modelo procedural da arma na mão do personagem. Espaço local: empunhadura na origem,
-## lâmina para -Z. Expõe a base e a ponta da lâmina para o rastro do golpe.
+## Modelo da arma na mão do personagem. Espaço local: empunhadura na origem, lâmina para -Z.
+## Lâmina de Arco: modelo 3D (assets/weapons/arc_blade.glb, preparado por tools/blender/build_sword.py).
+## Presa de Fase: procedural. Expõe a base e a ponta da lâmina para o rastro do golpe.
+
+const ARC_BLADE_MODEL: PackedScene = preload("res://assets/weapons/arc_blade.glb")
+## Trecho da lâmina do modelo da Lâmina de Arco (m, ao longo de -Z) para o rastro e o brilho do golpe.
+const ARC_BLADE_START: float = 0.32
+const ARC_BLADE_TIP: float = 1.13
 
 var weapon: WeaponConfig
 var trail_base: Node3D
@@ -10,6 +16,8 @@ var trail_tip: Node3D
 var _glow_materials: Array[StandardMaterial3D] = []
 var _base_energy: Array[float] = []
 var _boost: float = 0.0
+## Halo da Lâmina de Arco: só aparece durante o golpe.
+var _halo: StandardMaterial3D
 
 
 func build(config: WeaponConfig) -> void:
@@ -18,6 +26,7 @@ func build(config: WeaponConfig) -> void:
 		child.queue_free()
 	_glow_materials.clear()
 	_base_energy.clear()
+	_halo = null
 	trail_base = Node3D.new()
 	trail_tip = Node3D.new()
 	add_child(trail_base)
@@ -34,41 +43,23 @@ func set_boost(amount: float) -> void:
 	_boost = clampf(amount, 0.0, 1.0)
 	for i in _glow_materials.size():
 		_glow_materials[i].emission_energy_multiplier = _base_energy[i] * (1.0 + _boost * 1.5)
+	if _halo != null:
+		_halo.albedo_color.a = 0.3 * _boost
 
 
-# --- Lâmina de Arco: espada de plasma ciano com lâmina bifurcada --------------------
+# --- Lâmina de Arco: espada futurista (modelo 3D) -----------------------------------
 
 func _build_arc_blade(glow: Color) -> void:
-	var silver := _metal(Color(0.78, 0.8, 0.84))
-	var dark := _metal(Color(0.1, 0.1, 0.12))
-	var core_blue := _solid(Color(0.32, 0.38, 0.95), 0.4, 0.3)
-	var sigil := _emissive(Color(0.8, 0.85, 1.0), 1.2, false)
-	var blade := _emissive(glow, 3.0, false)
-	var halo := _emissive(glow, 1.5, true)
-
-	_cylinder(Vector3(0, 0, 0.0), 0.021, 0.24, dark)  # empunhadura
-	_cylinder(Vector3(0, 0, 0.14), 0.028, 0.04, core_blue)  # pomo
-	_cylinder(Vector3(0, 0, 0.17), 0.018, 0.03, silver)
-	# Guarda em "D" (arco de proteção da mão).
-	_box(Vector3(0, 0.055, 0.13), Vector3(0.018, 0.11, 0.018), silver)
-	_box(Vector3(0, 0.1, 0.0), Vector3(0.018, 0.018, 0.27), silver)
-	_box(Vector3(0, 0.06, -0.13), Vector3(0.018, 0.1, 0.018), silver)
-	# Núcleo azul com sigilo.
-	_box(Vector3(0, 0, -0.26), Vector3(0.08, 0.055, 0.25), core_blue)
-	_box(Vector3(0, 0.029, -0.26), Vector3(0.04, 0.004, 0.12), sigil)
-	_box(Vector3(0, 0, -0.395), Vector3(0.12, 0.035, 0.03), silver)  # colar
-	# Lâmina bifurcada: duas pontas com fenda no meio + halo aditivo.
-	var length := 0.82
-	var prong := PackedVector2Array([Vector2(0.008, 0.0), Vector2(0.055, 0.06), Vector2(0.05, length * 0.65),
-		Vector2(0.012, length), Vector2(0.006, length * 0.6)])
-	for side: float in [-1.0, 1.0]:
-		var points := PackedVector2Array()
-		for p in prong:
-			points.append(Vector2(p.x * side, p.y))
-		_blade_mesh(points, 0.012, Vector3(0, 0, -0.41), blade, 1.0)
-		_blade_mesh(points, 0.03, Vector3(0, 0, -0.41), halo, 1.35)
-	trail_base.position = Vector3(0, 0, -0.45)
-	trail_tip.position = Vector3(0, 0, -0.41 - length)
+	var model := ARC_BLADE_MODEL.instantiate() as Node3D
+	add_child(model)
+	# Halo de energia ao longo da lâmina: quase invisível parado, acende no golpe (set_boost).
+	var halo := _emissive(glow, 1.0, true)
+	halo.albedo_color.a = 0.0
+	_halo = halo
+	var length := ARC_BLADE_TIP - ARC_BLADE_START
+	_box(Vector3(0, 0, -(ARC_BLADE_START + length * 0.5)), Vector3(0.3, 0.1, length), halo)
+	trail_base.position = Vector3(0, 0, -ARC_BLADE_START)
+	trail_tip.position = Vector3(0, 0, -ARC_BLADE_TIP)
 
 
 # --- Presa de Fase: adaga curva laranja ------------------------------------------

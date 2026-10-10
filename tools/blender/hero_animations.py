@@ -130,8 +130,10 @@ READY = pose(
 
 def idle_keys():
     inhale = pose(chest=(6.5, 0, 0), upper_chest=(2, 0, 0), spine=(-2, 0, 0), neck=(-4.5, 0, 0),
-                  clavicle_l=(0, 0, -2), clavicle_r=(0, 0, 2), hips_pos=(0, -0.02, 0))
-    exhale = pose(chest=(3, 0, 0), spine=(-3.5, 0, 0), hips_pos=(0, -0.03, 0))
+                  clavicle_l=(0, 0, -2), clavicle_r=(0, 0, 2), hips_pos=(0, -0.02, 0),
+                  shoulder_l=(3, -2, -11), elbow_l=(14, 0, 0), wrist_l=(4, 6, -6), grip_l=0.3)
+    exhale = pose(chest=(3, 0, 0), spine=(-3.5, 0, 0), hips_pos=(0, -0.03, 0),
+                  shoulder_l=(6, 0, -9), elbow_l=(20, 0, 0), wrist_l=(-2, 3, -9), grip_l=0.4)
     left = pose(hips=(0, 0, -2.5), hips_pos=(-0.018, -0.028, 0), spine=(-3, 0, 1.5), head=(3, -7, 0),
                 thigh_l=(4, 0, -7), thigh_r=(-1, 0, 10), knee_r=(-16, 0, 0), foot_r=(17, 0, -10))
     right = pose(hips=(0, 0, 1.5), hips_pos=(0.012, -0.028, 0), spine=(-3, 0, -1), head=(2, 6, 0),
@@ -146,11 +148,18 @@ def idle_keys():
 
 
 def _arm_swing(phase, amp_l, amp_r, base_r):
-    c = math.cos(phase - 0.3)  # braços atrasam um pouco em relação às pernas
+    """Braço livre solto: o ombro puxa, o antebraço e a mão vêm atrasados (sobreposição), o cotovelo
+    dobra mais na frente e abre atrás, o braço cruza um pouco o corpo na frente e a mão abre e fecha."""
+    c = math.cos(phase - 0.3)            # ombro (atrasado em relação às pernas)
+    forward = 0.5 - 0.5 * c              # 0 = braço atrás, 1 = braço na frente
+    elbow = 0.5 - 0.5 * math.cos(phase - 0.75)
+    wrist = math.cos(phase - 1.15)
     return pose(
-        shoulder_l=(6 - amp_l * c, 0, -14), elbow_l=(85 - 12 * c, 0, 0), wrist_l=(-5, 0, -8),
+        shoulder_l=(6 - amp_l * c, -9 * forward, -15 + 4 * c), elbow_l=(52 + 46 * elbow, 0, 0),
+        wrist_l=(-6 + 14 * wrist, 4 * wrist, -10 + 4 * forward),
+        clavicle_l=(0, 4 * c, 2 * forward), grip_l=0.28 + 0.14 * forward,
         shoulder_r=(base_r + amp_r * c, 4, 14), elbow_r=(52 + 8 * c, 0, 0), wrist_r=(-18, 0, 0),
-        clavicle_l=(0, 3 * c, 0), clavicle_r=(0, 3 * c, 0),
+        clavicle_r=(0, 3 * c, 0),
     )
 
 

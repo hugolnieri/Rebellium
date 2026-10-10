@@ -292,8 +292,15 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 - Plataforma circular sobre as nuvens, à noite, com a cidade lá embaixo. Modelo feito no Blender
   (`art/arena/sky_arena.blend`, gerado por `tools/blender/build_sky_arena.py`).
 - **Passarela externa** com mureta de 1,4 m na borda; dá para pular a mureta e cair (volta ao spawn).
-- **Muro interno** de 3,2 m com 4 passagens nas diagonais: bom para wall jump. Telas dos dois lados.
-- **Arquibancada** de 4 degraus com neon magenta/ciano descendo até o centro; postes de treino no centro.
+- **Muro interno** de 6 m com 4 passagens nas diagonais: bom para wall jump (faixas de neon nos dois lados).
+- Centro plano com os postes de treino em volta do palco.
 - **Holograma** girando no palco central, drones em órbita, luzes vermelhas piscando nas antenas,
   propulsores com chama embaixo da plataforma.
 - R reinicia (postes e posição), como na arena de combate.
+
+## Espada (Lâmina de Arco)
+- A Lâmina de Arco usa o modelo 3D enviado (`art/weapons/arc_blade_source.usdz`, convertido por
+  `tools/blender/build_sword.py` em `assets/weapons/arc_blade.glb`): 1,25 m, cabo na mão direita.
+- Parado e andando fica apoiada no ombro; nos golpes acende um halo de energia ao longo da lâmina.
+- Braço livre (esquerdo): balança solto, dobrando o cotovelo na frente e esticando atrás; parado, pende
+  relaxado acompanhando a respiração.

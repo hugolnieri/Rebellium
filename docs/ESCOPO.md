@@ -199,3 +199,8 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   cabos e propulsores. Colisão gerada no Godot pelos objetos "-col".
 - Cena `SkyArena.tscn` com céu noturno, duas camadas de nuvens animadas, cidade e prédios iluminados lá
   embaixo; entra no ciclo do F3 logo depois da arena de combate.
+
+## Revisão: arena sem arquibancada, espada nova e braço livre
+- Arena flutuante: arquibancada e telas removidas; muro interno sobe para 6 m.
+- Lâmina de Arco usa o modelo 3D enviado pelo jogador (convertido no Blender, malha reduzida).
+- Braço livre com sobreposição (ombro → cotovelo → mão atrasados), cotovelo variando e mão relaxada.

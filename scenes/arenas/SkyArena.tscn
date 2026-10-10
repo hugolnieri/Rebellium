@@ -106,13 +106,13 @@ light_color = Color(0.3, 0.9, 1, 1)
 light_energy = 2.5
 omni_range = 14.0
 
-[node name="StandsLightA" type="OmniLight3D" parent="."]
+[node name="WallLightA" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -13)
 light_color = Color(1, 0.3, 0.8, 1)
 light_energy = 1.2
 omni_range = 10.0
 
-[node name="StandsLightB" type="OmniLight3D" parent="."]
+[node name="WallLightB" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 13)
 light_color = Color(0.2, 0.85, 1, 1)
 light_energy = 1.2
