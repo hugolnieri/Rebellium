@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dm7wadsv0g0t4"
-path="res://.godot/imported/hero_image_6.png-7d06db22916adb646488d84c7d53cb85.ctex"
+uid="uid://bn38hcjpbqf8s"
+path="res://.godot/imported/hero_F00_000_Hair_00.png-56729198285aa963f1305f8342455e40.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "1f6358e967296da6d71cc9b6030387c4"
+"md5": "c3ac6160a89075b06a386cc2d90993c6"
 }
 
 [deps]
 
-source_file="res://assets/character/hero_image_6.png"
-dest_files=["res://.godot/imported/hero_image_6.png-7d06db22916adb646488d84c7d53cb85.ctex"]
+source_file="res://assets/character/hero_F00_000_Hair_00.png"
+dest_files=["res://.godot/imported/hero_F00_000_Hair_00.png-56729198285aa963f1305f8342455e40.ctex"]
 
 [params]
 

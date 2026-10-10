@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bqs48n4xd2d80"
-path="res://.godot/imported/hero_image_12.png-369e3905d18a8b8e3f71cc445b83050e.ctex"
+uid="uid://civat8gpmgnmm"
+path="res://.godot/imported/hero_M00_000_00_FaceBrow_00.png-ae1a0bbab642b4178f2be625959433fc.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "6fdeb12de867c30befe10de2970f7818"
+"md5": "eae494b0a4c8646f15518db2fbd24bb5"
 }
 
 [deps]
 
-source_file="res://assets/character/hero_image_12.png"
-dest_files=["res://.godot/imported/hero_image_12.png-369e3905d18a8b8e3f71cc445b83050e.ctex"]
+source_file="res://assets/character/hero_M00_000_00_FaceBrow_00.png"
+dest_files=["res://.godot/imported/hero_M00_000_00_FaceBrow_00.png-ae1a0bbab642b4178f2be625959433fc.ctex"]
 
 [params]
 

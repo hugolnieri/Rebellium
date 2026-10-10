@@ -142,20 +142,16 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - O banner mostra `DODGE CANCEL`.
 
 ## Parte 3b: personagem e polimento (observar)
-- **Personagem**: modelo anime (base VRoid, licença CC0) com traje preto e linhas roxas, cabelo branco,
-  olhos verdes, toon shading e contorno. Pisca sozinho e franze a testa ao golpear.
-  - Parado: pernas abertas (`idle_stance_width_deg`), respira devagar (peito e ombros sobem e descem), apoia o
-    peso numa perna e olha em volta.
-  - Andando o **corpo inteiro** inclina para frente a partir do quadril (26°, `run_lean_deg`); no sprint ainda
-    mais (45°, `ninja_run_lean_deg`), com os **braços esticados para trás na horizontal** (`ninja_arm_pitch_deg`).
-  - Andar é um **trote** (passada longa, ritmo mais calmo, pequeno voo entre os passos), sem o corpo balançar
-    para os lados.
+- **Personagem**: modelo anime masculino (base VRoid, licença CC0) com traje azul-marinho de gola alta,
+  emblema no peito, cabelo branco, olhos cinza, descalço; toon shading e contorno. Pisca sozinho e franze a
+  testa ao golpear.
+  - **Todas as poses vêm do Blender** (`art/character/hero.blend`): parado, andar, sprint, ar, corrida no ar,
+    mortal do pulo, parede, mortal do wall jump, cambalhota, estrela, dano, espada no ombro e os golpes. Devem
+    estar iguais à versão anterior (andar em trote com pulinho, sprint ninja com braços para trás, etc.).
+  - Parado: pernas abertas, respira devagar, apoia o peso numa perna e olha em volta.
   - Pulo do chão: **mortal para frente** (encolhe no meio do giro; `jump_flip_enabled`, `jump_flip_duration`).
     Golpe, dash ou wall jump no ar interrompem o mortal.
-  - Pernas: passada com calcanhar no contato, joelho de apoio levemente dobrado, impulso na ponta do pé e
-    joelho subindo alto no balanço, mais ainda correndo (`knee_lift_walk_deg`, `knee_lift_run_deg`); andando
-    o pé fica pouco tempo no chão (`stance_fraction_walk`) e o corpo dá um pulinho a cada passo
-    (`walk_hop_height`).
+  - Andando e golpeando, as pernas continuam a passada; parado (ou no ar) o corpo todo assume a pose do golpe.
   - Pular do chão volta à velocidade de andar (6 m/s), mesmo vindo de sprint ou dash
     (`jump_resets_to_walk_speed`). Para ganhar velocidade no ar use a corrida no ar (W, W); o bunny hop
     preserva a velocidade com que você aterrissa.
@@ -191,7 +187,11 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   grupo "Sensação de velocidade".
 - **Sombra redonda** embaixo do jogador: use para mirar a aterrissagem e medir a altura.
 - **Poeira** ao pular, aterrissar forte e dar dash. **Tremor leve** de câmera no wall jump e em quedas fortes.
-- Ajustes: aba **Visual** do F2 (animação, poeira, sombra) e aba **Câmera** (tremor).
+- Ajustes: aba **Visual** do F2 (ritmo da animação, molas, poeira, sombra) e aba **Câmera** (tremor).
+- **Editar as animações no Blender**: abra `art/character/hero.blend`; no Dope Sheet → Action Editor
+  escolha o clipe (walk, sprint, atk_slash_r...), mexa nas poses e salve. Depois, aba **Scripting** →
+  texto `exportar_para_o_jogo.py` → **Run Script**. Volte ao Godot: o `hero.glb` é reimportado sozinho.
+  Não renomeie os clipes (o jogo procura pelo nome). O osso `Root` só mostra os giros no Blender.
 
 ## Parte 4: ajustes ao vivo (F2)
 1. Aperte **F2**: o mouse é solto e o personagem para de receber input.

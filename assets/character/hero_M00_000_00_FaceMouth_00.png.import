@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bymwbvwpq5ra6"
-path="res://.godot/imported/hero_image_9.png-0f4d2d37fd21cf5167fc35bdde62c13f.ctex"
+uid="uid://b31wr3uinrbxo"
+path="res://.godot/imported/hero_M00_000_00_FaceMouth_00.png-8c2a47f4b83f642af5821bce6e0e7d56.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "d4b5cad75eaf3ccdf720d6cfb050e1bf"
+"md5": "4a96d30f29a2ab208aaef338696f50a5"
 }
 
 [deps]
 
-source_file="res://assets/character/hero_image_9.png"
-dest_files=["res://.godot/imported/hero_image_9.png-0f4d2d37fd21cf5167fc35bdde62c13f.ctex"]
+source_file="res://assets/character/hero_M00_000_00_FaceMouth_00.png"
+dest_files=["res://.godot/imported/hero_M00_000_00_FaceMouth_00.png-8c2a47f4b83f642af5821bce6e0e7d56.ctex"]
 
 [params]
 

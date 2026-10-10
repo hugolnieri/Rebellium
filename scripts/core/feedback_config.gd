@@ -18,19 +18,12 @@ extends Resource
 ## O corpo vira NA HORA para a direção do input/câmera (sem suavização).
 @export var instant_facing: bool = true
 
-@export_group("Animação procedural")
+@export_group("Animação")
+## As poses vêm dos clipes do Blender (art/character/hero.blend, ver tools/blender/); aqui ficam
+## o ritmo (passada) e os efeitos aplicados por código (giros, agachamento, inclinação).
 ## Comprimento de um ciclo completo de passada (dois passos) andando / correndo.
 @export_range(0.5, 6.0, 0.05, "suffix:m") var stride_length_walk: float = 3.4
 @export_range(0.5, 8.0, 0.05, "suffix:m") var stride_length_sprint: float = 4.4
-@export_range(0.0, 90.0, 1.0, "suffix:°") var leg_swing_deg: float = 42.0
-@export_range(0.0, 120.0, 1.0, "suffix:°") var knee_bend_deg: float = 85.0
-@export_range(0.0, 90.0, 1.0, "suffix:°") var arm_swing_deg: float = 38.0
-## Inclinação do CORPO INTEIRO (a partir do quadril) andando; no sprint usa ninja_run_lean_deg.
-@export_range(0.0, 45.0, 0.5, "suffix:°") var run_lean_deg: float = 26.0
-@export_range(0.0, 45.0, 0.5, "suffix:°") var sprint_extra_lean_deg: float = 9.0
-@export_range(0.0, 0.3, 0.005, "suffix:m") var run_bob_height: float = 0.05
-## Velocidade de mistura entre poses (maior = mais seco).
-@export_range(1.0, 60.0, 0.5) var pose_blend_speed: float = 16.0
 ## Pulo do chão vira mortal para frente (duração do giro).
 @export var jump_flip_enabled: bool = true
 @export_range(0.1, 2.0, 0.01, "suffix:s") var jump_flip_duration: float = 0.62
@@ -45,30 +38,10 @@ extends Resource
 @export_range(0.0, 45.0, 0.5, "suffix:°") var max_bank_deg: float = 18.0
 ## Inclinação lateral nas curvas por (rad/s de giro × m/s). 0 = não balança ao trocar de direção.
 @export_range(0.0, 0.2, 0.001) var bank_strength: float = 0.0
-## Parado: respiração (período e amplitude no peito) e peso apoiado numa perna.
-@export_range(1.0, 10.0, 0.1, "suffix:s") var breath_period: float = 4.2
-@export_range(0.0, 10.0, 0.1, "suffix:°") var breath_depth_deg: float = 2.2
-@export_range(0.0, 10.0, 0.1, "suffix:°") var idle_weight_shift_deg: float = 2.5
-## Abertura das pernas parado (cada perna para fora).
-@export_range(0.0, 25.0, 0.5, "suffix:°") var idle_stance_width_deg: float = 10.0
 ## Cambalhota: altura do centro do corpo encolhido (as costas encostam no chão no meio do giro).
 @export_range(0.1, 1.0, 0.01, "suffix:m") var roll_ball_height: float = 0.36
 ## Dash como estrela (cambalhota lateral): giro completo durante o deslocamento do dash.
 @export var dash_cartwheel: bool = true
-## Sprint "ninja": corpo inteiro bem inclinado e braços esticados para trás.
-@export_range(0.0, 60.0, 0.5, "suffix:°") var ninja_run_lean_deg: float = 45.0
-## Ângulo dos braços no sprint em relação ao chão (0 = totalmente na horizontal, + = para cima).
-@export_range(-45.0, 45.0, 1.0, "suffix:°") var ninja_arm_pitch_deg: float = 0.0
-## Passada: fração do ciclo com o pé no chão andando / correndo e flexão do joelho de apoio.
-@export_range(0.2, 0.8, 0.01) var stance_fraction_walk: float = 0.32
-@export_range(0.2, 0.8, 0.01) var stance_fraction_run: float = 0.38
-@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_walk_deg: float = 20.0
-@export_range(0.0, 60.0, 1.0, "suffix:°") var stance_knee_run_deg: float = 32.0
-## Andando: altura do pulinho a cada passo.
-@export_range(0.0, 0.3, 0.005, "suffix:m") var walk_hop_height: float = 0.07
-## Elevação do joelho no balanço (coxa sobe além do passo) andando / correndo.
-@export_range(0.0, 90.0, 1.0, "suffix:°") var knee_lift_walk_deg: float = 34.0
-@export_range(0.0, 120.0, 1.0, "suffix:°") var knee_lift_run_deg: float = 55.0
 
 @export_group("Molas da animação")
 ## Frequência/amortecimento das articulações na locomoção (menor amortecimento = mais balanço).
@@ -82,11 +55,9 @@ extends Resource
 @export_range(0.05, 2.0, 0.01) var hair_spring_damping: float = 0.3
 
 @export_group("Personagem")
-## Modelo em assets/character/hero.glb (tools/prepare_character.py). Linhas do traje: textura de
-## emissão × tonalidade × energia.
-@export var suit_glow_tint: Color = Color(1, 1, 1)
-@export_range(0.0, 10.0, 0.1) var suit_glow_energy: float = 1.1
-@export var hair_color: Color = Color(0.84, 0.85, 0.92)
+## Modelo em assets/character/hero.glb (gerado no Blender por tools/blender/build_hero.py).
+## Tonalidade multiplicada na textura do cabelo (branco).
+@export var hair_color: Color = Color(0.92, 0.93, 0.97)
 ## Toon: cor multiplicada na sombra, limiar e suavidade do degrau de luz.
 @export var shade_color: Color = Color(0.62, 0.58, 0.72)
 @export_range(-1.0, 1.0, 0.01) var shade_threshold: float = 0.05

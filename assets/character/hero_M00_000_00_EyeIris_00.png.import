@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c365triv6fu76"
-path="res://.godot/imported/hero_image_5.png-1e69d9a3ab9f565bddece729829bcf55.ctex"
+uid="uid://g0pkhvb57smn"
+path="res://.godot/imported/hero_M00_000_00_EyeIris_00.png-2de740bf6edbdea54490880f257e3580.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "d18731bb7205960bee32d9a2e460b195"
+"md5": "29e4261d0c2354a55ba3a4cb2026eb55"
 }
 
 [deps]
 
-source_file="res://assets/character/hero_image_5.png"
-dest_files=["res://.godot/imported/hero_image_5.png-1e69d9a3ab9f565bddece729829bcf55.ctex"]
+source_file="res://assets/character/hero_M00_000_00_EyeIris_00.png"
+dest_files=["res://.godot/imported/hero_M00_000_00_EyeIris_00.png-2de740bf6edbdea54490880f257e3580.ctex"]
 
 [params]
 

@@ -66,3 +66,32 @@ func test_running_swings_the_leg_bones() -> void:
 		widest = maxf(widest, skeleton.get_bone_pose_rotation(thigh_l).angle_to(
 			skeleton.get_bone_pose_rotation(thigh_r)))
 	assert_gt(widest, 0.4, "pernas em fases opostas ao longo da passada")
+
+
+func _near(a: Vector3, b: Vector3, msg: String, tolerance: float = 0.02) -> void:
+	assert_lt(a.distance_to(b), tolerance, "%s: %s ≈ %s" % [msg, a, b])
+
+
+func test_blender_clips_are_loaded() -> void:
+	for clip in [&"idle", &"walk", &"sprint", &"air", &"air_sprint", &"jump_flip", &"wall_stick", &"wall_flip",
+			&"roll", &"cartwheel", &"hurt", &"sword_rest", &"atk_slash_r", &"atk_spin", &"atk_air_slam"]:
+		assert_true(HeroClips.has_clip(clip), "clipe %s no hero.glb" % clip)
+
+
+## As poses escritas em tools/blender/hero_animations.py voltam iguais (ida ao Blender e volta).
+func test_blender_clips_round_trip_reference_angles() -> void:
+	var stick := HeroClips.sample(&"wall_stick", 0.0)
+	_near(stick[&"thigh_l"], Vector3(1.75, 0, 0.1), "wall_stick coxa")
+	assert_almost_eq((stick[&"hips_y"] as Vector3).x, -0.28, 0.01, "wall_stick quadril baixo")
+	var rest := HeroClips.sample(&"sword_rest", 0.0)
+	_near(rest[&"shoulder_r"], Vector3(0.25, 0.07, 0.1), "sword_rest ombro")
+	_near(rest[&"wrist_r"], Vector3(1.1, -0.1, -0.39), "sword_rest pulso")
+	# Braço acima da cabeça (x > 90°): o Euler escolhido continua o autorado, sem trocar de ramo.
+	var slam := HeroClips.sample(&"atk_air_slam", CharacterModel.ATTACK_KEYS[0])
+	_near(slam[&"shoulder_r"], Vector3(3.0, 0, 0.1), "air_slam ombro")
+
+
+func test_walk_clip_alternates_legs() -> void:
+	var a := HeroClips.sample(&"walk", 0.0, true)
+	var b := HeroClips.sample(&"walk", 0.5, true)
+	_near(a[&"thigh_l"], b[&"thigh_r"], "meio ciclo depois a perna direita repete a esquerda", 0.05)

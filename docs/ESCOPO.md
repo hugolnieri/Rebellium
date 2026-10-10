@@ -153,3 +153,14 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Pulo do chão volta à velocidade de andar, inclusive após sprint/dash (`jump_resets_to_walk_speed`);
   o bunny hop preserva a velocidade de aterrissagem (útil com a corrida no ar).
 
+
+## Revisão: cancelar dash no ar
+- Space no meio do dash no ar cancela o dash (volta a cair, velocidade de andar; `air_dodge_jump_cancels`).
+
+## Revisão: personagem e animações no Blender
+- Personagem novo (base VRoid CC0 "HairSample_Male"): traje azul-marinho de gola alta com emblema,
+  cabelo branco, olhos cinza, descalço. Montado por `tools/blender/build_hero.py`.
+- Animações viram Actions do Blender em `art/character/hero.blend` (fonte editável); exportadas no
+  `hero.glb` e amostradas pelo jogo por tempo normalizado (`scenes/player/hero_clips.gd`).
+- Os parâmetros de forma da passada/poses saíram do F2 (agora se edita a pose no Blender); ritmo,
+  giros, agachamento e molas continuam no F2.

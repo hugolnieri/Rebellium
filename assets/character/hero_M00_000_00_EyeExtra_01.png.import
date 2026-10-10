@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bx4pcsobrtpg4"
-path="res://.godot/imported/hero_image_8.png-a3d1773b75310a66eb76be4d1bfb7d33.ctex"
+uid="uid://dtf2nxnmxklw"
+path="res://.godot/imported/hero_M00_000_00_EyeExtra_01.png-36dd8244d1dd08f86642799645ff01fa.ctex"
 metadata={
 "vram_texture": false
 }
@@ -13,8 +13,8 @@ generator_parameters={
 
 [deps]
 
-source_file="res://assets/character/hero_image_8.png"
-dest_files=["res://.godot/imported/hero_image_8.png-a3d1773b75310a66eb76be4d1bfb7d33.ctex"]
+source_file="res://assets/character/hero_M00_000_00_EyeExtra_01.png"
+dest_files=["res://.godot/imported/hero_M00_000_00_EyeExtra_01.png-36dd8244d1dd08f86642799645ff01fa.ctex"]
 
 [params]
 

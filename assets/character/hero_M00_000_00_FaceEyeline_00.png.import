@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dp3j1tqfqxs06"
-path="res://.godot/imported/hero_image_10.png-e72fb2d4b6abef044b716cf1a9a73dce.ctex"
+uid="uid://cigxi43iask03"
+path="res://.godot/imported/hero_M00_000_00_FaceEyeline_00.png-28e5b4c2312c9ef4ee858637a7128a6f.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "8f7ea115e791d18a53e14dee00e80b53"
+"md5": "bf066aa2baac1ac065898838e250407a"
 }
 
 [deps]
 
-source_file="res://assets/character/hero_image_10.png"
-dest_files=["res://.godot/imported/hero_image_10.png-e72fb2d4b6abef044b716cf1a9a73dce.ctex"]
+source_file="res://assets/character/hero_M00_000_00_FaceEyeline_00.png"
+dest_files=["res://.godot/imported/hero_M00_000_00_FaceEyeline_00.png-28e5b4c2312c9ef4ee858637a7128a6f.ctex"]
 
 [params]
 

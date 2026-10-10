@@ -24,11 +24,10 @@ const HIPS_Y: StringName = &"hips_y"
 const HAIR: StringName = &"hair"
 
 const MODEL_SCENE: PackedScene = preload("res://assets/character/hero.glb")
-const SUIT_EMISSION: Texture2D = preload("res://assets/character/hero_suit_emission.png")
 const TOON_SHADER: Shader = preload("res://scenes/player/feedback/anime_toon.gdshader")
 const OUTLINE_SHADER: Shader = preload("res://scenes/player/feedback/outline.gdshader")
 ## Altura do modelo original (topo do cabelo), para escalar até REFERENCE_HEIGHT.
-const MODEL_HEIGHT: float = 1.92
+const MODEL_HEIGHT: float = 1.91
 ## Canal da animação → osso do modelo (nomes do VRoid).
 const BONE_MAP: Dictionary = {
 	&"hips": &"J_Bip_C_Hips", &"spine": &"J_Bip_C_Spine", &"chest": &"J_Bip_C_Chest",
@@ -48,12 +47,14 @@ const PALM_OFFSET: float = 0.06
 const FINGERS: Array[String] = ["Index", "Middle", "Ring", "Little"]
 ## Quanto cada falange dobra em relação à base.
 const PHALANX_CURL: Array[float] = [1.0, 1.1, 0.8]
-## Braço da arma com a lâmina apoiada no ombro (armas com `rest_on_shoulder`).
-const SHOULDER_REST: Dictionary = {
-	&"shoulder_r": Vector3(0.25, 0.07, 0.1),
-	&"elbow_r": Vector3(1.2, 0, 0),
-	&"wrist_r": Vector3(1.1, -0.1, -0.39),
-}
+## Canais do braço trocados pelo clipe sword_rest (armas com `rest_on_shoulder`).
+const SWORD_ARM: Array[StringName] = [&"shoulder_r", &"elbow_r", &"wrist_r"]
+## Canais que, andando, continuam com a passada durante um golpe.
+const LOWER_BODY: Array[StringName] = [
+	&"hips", &"hips_y", &"thigh_l", &"thigh_r", &"knee_l", &"knee_r", &"foot_l", &"foot_r",
+]
+## Tempos normalizados das poses de preparação e de acerto nos clipes atk_* (fim = acompanhamento).
+const ATTACK_KEYS: Array[float] = [0.35, 0.6]
 ## Quanto o quadril sobe no meio da estrela (mãos no chão, corpo de ponta-cabeça).
 const CARTWHEEL_LIFT: float = 0.2
 ## Balanço do cabelo aplicado às mechas presas à cabeça.
@@ -82,7 +83,6 @@ var _lean: Node3D
 var _trick: Node3D
 var _socket: Node3D
 var _materials: Array[ShaderMaterial] = []
-var _suit_material: ShaderMaterial
 
 # Molas: posição/velocidade por canal.
 var _pos: Dictionary = {}
@@ -92,7 +92,6 @@ var _phase: float = 0.0
 var _time: float = 0.0
 var _run_amount: float = 0.0
 var _last_yaw: float = 0.0
-var _last_speed: float = 0.0
 var _bank: float = 0.0
 var _land_timer: float = 0.0
 var _land_strength: float = 0.0
@@ -161,6 +160,7 @@ func _build() -> void:
 	# T-pose → braço abaixado: esquerdo (-X) gira +90° em Z, direito (+X) gira -90°.
 	_arm_ref[&"l"] = Quaternion(Vector3.BACK, PI * 0.5)
 	_arm_ref[&"r"] = Quaternion(Vector3.BACK, -PI * 0.5)
+	HeroClips.load_from(_rig, BONE_MAP, _arm_ref, _hips_rest, _rig_scale)
 	for bone_name in RIGHT_ARM_CHAIN:
 		_arm_offsets.append(_skeleton.get_bone_rest(_skeleton.find_bone(bone_name)).origin)
 	var head := _bones[&"head"] as int
@@ -257,11 +257,6 @@ func _make_toon(source: BaseMaterial3D, shaders: Dictionary, outline: ShaderMate
 			material.set_shader_parameter(&"tint", fb.face_tint)
 	if mat_name.contains("HAIR"):
 		material.set_shader_parameter(&"tint", fb.hair_color)
-	if mat_name.contains("Body_00_SKIN"):
-		_suit_material = material
-		material.set_shader_parameter(&"emission_tex", SUIT_EMISSION)
-		material.set_shader_parameter(&"emission_tint", fb.suit_glow_tint)
-		material.set_shader_parameter(&"emission_energy", fb.suit_glow_energy)
 	if not blend and not is_face:
 		var pass_material := outline.duplicate() as ShaderMaterial
 		pass_material.set_shader_parameter(&"albedo_tex", source.albedo_texture)
@@ -394,35 +389,36 @@ func _process(delta: float) -> void:
 	var bank_target := clampf(-turn_rate * speed * fb.bank_strength, -deg_to_rad(fb.max_bank_deg),
 		deg_to_rad(fb.max_bank_deg)) if grounded or player.air_sprinting else 0.0
 	_bank = lerpf(_bank, bank_target, clampf(delta * 8.0, 0.0, 1.0))
-	var accel := (speed - _last_speed) / maxf(delta, 0.0001)
-	_last_speed = speed
-
-	var pose := _rest_pose()
+	var pose: Dictionary
 	var attack_weight := 0.0
 	match state:
 		&"Attack":
-			if player.state_machine.current.get(&"airborne") == true:
-				_air_pose(pose)
-			else:
-				_ground_pose(pose, false, accel)
-			attack_weight = _attack_pose(pose)
+			var airborne: bool = player.state_machine.current.get(&"airborne") == true
+			pose = _air_pose() if airborne else _ground_pose(false)
+			attack_weight = _attack_pose(pose, airborne)
 		&"Jump", &"Fall" when player.air_sprinting:
-			_air_sprint_pose(pose)
-		&"WallJump" when _trick_face_wall and (_is_wall_sticking() or _trick_timer > _trick_duration * 0.75):
-			_wall_kick_pose(pose)
+			pose = _loop_clip(&"air_sprint", _time)
+		&"WallJump" when _is_wall_sticking():
+			pose = _clip(&"wall_stick", 0.0)
+		&"WallJump" when _trick_face_wall and _trick_timer > 0.0:
+			pose = _clip(&"wall_flip", _trick_progress())
 		&"Jump", &"Fall", &"WallJump":
-			_air_pose(pose)
+			pose = _air_pose()
 			if _trick_from_jump and _trick_timer > 0.0:
-				_flip_tuck(pose)
+				pose = _clip(&"jump_flip", _trick_progress())
 		&"Land" when _is_rolling():
-			_roll_pose(pose)
+			pose = _clip(&"roll", player.state_machine.current.call(&"get_roll_progress"))
 		&"Dodge":
-			_dodge_pose(pose)
+			if fb.dash_cartwheel and _dash_progress() < 1.0:
+				pose = _clip(&"cartwheel", _dash_progress())
+			else:
+				pose = _loop_clip(&"idle", _time)
+				_dodge_pose(pose)
 		&"Hurt":
-			_hurt_pose(pose)
+			pose = _clip(&"hurt", 0.5)
 		_:
-			_ground_pose(pose, sprinting, accel)
-	pose[&"lean"] = pose.get(&"lean", Vector3.ZERO) + Vector3(0, 0, _bank)
+			pose = _ground_pose(sprinting)
+	pose[&"lean"] = pose[&"lean"] + Vector3(0, 0, _bank)
 
 	if _is_rolling():
 		_land_timer = 0.0  # a cambalhota já absorve o impacto
@@ -444,227 +440,57 @@ func _process(delta: float) -> void:
 	_update_face(state, delta)
 
 
-func _rest_pose() -> Dictionary:
-	var pose := {}
-	for joint in JOINTS:
-		pose[joint] = Vector3.ZERO
-	pose[HIPS_Y] = Vector3.ZERO
-	# Postura de prontidão: arma baixa à frente, braço livre relaxado.
-	pose[&"shoulder_r"] = Vector3(0.35, 0.05, 0.18)
-	pose[&"elbow_r"] = Vector3(0.75, 0, 0)
-	pose[&"wrist_r"] = Vector3(-0.35, 0, 0)
-	pose[&"shoulder_l"] = Vector3(0.1, 0, -0.16)
-	pose[&"elbow_l"] = Vector3(0.35, 0, 0)
+## Pose de um clipe do Blender no tempo normalizado `u` (0–1).
+func _clip(clip: StringName, u: float) -> Dictionary:
+	var pose := HeroClips.sample(clip, u)
+	pose[&"lean"] = Vector3.ZERO
 	return pose
 
 
-func _ground_pose(pose: Dictionary, sprinting: bool, accel: float) -> void:
-	var fb := _fb()
-	var cfg := player.config
+## Clipe em loop no tempo de jogo (s), na velocidade em que foi animado.
+func _loop_clip(clip: StringName, time: float) -> Dictionary:
+	var pose := HeroClips.sample(clip, time / maxf(HeroClips.length_of(clip), 0.001), true)
+	pose[&"lean"] = Vector3.ZERO
+	return pose
+
+
+func _blend(a: Dictionary, b: Dictionary, t: float) -> Dictionary:
+	if t <= 0.0:
+		return a
+	var out := {}
+	for channel: StringName in a:
+		out[channel] = (a[channel] as Vector3).lerp(b[channel], t)
+	return out
+
+
+## Chão: parado → andando (pela velocidade) → sprint; passada sincronizada pela fase.
+func _ground_pose(sprinting: bool) -> Dictionary:
 	var amount := clampf(_run_amount, 0.0, 1.0)
-	var calm := 1.0 - amount
-	var speed := player.get_horizontal_speed()
-	var run_k := clampf((speed - cfg.walk_speed) / maxf(cfg.sprint_speed - cfg.walk_speed, 0.01), 0.0, 1.0)
 	_sprint_amount = move_toward(_sprint_amount, 1.0 if sprinting else 0.0, get_process_delta_time() * 6.0)
-	var arm_swing := deg_to_rad(fb.arm_swing_deg) * amount
-	# Parado: respiração lenta e peso numa perna (a outra relaxada, joelho levemente dobrado).
-	var breath := sin(_time * TAU / maxf(fb.breath_period, 0.1))
-	var depth := deg_to_rad(fb.breath_depth_deg)
-	var shift := deg_to_rad(fb.idle_weight_shift_deg) * calm
-	var stance := deg_to_rad(fb.idle_stance_width_deg) * calm
-	# O corpo inteiro inclina a partir do quadril; as coxas compensam quase tudo para os pés
-	# continuarem embaixo do corpo (linha diagonal do pé de trás até a cabeça).
-	var lean := lerpf(deg_to_rad(fb.run_lean_deg) * amount, deg_to_rad(fb.ninja_run_lean_deg), _sprint_amount)
-	_legs(pose, amount, run_k, lean, stance, shift, calm)
-	# Braço livre balança oposto à perna; ombros sobem de leve ao inspirar.
-	var lift := breath * depth * 0.8 * calm
-	pose[&"shoulder_l"] = Vector3(-sin(_phase) * arm_swing + 0.1 + lean * 0.5, 0, -0.16 - 0.1 * amount - lift)
-	pose[&"elbow_l"] = Vector3(0.35 + 0.9 * amount, 0, 0)
-	pose[&"shoulder_r"] = Vector3(lerpf(0.35, -0.45, amount) + sin(_phase) * arm_swing * 0.25 + lean * 0.5,
-		0.05, 0.18 + 0.12 * amount + lift)
-	pose[&"elbow_r"] = Vector3(lerpf(0.75, 0.35, amount), 0, 0)
-	pose[&"wrist_r"] = Vector3(lerpf(-0.35, 3.3, amount), 0, 0)
-	var accel_lean := clampf(accel * 0.01, -0.15, 0.2)
-	# Sem giro do quadril: com o corpo inclinado, girar a pelve faz o corpo balançar para os lados.
-	pose[&"hips"] = Vector3(-lean, 0, -shift * 0.6)
-	pose[&"spine"] = Vector3(-accel_lean - lean * 0.1 + breath * depth * 0.3 * calm, 0, shift * 0.3)
-	pose[&"chest"] = Vector3(breath * depth * calm, -sin(_phase) * 0.05 * amount, shift * 0.2)
-	# Cabeça: olha para frente apesar da inclinação, compensa a respiração e olha em volta devagar.
-	pose[&"head"] = Vector3(lean * 0.75 - breath * depth * 0.5 * calm,
-		sin(_time * 0.23) * 0.07 * calm, 0)
+	var pose := _loop_clip(&"idle", _time)
+	pose = _blend(pose, _clip(&"walk", fposmod(_phase / TAU, 1.0)), amount)
+	pose = _blend(pose, _clip(&"sprint", fposmod(_phase / TAU, 1.0)), _sprint_amount)
 	var weapon := player.get_weapon()
 	if weapon != null and weapon.rest_on_shoulder:
-		# Lâmina apoiada no ombro direito (parado e andando).
-		for key: StringName in SHOULDER_REST:
-			pose[key] = SHOULDER_REST[key]
-		pose[&"shoulder_r"] += Vector3(sin(_phase) * arm_swing * 0.1 + lift, 0, 0)
-	if _sprint_amount > 0.0:
-		_ninja_run(pose, _sprint_amount)
+		# Lâmina apoiada no ombro direito (parado e andando; no sprint o braço vai para trás).
+		var rest := _clip(&"sword_rest", 0.0)
+		for key: StringName in SWORD_ARM:
+			pose[key] = (pose[key] as Vector3).lerp(rest[key], 1.0 - _sprint_amount)
+	return pose
 
 
-## Passada realista por perna: apoio (contato com o calcanhar → carga com o joelho um pouco
-## dobrado → impulso na ponta do pé) e balanço (joelho sobe dobrado e estica antes do contato).
-func _legs(pose: Dictionary, amount: float, run_k: float, lean: float, stance: float, shift: float,
-		calm: float) -> void:
-	var fb := _fb()
-	var stance_frac := lerpf(fb.stance_fraction_walk, fb.stance_fraction_run, run_k)
-	var swing_range := deg_to_rad(fb.leg_swing_deg) * amount * lerpf(1.0, 1.3, run_k)
-	var front := swing_range * 0.58
-	var back := swing_range * 0.42
-	var knee_swing := deg_to_rad(fb.knee_bend_deg) * amount * lerpf(0.9, 1.6, run_k)
-	var knee_load := deg_to_rad(lerpf(fb.stance_knee_walk_deg, fb.stance_knee_run_deg, run_k)) * amount
-	var knee_lift := deg_to_rad(lerpf(fb.knee_lift_walk_deg, fb.knee_lift_run_deg, run_k)) * amount
-	var compensate := lean * 0.8
-	for i in 2:
-		var side := "l" if i == 0 else "r"
-		var u := fposmod((_phase + PI * i) / TAU, 1.0)
-		var thigh: float
-		var knee: float
-		var ankle: float
-		if u < stance_frac:
-			var t := u / stance_frac
-			thigh = lerpf(front, -back, t)
-			knee = -knee_load * sin(PI * t)
-			# Calcanhar no contato (ponta para cima), pé plano, impulso na ponta no fim do apoio.
-			ankle = 0.18 * maxf(0.0, 1.0 - t * 4.0) - 0.55 * pow(maxf(0.0, (t - 0.65) / 0.35), 2.0)
-			ankle *= amount
-		else:
-			var t := (u - stance_frac) / (1.0 - stance_frac)
-			# Joelho sobe alto no meio do balanço e a perna estica de volta antes de pisar.
-			thigh = -back + (front + back) * (0.5 - 0.5 * cos(PI * t)) + knee_lift * sin(PI * minf(t / 0.85, 1.0))
-			knee = -(knee_swing + knee_lift * 0.8) * sin(PI * minf(t / 0.8, 1.0))
-			# Saindo do impulso com a ponta para baixo, depois levanta a ponta para não arrastar.
-			ankle = (-0.5 * pow(1.0 - t, 3.0) + 0.15 * sin(PI * t)) * amount
-		var relaxed := 1.0 if i == 1 else 0.0  # parado: perna direita relaxada
-		# Pernas abertas parado: esquerda gira -Z (para fora), direita +Z; o pé compensa.
-		var out := -stance if i == 0 else stance
-		thigh += compensate + 0.08 * relaxed * calm
-		knee -= (0.06 + 0.14 * relaxed) * calm
-		pose[StringName("thigh_" + side)] = Vector3(thigh, 0, out + shift)
-		pose[StringName("knee_" + side)] = Vector3(knee, 0, 0)
-		# Pé plano em relação ao chão: desfaz a inclinação acumulada (quadril + coxa + joelho).
-		var flat := lean - thigh - knee
-		pose[StringName("foot_" + side)] = Vector3(flat + ankle + 0.05 * relaxed * calm, 0, -out - shift)
-	# Sobe-desce: passada com fase de voo (trote/corrida) afunda no meio do apoio e sobe no voo;
-	# caminhada com apoio longo faz o contrário.
-	var mid := cos(2.0 * (_phase - PI * stance_frac))
-	var flight := clampf((0.55 - stance_frac) / 0.15, 0.0, 1.0)
-	var bob := _fb().run_bob_height * amount * lerpf(mid, -mid, flight) * 0.5
-	# Andando: um pulinho a cada passo (o corpo sobe no meio de cada passada).
-	var hop := fb.walk_hop_height * amount * (1.0 - run_k) * (1.0 - _sprint_amount) * absf(sin(_phase))
-	pose[HIPS_Y] = Vector3(bob + hop - 0.02 * calm - 0.03 * amount, 0, 0)
+## Ar: mistura contínua subindo (encolhido) → ápice → caindo (pernas buscando o chão).
+func _air_pose() -> Dictionary:
+	return _clip(&"air", (1.0 - clampf(player.velocity.y / 9.0, -1.0, 1.0)) * 0.5)
 
 
-## Corrida "ninja": corpo inteiro mergulhado (vem do quadril, em _ground_pose), cabeça erguida e
-## braços esticados para trás NA HORIZONTAL — o ângulo do ombro desconta a inclinação do tronco.
-func _ninja_run(pose: Dictionary, weight: float) -> void:
-	var fb := _fb()
-	var bounce := sin(_phase * 2.0) * 0.04
-	var torso_forward := -((pose[&"hips"] as Vector3).x + (pose[&"spine"] as Vector3).x
-		+ (pose[&"chest"] as Vector3).x)
-	# Com o tronco inclinado para frente, o braço solto já aponta um pouco para trás; falta
-	# girar (90° − inclinação) para ficar paralelo ao chão.
-	var back := -(PI * 0.5 - torso_forward + deg_to_rad(fb.ninja_arm_pitch_deg))
-	var target := {
-		&"head": Vector3(torso_forward * 0.85, 0, 0),
-		&"shoulder_l": Vector3(back + bounce, 0, -0.18),
-		&"shoulder_r": Vector3(back - bounce, 0, 0.18),
-		&"elbow_l": Vector3(0.05, 0, 0),
-		&"elbow_r": Vector3(0.05, 0, 0),
-		&"wrist_l": Vector3(-0.2, 0, 0),
-		&"wrist_r": Vector3(-1.4, 0, 0),  # lâmina alinhada ao braço, arrastando atrás
-	}
-	for key: StringName in target:
-		pose[key] = (pose[key] as Vector3).lerp(target[key], weight)
+func _trick_progress() -> float:
+	return clampf(1.0 - _trick_timer / _trick_duration, 0.0, 1.0)
 
 
-func _air_pose(pose: Dictionary) -> void:
-	# Mistura contínua: subindo (encolhido) → ápice → caindo (pernas buscando o chão).
-	var k := clampf(player.velocity.y / 9.0, -1.0, 1.0)
-	var rise := clampf(k, 0.0, 1.0)
-	var fall := clampf(-k, 0.0, 1.0)
-	pose[&"thigh_l"] = Vector3(lerpf(0.5, 1.1, rise) - 0.15 * fall, 0, 0.05)
-	pose[&"thigh_r"] = Vector3(lerpf(0.1, -0.2, rise) + 0.25 * fall, 0, -0.05)
-	pose[&"knee_l"] = Vector3(lerpf(-0.8, -1.6, rise) + 0.3 * fall, 0, 0)
-	pose[&"knee_r"] = Vector3(lerpf(-0.6, -0.8, rise) + 0.2 * fall, 0, 0)
-	pose[&"shoulder_l"] = Vector3(lerpf(0.4, 0.9, rise) - 0.2 * fall, 0, lerpf(-0.6, -0.35, rise) - 0.5 * fall)
-	pose[&"elbow_l"] = Vector3(0.7, 0, 0)
-	pose[&"shoulder_r"] = Vector3(lerpf(0.3, -0.3, rise) + 0.2 * fall, 0.1, 0.45 + 0.4 * fall)
-	pose[&"elbow_r"] = Vector3(0.7, 0, 0)
-	pose[&"wrist_r"] = Vector3(-0.6, 0, 0)
-	pose[&"spine"] = Vector3(-0.15 * rise + 0.08 * fall, 0, 0)
-	pose[&"head"] = Vector3(0.1 * rise - 0.1 * fall, 0, 0)
-
-
-## Corrida no ar: corpo mergulhado para frente, pernas pedalando para trás.
-func _air_sprint_pose(pose: Dictionary) -> void:
-	var cycle := sin(_time * 14.0)
-	pose[&"hips"] = Vector3(-0.5, 0, 0)
-	pose[&"spine"] = Vector3(-0.1, 0, 0)
-	pose[&"thigh_l"] = Vector3(0.3 + cycle * 0.6, 0, 0)
-	pose[&"thigh_r"] = Vector3(0.3 - cycle * 0.6, 0, 0)
-	pose[&"knee_l"] = Vector3(-0.9 - maxf(cycle, 0.0) * 0.6, 0, 0)
-	pose[&"knee_r"] = Vector3(-0.9 - maxf(-cycle, 0.0) * 0.6, 0, 0)
-	_ninja_run(pose, 1.0)
-
-
-## Mortal do pulo: encolhe no meio do giro (joelhos no peito) e abre de novo para cair.
-func _flip_tuck(pose: Dictionary) -> void:
-	var t := 1.0 - _trick_timer / _trick_duration
-	var w := sin(PI * clampf(t, 0.0, 1.0))
-	var tuck := {
-		&"spine": Vector3(-0.5, 0, 0), &"chest": Vector3(-0.3, 0, 0), &"head": Vector3(-0.3, 0, 0),
-		&"thigh_l": Vector3(1.9, 0, 0.1), &"thigh_r": Vector3(1.9, 0, -0.1),
-		&"knee_l": Vector3(-2.3, 0, 0), &"knee_r": Vector3(-2.3, 0, 0),
-		&"shoulder_l": Vector3(1.0, 0, 0.1), &"elbow_l": Vector3(1.5, 0, 0),
-	}
-	for key: StringName in tuck:
-		pose[key] = (pose[key] as Vector3).lerp(tuck[key], w)
-
-
-## Colado na parede: agachado de frente para ela, um pé plantado alto e o outro embaixo,
-## tronco ereto, braços abrindo para o mortal.
-func _wall_kick_pose(pose: Dictionary) -> void:
-	# Bem encolhido: joelhos no peito, tronco curvado para a parede, braços recolhidos.
-	pose[HIPS_Y] = Vector3(-0.28, 0, 0)
-	pose[&"thigh_l"] = Vector3(1.75, 0, 0.1)
-	pose[&"thigh_r"] = Vector3(1.35, 0, -0.1)
-	pose[&"knee_l"] = Vector3(-2.3, 0, 0)
-	pose[&"knee_r"] = Vector3(-2.0, 0, 0)
-	pose[&"foot_l"] = Vector3(0.5, 0, 0)
-	pose[&"foot_r"] = Vector3(0.4, 0, 0)
-	pose[&"spine"] = Vector3(-0.35, 0, 0)
-	pose[&"chest"] = Vector3(-0.2, 0, 0)
-	pose[&"head"] = Vector3(0.35, 0, 0)
-	pose[&"shoulder_l"] = Vector3(1.6, 0, -0.6)
-	pose[&"shoulder_r"] = Vector3(1.4, 0, 0.6)
-	pose[&"elbow_l"] = Vector3(0.5, 0, 0)
-	pose[&"elbow_r"] = Vector3(0.5, 0, 0)
-
-
-## Cambalhota: corpo encolhido (joelhos no peito, cabeça baixa, braços abraçando as pernas).
-func _roll_pose(pose: Dictionary) -> void:
-	# O corpo inteiro desce pelo pivô (_update_trick); aqui só a bola: costas arredondadas,
-	# queixo no peito, joelhos colados no peito.
-	pose[HIPS_Y] = Vector3(0, 0, 0)
-	pose[&"spine"] = Vector3(-0.9, 0, 0)
-	pose[&"chest"] = Vector3(-0.5, 0, 0)
-	pose[&"head"] = Vector3(-0.55, 0, 0)
-	pose[&"thigh_l"] = Vector3(2.1, 0, 0.12)
-	pose[&"thigh_r"] = Vector3(2.1, 0, -0.12)
-	pose[&"knee_l"] = Vector3(-2.4, 0, 0)
-	pose[&"knee_r"] = Vector3(-2.4, 0, 0)
-	pose[&"shoulder_l"] = Vector3(1.2, 0, 0.1)
-	pose[&"shoulder_r"] = Vector3(1.0, 0, -0.1)
-	pose[&"elbow_l"] = Vector3(1.4, 0, 0)
-	pose[&"elbow_r"] = Vector3(1.2, 0, 0)
-
-
+## Dash sem estrela (dash_cartwheel desligado): agachado e inclinado para o lado do movimento.
 func _dodge_pose(pose: Dictionary) -> void:
 	var fb := _fb()
-	if fb.dash_cartwheel and _dash_progress() < 1.0:
-		_cartwheel_pose(pose)
-		return
 	var local := player.visual.global_basis.inverse() * player.get_horizontal_velocity()
 	var side := clampf(local.x / maxf(player.config.dodge_speed, 0.01), -1.0, 1.0)
 	var forward := clampf(-local.z / maxf(player.config.dodge_speed, 0.01), -1.0, 1.0)
@@ -682,21 +508,6 @@ func _dodge_pose(pose: Dictionary) -> void:
 	pose[&"elbow_r"] = Vector3(0.9, 0, 0)
 
 
-## Estrela: braços abertos acima da cabeça e pernas afastadas (o giro vem de _update_trick).
-func _cartwheel_pose(pose: Dictionary) -> void:
-	pose[HIPS_Y] = Vector3.ZERO
-	pose[&"spine"] = Vector3(0.05, 0, 0)
-	pose[&"head"] = Vector3(0.1, 0, 0)
-	pose[&"shoulder_l"] = Vector3(0.15, 0, -2.5)
-	pose[&"shoulder_r"] = Vector3(0.15, 0, 2.5)
-	pose[&"elbow_l"] = Vector3(0.1, 0, 0)
-	pose[&"elbow_r"] = Vector3(0.1, 0, 0)
-	pose[&"thigh_l"] = Vector3(0.05, 0, -0.6)
-	pose[&"thigh_r"] = Vector3(0.05, 0, 0.6)
-	pose[&"knee_l"] = Vector3(-0.15, 0, 0)
-	pose[&"knee_r"] = Vector3(-0.15, 0, 0)
-
-
 ## Progresso do deslocamento do dash (1 fora do dash).
 func _dash_progress() -> float:
 	if not player.state_machine.is_in(&"Dodge"):
@@ -704,49 +515,41 @@ func _dash_progress() -> float:
 	return player.state_machine.current.call(&"get_dash_progress")
 
 
-func _hurt_pose(pose: Dictionary) -> void:
-	pose[&"spine"] = Vector3(0.45, 0.15, 0)
-	pose[&"chest"] = Vector3(0.2, 0, 0)
-	pose[&"head"] = Vector3(0.35, 0, 0)
-	pose[&"shoulder_l"] = Vector3(0.6, 0, -0.9)
-	pose[&"shoulder_r"] = Vector3(0.5, 0, 0.9)
-	pose[&"knee_l"] = Vector3(-0.5, 0, 0)
-	pose[&"knee_r"] = Vector3(-0.3, 0, 0)
-	pose[HIPS_Y] = Vector3(-0.08, 0, 0)
-
-
-## Sobrepõe as poses-chave do golpe atual. Retorna o peso do golpe (0–1) para as molas.
-func _attack_pose(pose: Dictionary) -> float:
+## Sobrepõe o clipe do golpe atual (atk_<anim>), amostrado pelas fases do golpe: preparação
+## até ATTACK_KEYS[0], acerto até ATTACK_KEYS[1], acompanhamento até o fim. Andando, as pernas
+## continuam a passada; parado (ou no ar) assumem a base do golpe. Retorna o peso (0–1) para as molas.
+func _attack_pose(pose: Dictionary, airborne: bool) -> float:
 	var state := player.state_machine.current
 	var attack: AttackData = state.get(&"attack")
 	if attack == null:
 		return 0.0
-	var keys := AttackPoses.get_keys(attack.anim)
+	var clip := StringName("atk_" + attack.anim)
+	if not HeroClips.has_clip(clip):
+		clip = &"atk_slash_r"
+	var spin := AttackPoses.get_spin(attack.anim)
 	var phase: int = state.call(&"get_phase")
 	var p: float = clampf(state.call(&"get_phase_progress"), 0.0, 1.0)
-	var target: Dictionary
+	var u: float
 	var weight := 1.0
-	_spin_angle = 0.0
 	match phase:
 		0:
-			target = keys[0]
+			u = ATTACK_KEYS[0] * p
+			_spin_angle = 0.0
 		1:
-			target = _blend_keys(keys[0], keys[1], _ease_out(p))
-			_spin_angle = keys[1].get("spin", 0.0) * _ease_out(p)
+			u = lerpf(ATTACK_KEYS[0], ATTACK_KEYS[1], _ease_out(p))
+			_spin_angle = spin * _ease_out(p)
 		_:
-			target = _blend_keys(keys[1], keys[2], clampf(p * 2.0, 0.0, 1.0))
-			_spin_angle = keys[1].get("spin", 0.0)
+			u = lerpf(ATTACK_KEYS[1], 1.0, clampf(p * 2.0, 0.0, 1.0))
+			_spin_angle = spin
 			# Na segunda metade da recuperação devolve o controle à locomoção.
 			weight = 1.0 - clampf((p - 0.5) * 2.0, 0.0, 1.0)
-	for channel: String in target:
-		if channel == "spin":
+	var target := _clip(clip, u)
+	var legs_weight := weight if airborne else weight * (1.0 - clampf(_run_amount, 0.0, 1.0))
+	for channel: StringName in target:
+		if channel == &"lean":
 			continue
-		var key := StringName(channel)
-		var value: Variant = target[channel]
-		if channel == "hips_y":
-			pose[HIPS_Y] = pose[HIPS_Y].lerp(Vector3(value, 0, 0), weight)
-		elif pose.has(key):
-			pose[key] = (pose[key] as Vector3).lerp(value, weight)
+		var w := legs_weight if channel in LOWER_BODY else weight
+		pose[channel] = (pose[channel] as Vector3).lerp(target[channel], w)
 	if weight <= 0.0:
 		_spin_angle = 0.0
 	if weapon_visual != null:
@@ -754,22 +557,6 @@ func _attack_pose(pose: Dictionary) -> float:
 	if trail != null:
 		trail.emitting = (phase == 0 and p > 0.6) or phase == 1 or (phase == 2 and p < 0.25)
 	return weight
-
-
-func _blend_keys(a: Dictionary, b: Dictionary, t: float) -> Dictionary:
-	var result := a.duplicate()
-	for channel: String in b:
-		if channel == "spin":
-			continue
-		if result.has(channel):
-			var from: Variant = result[channel]
-			if from is float:
-				result[channel] = lerpf(from, b[channel], t)
-			else:
-				result[channel] = (from as Vector3).lerp(b[channel], t)
-		else:
-			result[channel] = b[channel]
-	return result
 
 
 func _ease_out(t: float) -> float:
@@ -922,7 +709,6 @@ func _ease_in_out(t: float) -> float:
 
 
 func _update_flash(delta: float) -> void:
-	var fb := _fb()
 	if _flash_timer <= 0.0:
 		return
 	_flash_timer = maxf(_flash_timer - delta, 0.0)
@@ -930,10 +716,6 @@ func _update_flash(delta: float) -> void:
 	var glow := _flash_color * (_flash_energy * k * 0.25)
 	for material in _materials:
 		material.set_shader_parameter(&"flash_color", Color(glow.r, glow.g, glow.b))
-	if _suit_material != null:
-		_suit_material.set_shader_parameter(&"emission_tint", fb.suit_glow_tint.lerp(_flash_color, k))
-		_suit_material.set_shader_parameter(&"emission_energy", lerpf(fb.suit_glow_energy,
-			fb.suit_glow_energy * 2.0, k))
 
 
 ## Piscar de tempos em tempos e sobrancelhas franzidas ao golpear/apanhar.

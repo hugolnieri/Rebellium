@@ -2,16 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c1bev7wj0h4j1"
-path="res://.godot/imported/hero_suit_emission.png-ef58a1a0e29a27439f04acc3dc7c2e1a.ctex"
+uid="uid://xr4g74hpyhxi"
+path="res://.godot/imported/hero_M00_000_00_EyeHighlight_00.png-a9b75994cb1bbda40123b0c771a499ab.ctex"
 metadata={
 "vram_texture": false
+}
+generator_parameters={
+"md5": "45893f4d34953758eeba634918dcf064"
 }
 
 [deps]
 
-source_file="res://assets/character/hero_suit_emission.png"
-dest_files=["res://.godot/imported/hero_suit_emission.png-ef58a1a0e29a27439f04acc3dc7c2e1a.ctex"]
+source_file="res://assets/character/hero_M00_000_00_EyeHighlight_00.png"
+dest_files=["res://.godot/imported/hero_M00_000_00_EyeHighlight_00.png-a9b75994cb1bbda40123b0c771a499ab.ctex"]
 
 [params]
 
@@ -23,7 +26,7 @@ compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=false
+mipmaps/generate=true
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""

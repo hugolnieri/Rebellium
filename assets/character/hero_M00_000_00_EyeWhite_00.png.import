@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dkfiwar77xiyt"
-path="res://.godot/imported/hero_image_3.png-8c1dba398cfe6940547a3e41119566e9.ctex"
+uid="uid://cgso25rabocvy"
+path="res://.godot/imported/hero_M00_000_00_EyeWhite_00.png-86550795c5695417678637a014704fe0.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "45893f4d34953758eeba634918dcf064"
+"md5": "d2e79312dd377343b3ae93d139a021b5"
 }
 
 [deps]
 
-source_file="res://assets/character/hero_image_3.png"
-dest_files=["res://.godot/imported/hero_image_3.png-8c1dba398cfe6940547a3e41119566e9.ctex"]
+source_file="res://assets/character/hero_M00_000_00_EyeWhite_00.png"
+dest_files=["res://.godot/imported/hero_M00_000_00_EyeWhite_00.png-86550795c5695417678637a014704fe0.ctex"]
 
 [params]
 
