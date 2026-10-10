@@ -1,8 +1,9 @@
 extends Node
-## Autoload "SceneCycler": F3 alterna entre as cenas jogáveis (arena de combate, percurso, arena livre).
+## Autoload "SceneCycler": F3 alterna entre as cenas jogáveis (arena de combate, arena flutuante, percurso, arena livre).
 
 const SCENES: Array[String] = [
 	"res://scenes/arenas/CombatArena.tscn",
+	"res://scenes/arenas/SkyArena.tscn",
 	"res://scenes/arenas/TrainingCourse.tscn",
 	"res://scenes/arenas/Arena.tscn",
 ]

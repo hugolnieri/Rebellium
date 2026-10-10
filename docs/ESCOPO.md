@@ -192,3 +192,10 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Wall jump continua liberado por 1,2 s depois do pulo (antes 0,6 s): dá para pular para baixo e ainda
   acertar uma parede abaixo da altura de onde saiu.
 - Cambalhota no lugar, mas segurando uma direção ela rola para lá (`roll_steer_speed`).
+
+## Revisão: arena flutuante
+- Cenário novo modelado no Blender por código (malhas, UVs e texturas geradas): plataforma circular com
+  passarela, muro interno com passagens, arquibancada neon, telas, holograma, antenas, drones, treliça,
+  cabos e propulsores. Colisão gerada no Godot pelos objetos "-col".
+- Cena `SkyArena.tscn` com céu noturno, duas camadas de nuvens animadas, cidade e prédios iluminados lá
+  embaixo; entra no ciclo do F3 logo depois da arena de combate.

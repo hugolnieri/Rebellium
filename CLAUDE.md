@@ -19,6 +19,7 @@ python3 tools/gen_sfx.py        # regera os sons em assets/sfx (requer numpy)
 python3 tools/blender/build_hero.py   # recria art/character/hero.blend + hero.glb (Blender: blender -b -P ...;
                                      # ou bpy do pip: pip install bpy==4.2.0). APAGA edições manuais do .blend
 python3 tools/blender/export_hero.py  # só exporta o hero.blend editado → assets/character/hero.glb
+python3 tools/blender/build_sky_arena.py  # recria a arena flutuante (art/arena/sky_arena.blend + assets/arena/sky_arena.glb)
 ```
 Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`.
 
@@ -63,6 +64,8 @@ scenes/player/     Player.tscn, câmera, input, estados, sensor de parede, VFX, 
                    Player e nunca altera gameplay)
 assets/character/  personagem exportado (hero.glb: malha + esqueleto + animações; ver CREDITS.md)
 art/character/     hero.blend — fonte editável do personagem e das animações (Actions); `.gdignore`
+art/arena/         sky_arena.blend — fonte editável da arena flutuante
+assets/arena/      sky_arena.glb (objetos com sufixo "-col" viram colisão no Godot)
 scenes/arenas/     arena de combate, postes de treino, percurso de treino, arena livre
 scenes/ui/         HUD, HUD de debug (F1), menu de debug (F2)
 scripts/core/      eventos, configs, regras puras, utilitários
@@ -75,6 +78,8 @@ tools/             scripts de instalação e de teste
 
 ## Cenas
 - `scenes/arenas/CombatArena.tscn` (principal): postes de treino, HUD de combate, R reinicia.
+- `scenes/arenas/SkyArena.tscn`: arena flutuante sobre as nuvens (modelo do Blender), postes de treino;
+  `sky_arena.gd` herda da arena de combate e anima holograma, drones, luzes e chamas.
 - `scenes/arenas/TrainingCourse.tscn`: percurso de movimento, cronômetro, checkpoints.
 - `scenes/arenas/Arena.tscn`: arena livre para experimentar.
 - Todas incluem HUD, DebugHUD (F1) e DebugMenu (F2). F3 (autoload `SceneCycler`) alterna entre elas.

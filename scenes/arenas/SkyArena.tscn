@@ -1,0 +1,168 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/arenas/sky_arena.gd" id="arena"]
+[ext_resource type="PackedScene" path="res://assets/arena/sky_arena.glb" id="platform"]
+[ext_resource type="Shader" path="res://scenes/arenas/sky/clouds.gdshader" id="clouds"]
+[ext_resource type="Shader" path="res://scenes/arenas/sky/city.gdshader" id="city"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://scenes/arenas/TrainingDummy.tscn" id="dummy"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugHUD.tscn" id="dhud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CombatHUD.tscn" id="chud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugMenu.tscn" id="dmenu"]
+
+[sub_resource type="ProceduralSkyMaterial" id="skymat"]
+sky_top_color = Color(0.025, 0.04, 0.09, 1)
+sky_horizon_color = Color(0.2, 0.26, 0.38, 1)
+sky_curve = 0.12
+ground_bottom_color = Color(0.03, 0.035, 0.06, 1)
+ground_horizon_color = Color(0.2, 0.26, 0.38, 1)
+ground_curve = 0.05
+sun_angle_max = 8.0
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("skymat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.45, 0.5, 0.65, 1)
+ambient_light_energy = 0.8
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.6
+glow_bloom = 0.03
+glow_hdr_threshold = 1.1
+fog_enabled = true
+fog_light_color = Color(0.17, 0.21, 0.31, 1)
+fog_density = 0.0035
+fog_sky_affect = 0.4
+
+[sub_resource type="FastNoiseLite" id="noise"]
+frequency = 0.006
+fractal_octaves = 5
+
+[sub_resource type="NoiseTexture2D" id="cloudnoise"]
+width = 512
+height = 512
+seamless = true
+noise = SubResource("noise")
+
+[sub_resource type="ShaderMaterial" id="cloudsnear"]
+render_priority = -1
+shader = ExtResource("clouds")
+shader_parameter/noise_tex = SubResource("cloudnoise")
+shader_parameter/color = Color(0.52, 0.58, 0.72, 1)
+shader_parameter/city_tint = Color(0.55, 0.35, 0.7, 1)
+shader_parameter/scale = 0.004
+shader_parameter/wind = Vector2(0.004, 0.0015)
+shader_parameter/coverage = 0.42
+shader_parameter/softness = 0.28
+shader_parameter/opacity = 0.85
+shader_parameter/fade_radius = 900.0
+
+[sub_resource type="ShaderMaterial" id="cloudsfar"]
+render_priority = -2
+shader = ExtResource("clouds")
+shader_parameter/noise_tex = SubResource("cloudnoise")
+shader_parameter/color = Color(0.4, 0.45, 0.6, 1)
+shader_parameter/city_tint = Color(0.6, 0.3, 0.6, 1)
+shader_parameter/scale = 0.0025
+shader_parameter/wind = Vector2(-0.002, 0.003)
+shader_parameter/coverage = 0.48
+shader_parameter/softness = 0.3
+shader_parameter/opacity = 0.7
+shader_parameter/fade_radius = 1100.0
+
+[sub_resource type="PlaneMesh" id="cloudplane"]
+size = Vector2(2400, 2400)
+
+[sub_resource type="ShaderMaterial" id="citymat"]
+shader = ExtResource("city")
+
+[sub_resource type="PlaneMesh" id="cityplane"]
+size = Vector2(3000, 3000)
+material = SubResource("citymat")
+
+[node name="SkyArena" type="Node3D"]
+script = ExtResource("arena")
+kill_height = -20.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707107, 0.707107, -0.5, -0.612372, 0.612372, 0, 30, 0)
+light_color = Color(0.7, 0.78, 1, 1)
+light_energy = 0.7
+shadow_enabled = true
+
+[node name="Platform" parent="." instance=ExtResource("platform")]
+
+[node name="HologramLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, 0)
+light_color = Color(0.3, 0.9, 1, 1)
+light_energy = 2.5
+omni_range = 14.0
+
+[node name="StandsLightA" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -13)
+light_color = Color(1, 0.3, 0.8, 1)
+light_energy = 1.2
+omni_range = 10.0
+
+[node name="StandsLightB" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 13)
+light_color = Color(0.2, 0.85, 1, 1)
+light_energy = 1.2
+omni_range = 10.0
+
+[node name="CloudsNear" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -45, 0)
+cast_shadow = 0
+mesh = SubResource("cloudplane")
+surface_material_override/0 = SubResource("cloudsnear")
+
+[node name="CloudsFar" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -110, 0)
+cast_shadow = 0
+mesh = SubResource("cloudplane")
+surface_material_override/0 = SubResource("cloudsfar")
+
+[node name="City" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -260, 0)
+cast_shadow = 0
+mesh = SubResource("cityplane")
+
+[node name="Dummies" type="Node3D" parent="."]
+
+[node name="DummyLeft" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -4)
+mode = 0
+
+[node name="DummyRight" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -4)
+mode = 0
+
+[node name="DummyAggressive" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -7)
+mode = 2
+
+[node name="DummyWalkway" parent="Dummies" instance=ExtResource("dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -6)
+mode = 0
+
+[node name="Spawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 21)
+
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 21)
+
+[node name="HUD" parent="." instance=ExtResource("hud")]
+
+[node name="DebugHUD" parent="." instance=ExtResource("dhud")]
+
+[node name="CombatHUD" parent="." instance=ExtResource("chud")]
+
+[node name="DebugMenu" parent="." instance=ExtResource("dmenu")]

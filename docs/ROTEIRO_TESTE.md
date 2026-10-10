@@ -287,3 +287,13 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 | Golpe aéreo (flutuar e mergulhar) | `air_start_vertical_speed`, `air_active_vertical_speed`, `air_gravity_scale` |
 | Mira assistida, buffer do clique, vida | aba Combate |
 | Postes | `config/dummy_config.tres` (vida, recuperação, intervalo e aviso do agressivo) |
+
+## Arena flutuante (F3 a partir da arena de combate)
+- Plataforma circular sobre as nuvens, à noite, com a cidade lá embaixo. Modelo feito no Blender
+  (`art/arena/sky_arena.blend`, gerado por `tools/blender/build_sky_arena.py`).
+- **Passarela externa** com mureta de 1,4 m na borda; dá para pular a mureta e cair (volta ao spawn).
+- **Muro interno** de 3,2 m com 4 passagens nas diagonais: bom para wall jump. Telas dos dois lados.
+- **Arquibancada** de 4 degraus com neon magenta/ciano descendo até o centro; postes de treino no centro.
+- **Holograma** girando no palco central, drones em órbita, luzes vermelhas piscando nas antenas,
+  propulsores com chama embaixo da plataforma.
+- R reinicia (postes e posição), como na arena de combate.
