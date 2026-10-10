@@ -14,7 +14,7 @@ Tudo é original: não usar nomes, assets ou termos de outros jogos.
 tools/install_godot.sh          # instala o Godot 4.7.2 e cria o comando `godot` (se faltar)
 tools/run_tests.sh              # importa o projeto e roda TODOS os testes (sai != 0 se falhar)
 tools/run_tests.sh -gselect=test_sp_pool.gd   # um arquivo só
-godot --path .                  # roda o jogo (cena principal = arena de combate; F3 alterna cenas)
+godot --path .                  # roda o jogo (cena principal = arena flutuante; F3 alterna cenas)
 python3 tools/gen_sfx.py        # regera os sons em assets/sfx (requer numpy)
 python3 tools/blender/build_hero.py   # recria art/character/hero.blend + hero.glb (Blender: blender -b -P ...;
                                      # ou bpy do pip: pip install bpy==4.2.0). APAGA edições manuais do .blend
@@ -77,8 +77,8 @@ tools/             scripts de instalação e de teste
 ```
 
 ## Cenas
-- `scenes/arenas/CombatArena.tscn` (principal): postes de treino, HUD de combate, R reinicia.
-- `scenes/arenas/SkyArena.tscn`: arena flutuante sobre as nuvens (modelo do Blender), postes de treino;
+- `scenes/arenas/CombatArena.tscn`: postes de treino, HUD de combate, R reinicia.
+- `scenes/arenas/SkyArena.tscn` (principal): arena flutuante sobre as nuvens (modelo do Blender), postes de treino;
   `sky_arena.gd` herda da arena de combate e anima holograma, drones, luzes e chamas.
 - `scenes/arenas/TrainingCourse.tscn`: percurso de movimento, cronômetro, checkpoints.
 - `scenes/arenas/Arena.tscn`: arena livre para experimentar.

@@ -288,7 +288,7 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 | Mira assistida, buffer do clique, vida | aba Combate |
 | Postes | `config/dummy_config.tres` (vida, recuperação, intervalo e aviso do agressivo) |
 
-## Arena flutuante (F3 a partir da arena de combate)
+## Arena flutuante (cena inicial do jogo; F3 vai para as outras)
 - Plataforma circular sobre as nuvens, à noite, com a cidade lá embaixo. Modelo feito no Blender
   (`art/arena/sky_arena.blend`, gerado por `tools/blender/build_sky_arena.py`).
 - **Passarela externa** com mureta de 1,4 m na borda; dá para pular a mureta e cair (volta ao spawn).
