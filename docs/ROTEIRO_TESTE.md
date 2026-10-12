@@ -314,6 +314,6 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 
 ## Verificação: andar para frente na SkyArena
 
-1. Abra o jogo e, sem mexer o mouse, segure W por alguns segundos.
-2. O personagem deve avançar na direção para a qual a câmera aponta, sem parecer andar de lado em relação à trajetória.
-3. Gire a câmera e repita; o modelo deve continuar alinhado à direção percorrida.
+1. Abra a SkyArena e, sem mexer o mouse, segure W por alguns segundos.
+2. O jogador deve avançar na direção para a qual aponta no spawn, sem desvio diagonal para a direita.
+3. Gire a câmera e repita; W deve seguir o novo frente da câmera e o modelo deve continuar alinhado à trajetória.
