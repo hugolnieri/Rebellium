@@ -28,6 +28,8 @@ Clipes e como o jogo os amostra (tempo normalizado 0–1):
   jump_flip, wall_flip, roll, cartwheel   pelo progresso do movimento
   wall_stick, dash, hurt, land, sword_rest   poses (sword_rest só vale no braço direito)
   atk_<golpe>  0 prontidão · 0,35 preparação · 0,6 acerto · 1 acompanhamento
+  launched     0 recebendo o golpe · 1 de costas pronto para bater no chão (pelo PROGRESSO do voo do alvo)
+  knockdown, getup   pelo tempo (queda de costas e levantar); só o caçador usa launched/knockdown/getup
 """
 import math
 
@@ -393,6 +395,102 @@ def hurt_keys():
 def sword_rest_keys():
     rest = over(READY, pose(shoulder_r=(14.3, 4.0, 5.7), elbow_r=(68.8, 0, 0), wrist_r=(63.0, -5.7, -22.3)))
     return [(0, rest), (12, rest)]
+
+
+# --- Arremesso: voo, queda de costas e levantar ------------------------------------------------------
+# Aqui o QUADRIL deita o corpo todo (hips x até ≈ 90°) e hips_pos o desce até o chão; não há giro por
+# código nem prévia do Root. O alvo gira para encarar quem bateu e voa de costas, cabeça primeiro: o "para
+# frente" destes clipes é a direção de quem bateu. Usados pelo caçador (scenes/arenas/hunter_bot.gd).
+
+OPEN_HANDS = pose(grip_l=0.25, grip_r=0.3)
+
+# Voo, última pose: de costas e baixo, pronto para bater no chão (a origem do corpo é a "barriga para cima").
+FLY_END = over(READY, OPEN_HANDS, pose(
+    hips=(86, 0, 0), hips_pos=(0, -0.70, 0), spine=(4, 0, 0), chest=(4, 0, 0), upper_chest=(2, 0, 0),
+    neck=(8, 0, 0), head=(16, 4, 0),
+    shoulder_l=(35, 0, -80), elbow_l=(25, 0, 0), shoulder_r=(35, 0, 80), elbow_r=(25, 0, 0), wrist_r=(0, 0, 0),
+    thigh_l=(2, 0, -12), knee_l=(-24, 0, 0), foot_l=(-14, 0, 0),
+    thigh_r=(0, 0, 12), knee_r=(-30, 0, 0), foot_r=(-14, 0, 0)))
+
+# Deitado de costas, braços e pernas soltos (fim do knockdown, começo do getup).
+LYING = over(READY, OPEN_HANDS, pose(
+    hips=(88, 0, 0), hips_pos=(0, -0.745, 0), spine=(0, 0, 0), chest=(0, 0, 0), upper_chest=(0, 0, 0),
+    neck=(2, 0, 0), head=(10, 14, 0),
+    shoulder_l=(4, 0, -32), elbow_l=(14, 0, 0), wrist_l=(0, 0, 0), shoulder_r=(4, 0, 32), elbow_r=(18, 0, 0),
+    wrist_r=(0, 0, 0),
+    thigh_l=(2, 0, -11), knee_l=(-6, 0, 0), foot_l=(14, 0, 8), thigh_r=(0, 0, 13), knee_r=(-10, 0, 0),
+    foot_r=(16, 0, -8), grip_l=0.35, grip_r=0.3))
+
+
+def launched_keys():
+    """Voo: recebe o golpe (peito para frente, cabeça para trás) → quadril deita → corpo na horizontal com
+    braços e pernas balançando → de costas, pronto para bater no chão. O jogo toca por PROGRESSO do voo."""
+    hit = over(READY, OPEN_HANDS, pose(
+        hips=(14, 0, 0), hips_pos=(0, -0.10, 0.03), spine=(22, 0, 0), chest=(14, 0, 0), upper_chest=(6, 0, 0),
+        neck=(10, 0, 0), head=(24, 0, 0),
+        shoulder_l=(40, 0, -75), elbow_l=(30, 0, 0), shoulder_r=(30, 0, 80), elbow_r=(34, 0, 0),
+        wrist_r=(0, 0, 0),
+        thigh_l=(8, 0, -10), knee_l=(-34, 0, 0), foot_l=(-10, 0, 0),
+        thigh_r=(14, 0, 10), knee_r=(-22, 0, 0), foot_r=(-10, 0, 0)))
+    rising = over(hit, pose(
+        hips=(46, 0, 0), hips_pos=(0, -0.42, 0), spine=(10, 0, 0), chest=(8, 0, 0), neck=(8, 0, 0), head=(20, 0, 0),
+        shoulder_l=(110, 0, -45), elbow_l=(25, 0, 0), shoulder_r=(35, 0, 100), elbow_r=(40, 0, 0),
+        thigh_l=(20, 0, -14), knee_l=(-50, 0, 0), thigh_r=(-6, 0, 12), knee_r=(-72, 0, 0),
+        foot_l=(-24, 0, 0), foot_r=(-30, 0, 0)))
+    flat_a = over(rising, pose(
+        hips=(76, 0, 0), hips_pos=(0, -0.62, 0), spine=(6, 0, 0), chest=(5, 0, 0), upper_chest=(3, 0, 0),
+        neck=(8, 0, 0), head=(18, 0, 0),
+        shoulder_l=(150, 0, -40), elbow_l=(20, 0, 0), shoulder_r=(55, 0, 90), elbow_r=(30, 0, 0),
+        thigh_l=(10, 0, -16), knee_l=(-34, 0, 0), thigh_r=(-8, 0, 12), knee_r=(-60, 0, 0)))
+    flat_b = over(flat_a, pose(  # braços e pernas trocam de lado
+        shoulder_l=(60, 0, -85), elbow_l=(28, 0, 0), shoulder_r=(160, 0, 35), elbow_r=(18, 0, 0),
+        thigh_l=(-8, 0, -12), knee_l=(-64, 0, 0), thigh_r=(14, 0, 16), knee_r=(-30, 0, 0), head=(14, 6, 0)))
+    flat_c = over(flat_a, pose(
+        hips=(82, 0, 0), hips_pos=(0, -0.66, 0),
+        shoulder_l=(120, 0, -60), elbow_l=(34, 0, 0), shoulder_r=(100, 0, 60), elbow_r=(22, 0, 0),
+        thigh_l=(14, 0, -14), knee_l=(-46, 0, 0), thigh_r=(4, 0, 14), knee_r=(-44, 0, 0), head=(16, -4, 0)))
+    return [(0, hit), (9, rising), (20, flat_a), (32, flat_b), (41, flat_c), (48, FLY_END)]
+
+
+def knockdown_keys():
+    """Bate no chão de costas, quica uma vez e se acomoda deitado."""
+    slam = over(LYING, pose(
+        hips_pos=(0, -0.76, 0), neck=(-6, 0, 0), chest=(-6, 0, 0), head=(-6, 10, 0),
+        shoulder_l=(70, 0, -95), shoulder_r=(70, 0, 95), elbow_l=(30, 0, 0), elbow_r=(30, 0, 0),
+        thigh_l=(26, 0, -14), thigh_r=(22, 0, 14), knee_l=(-40, 0, 0), knee_r=(-48, 0, 0)))
+    bounce = over(LYING, pose(
+        hips_pos=(0, -0.64, 0), chest=(-4, 0, 0), head=(0, 12, 0),
+        shoulder_l=(95, 0, -70), shoulder_r=(95, 0, 70),
+        thigh_l=(40, 0, -12), thigh_r=(36, 0, 12), knee_l=(-55, 0, 0), knee_r=(-60, 0, 0)))
+    settle = over(LYING, pose(
+        hips_pos=(0, -0.73, 0), shoulder_l=(30, 0, -48), shoulder_r=(30, 0, 48),
+        thigh_l=(10, 0, -12), thigh_r=(8, 0, 13)))
+    return [(0, FLY_END), (5, slam), (12, bounce), (22, settle), (36, LYING)]
+
+
+def getup_keys():
+    """Deitado → joelhos sobem e as mãos apoiam → senta → agacha → de pé na prontidão."""
+    brace = over(LYING, pose(
+        neck=(-20, 0, 0), head=(-10, 0, 0), chest=(-12, 0, 0), spine=(-8, 0, 0),
+        thigh_l=(72, 0, -14), knee_l=(-112, 0, 0), foot_l=(20, 0, 0),
+        thigh_r=(66, 0, 14), knee_r=(-108, 0, 0), foot_r=(20, 0, 0),
+        shoulder_l=(-62, 0, -30), elbow_l=(24, 0, 0), shoulder_r=(-62, 0, 30), elbow_r=(24, 0, 0)))
+    sit = over(brace, pose(
+        hips=(60, 0, 0), hips_pos=(0, -0.66, 0), spine=(-30, 0, 0), chest=(-14, 0, 0), upper_chest=(-4, 0, 0),
+        neck=(-4, 0, 0), head=(6, 0, 0),
+        thigh_l=(86, 0, -14), knee_l=(-120, 0, 0), thigh_r=(80, 0, 14), knee_r=(-118, 0, 0),
+        shoulder_l=(30, 0, -24), elbow_l=(30, 0, 0), shoulder_r=(30, 0, 24), elbow_r=(34, 0, 0)))
+    squat = over(READY, pose(
+        hips=(16, 0, 0), hips_pos=(0, -0.46, 0), spine=(-22, 0, 0), chest=(-8, 0, 0), head=(10, 0, 0),
+        thigh_l=(92, 0, -14), knee_l=(-128, 0, 0), foot_l=(38, 0, 12),
+        thigh_r=(86, 0, 14), knee_r=(-124, 0, 0), foot_r=(38, 0, -12),
+        shoulder_l=(54, 0, -22), elbow_l=(34, 0, 0), shoulder_r=(48, 0, 24), elbow_r=(38, 0, 0),
+        grip_l=0.4, grip_r=0.4))
+    stand = over(READY, pose(
+        hips_pos=(0, -0.10, 0), spine=(-8, 0, 0), head=(6, 0, 0),
+        thigh_l=(26, 0, -9), knee_l=(-40, 0, 0), foot_l=(15, 0, 9),
+        thigh_r=(20, 0, 8), knee_r=(-42, 0, 0), foot_r=(23, 0, -8)))
+    return [(0, LYING), (12, brace), (26, sit), (42, squat), (56, stand), (66, READY)]
 
 
 # --- Golpes ----------------------------------------------------------------------------------------
@@ -833,6 +931,9 @@ def clips(hips_rest_y):
         ("land", 15, False, land_keys(), None),
         ("hurt", 20, False, hurt_keys(), None),
         ("sword_rest", 12, False, sword_rest_keys(), None),
+        ("launched", 48, False, launched_keys(), None),
+        ("knockdown", 36, False, knockdown_keys(), None),
+        ("getup", 66, False, getup_keys(), None),
     ]
     for name in ATTACKS:
         out.append(("atk_" + name, ATTACK_FRAMES, False, attack_keys(name), root_spin if name == "spin" else None))

@@ -21,6 +21,18 @@ func test_settles_on_floor_idle() -> void:
 	assert_eq(d.player.get_state_name(), &"Idle")
 
 
+func test_respawn_keeps_the_body_unrotated_and_turns_only_the_visual() -> void:
+	# O corpo não gira: o yaw do ponto vira só a direção inicial do visual (e o spawn guarda o yaw).
+	d.player.respawn(Transform3D(Basis(Vector3.UP, 1.0), Vector3(0, 0.05, 0)))
+	assert_almost_eq(d.player.global_rotation.y, 0.0, 0.001, "corpo sem rotação")
+	assert_almost_eq(d.player.visual.rotation.y, 1.0, 0.001, "o visual encara o yaw pedido")
+	d.look_yaw = 1.0
+	d.step(30, FWD)
+	var v := d.player.get_horizontal_velocity()
+	assert_almost_eq(wrapf(d.player.visual.global_rotation.y - atan2(-v.x, -v.z), -PI, PI), 0.0, 0.05,
+		"andando para frente, o personagem encara o caminho")
+
+
 func test_walk_reaches_6_mps() -> void:
 	d.step(60, FWD)
 	assert_eq(d.player.get_state_name(), &"Run")

@@ -15,16 +15,17 @@ testes GUT 9.7.1 (headless). Blender (`bpy` 4.2.0, Python 3.11) gera por código
 
 ## Estado em uma olhada
 
-- Cena principal: arena flutuante (`scenes/arenas/SkyArena.tscn`) com um **bot vermelho "caçador"** parado no centro, que só recebe dano
-  (placeholder: o modo caçador ainda não foi definido). F3 alterna: SkyArena → CombatArena → TrainingCourse → Arena.
+- Cena principal: arena flutuante (`scenes/arenas/SkyArena.tscn`) com um **bot vermelho "caçador"** no centro: não ataca, mas reage com
+  as animações do personagem e **o golpe pesado o arremessa** (cai, levanta e volta ao spawn; a etiqueta mostra a distância). O modo
+  caçador ainda não foi definido. F3 alterna: SkyArena → CombatArena → TrainingCourse → Arena.
 - Player com 10 estados (Idle, Run, Sprint, Jump, Fall, WallJump, Dodge, Land, Attack, Hurt), SP, dash lateral, wall jump por reflexão,
   back-coming encadeado (o reverse wall jump foi **removido**), cancels, bunny hop, rolamento no pouso.
 - Duas armas: Lâmina de Arco (modelo 3D enviado pelo dono) e Presa de Fase (procedural), com combos leves, pesado (segurar o clique),
   golpes aéreos e de dash, hitstop, rastro, esquiva perfeita.
 - Personagem (base VRoid CC0) e **todas as animações feitas no Blender** (`hero.blend` → `hero.glb`); o jogo as toca direto nos ossos
   (`HeroClips`) com crossfade. Menu F2 edita todas as configs ao vivo.
-- **203 testes passam**; `godot --headless --quit-after 120` abre sem erros.
-- Os dois últimos commits de arena (`677621f`, `e798e12`) **ainda não foram validados pelo dono dentro do jogo**.
+- **216 testes passam**; `godot --headless --quit-after 120` abre sem erros.
+- Os commits de arena (`677621f`, `e798e12`) e o do caçador que voa **ainda não foram validados pelo dono dentro do jogo**.
 
 ## Comandos
 
@@ -64,7 +65,9 @@ normalmente; os `.glb`/`.blend` já estão versionados. Se o ambiente bloquear i
 8. **Alvos de golpe** ficam no grupo `hittable` e implementam `take_hit(info) -> bool`, `get_hit_center()`, `get_hit_radius()`.
 9. **Hitstop** pausa a simulação do Player (`hitstop_ticks`); os tempos do golpe contam em ticks próprios do estado Attack.
 10. **Apresentação nunca altera gameplay**: `character_model.gd` e o resto de `scenes/player/` visual só leem o Player.
-11. Paleta greybox: preto, cinza escuro, branco sujo, metal; acentos (vermelho, violeta, azul elétrico, verde ácido) para feedback.
+11. **O corpo do Player nunca gira**: movimento, câmera e visual usam o yaw do mundo, que vive em `visual.rotation.y`. Para nascer ou
+    teleportar o Player use `Player.respawn`/`_place`, nunca `global_transform = ...` com rotação (o modelo andaria de lado).
+12. Paleta greybox: preto, cinza escuro, branco sujo, metal; acentos (vermelho, violeta, azul elétrico, verde ácido) para feedback.
     Exceções: o personagem (traje azul-marinho de gola alta, cabelo branco, descalço) e as armas com brilho próprio (ciano / laranja).
 
 ## Como trabalhar com o dono
@@ -87,6 +90,8 @@ normalmente; os `.glb`/`.blend` já estão versionados. Se o ambiente bloquear i
 - **`class_name` novo** → `godot --headless --import` (senão "Could not find type").
 - **Eixos**: Blender (x, y, z) → Godot (x, z, −y). **Yaw**: frente = (−sin yaw, −cos yaw). Em `.tscn`, `Transform3D(...)` lista a base por linhas.
 - **Clipes de animação** são procurados por nome em `character_model.gd`; não renomeie sem ajustar o código e os `AttackData`.
+- **`AnimatableBody3D` com `sync_to_physics = true`** desfaz atribuições de `global_position` até o próximo passo da física; o
+  `HunterBot` usa `false`. O projeto trata "variável inferida de Variant" como erro (`var s: String = fila.pop_front()`).
 - **Wall jump** usa a velocidade de **entrada** na parede (`wall_sensor`), não a de depois do `move_and_slide` (que "come" a componente).
 - Testes de cena inteira: `player.external_control = true`, `await d.ready_physics(self)` e a posição inicial vem do marcador `Spawn`.
 - Rodar `build_hero.py` apaga edições manuais do `hero.blend`; rodar `build_sky_arena.py` sobrescreve o `.blend`/`.glb` da arena.
@@ -95,12 +100,12 @@ normalmente; os `.glb`/`.blend` já estão versionados. Se o ambiente bloquear i
 
 ```
 config/            Resources .tres com TODOS os números de gameplay
-scenes/player/     Player.tscn, câmera, input, estados, sensor de parede, personagem (character_model.gd, hero_clips.gd), armas visuais
+scenes/player/     Player.tscn, câmera, input, estados, sensor de parede, personagem (character_model.gd, hero_clips.gd, hero_puppet.gd), armas visuais
 scenes/arenas/     SkyArena (principal), CombatArena, TrainingCourse, Arena, TrainingDummy, HunterBot
 scenes/ui/         HUD, HUD de debug (F1), menu de debug (F2), HUD de combate e de treino
 scripts/core/      eventos, configs, regras puras, utilitários
 tests/unit/        testes de lógica pura (7 arquivos)
-tests/integration/ testes com o Player real e física headless (10 arquivos); test_training_course.gd tem bots que completam o percurso
+tests/integration/ testes com o Player real e física headless (11 arquivos); test_training_course.gd tem bots que completam o percurso
 tests/helpers/     player_driver.gd: dirige o Player tick a tick com PlayerInput sintético
 tools/             install_godot.sh, run_tests.sh, gen_sfx.py e tools/blender/ (build_hero, hero_animations, export_hero, build_sky_arena, build_sword)
 art/               fontes editáveis (hero.blend, sky_arena.blend, arc_blade_source.usdz); `.gdignore`
@@ -110,6 +115,7 @@ docs/              CONTEXTO_PROJETO.md (estado completo), ESCOPO.md (diário de 
 
 ## Em aberto (detalhes na seção 19 de `docs/CONTEXTO_PROJETO.md`)
 
-- Validação do dono no jogo das duas últimas arenas; definição do **modo caçador** (o bot é só um alvo).
+- Validação do dono no jogo das duas últimas arenas e do caçador que voa (força do arremesso); definição do **modo caçador**
+  (o bot reage e voa, mas não age).
 - Espada: clarear o material e registrar origem/licença no `CREDITS.md` (o modelo foi enviado pelo dono).
 - Trechos velhos em `ROTEIRO_TESTE.md`/`ESCOPO.md`; não há CI nem branch `main`.

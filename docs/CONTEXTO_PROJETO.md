@@ -1,7 +1,7 @@
 # REBELLIUM — Contexto completo do projeto
 
-Documento de passagem de bastão. Descreve **o jogo como está hoje** (commit `e798e12`, branch
-`claude/lucid-ramanujan-wy8xe5`), como o código se organiza, como se trabalha com o dono e o que está em aberto.
+Documento de passagem de bastão. Descreve **o jogo como está hoje** (branch
+`claude/lucid-ramanujan-wy8xe5`; última revisão: personagem anda reto e caçador que voa), como o código se organiza, como se trabalha com o dono e o que está em aberto.
 Em caso de divergência, **o código e os `.tres` mandam**: `docs/ESCOPO.md` e `docs/ROTEIRO_TESTE.md` são diários
 de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes: `AGENTS.md` (e `CLAUDE.md`).
 
@@ -14,11 +14,12 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
 - **Stack**: Godot 4.7.2-stable, GDScript **tipado**, física Jolt a 60 ticks fixos, testes GUT 9.7.1 (headless).
   Blender (módulo `bpy` 4.2.0, Python 3.11) gera por código o personagem, as animações, a arena e a espada.
 - **Cena principal**: arena flutuante sobre as nuvens (`scenes/arenas/SkyArena.tscn`), com um bot vermelho
-  ("caçador") parado no centro que só recebe dano. **F3** alterna: SkyArena → CombatArena → TrainingCourse → Arena.
-- **Qualidade hoje**: 203 testes passando (17 arquivos: 7 unitários + 10 de integração) e
+  ("caçador") no centro: não ataca, mas reage com as animações do personagem e é **arremessado pelo golpe pesado**.
+  **F3** alterna: SkyArena → CombatArena → TrainingCourse → Arena.
+- **Qualidade hoje**: 216 testes passando (18 arquivos: 7 unitários + 11 de integração) e
   `godot --headless --quit-after 120` sem erros. ~8,4 mil linhas de GDScript (com testes) e ~2,5 mil de Python (tools).
-- **Repositório**: `github.com/hugolnieri/Rebellium`, 39 commits. **Só existe uma branch no GitHub e ela é a padrão:
-  `claude/lucid-ramanujan-wy8xe5`** (não há `main`). Último commit: `e798e12`.
+- **Repositório**: `github.com/hugolnieri/Rebellium`, 42 commits. **Só existe uma branch no GitHub e ela é a padrão:
+  `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
 - **Dono do projeto**: GitHub `hugolnieri`; fala português; testa no Windows (`C:\Dev\Rebellium`).
 
 ## 2. Como se trabalha com o dono
@@ -91,6 +92,9 @@ O mapa de input está em `project.godot`; **só `scenes/player/input_reader.gd` 
 **Player** (`scenes/player/player.gd`, `CharacterBody3D`; origem do corpo nos pés; cápsula r 0,4 × h 1,8). Fluxo por tick:
 `input → SP.update → estado.physics_update → move_and_slide → wall_sensor.update → estado.post_move → _update_visual`.
 O `step(input, delta)` é público: os testes dirigem o Player tick a tick com `external_control = true`.
+**O corpo do Player nunca gira** (rotação sempre identidade): movimento, câmera e visual usam o yaw do **mundo**, e
+`visual.rotation.y` recebe um yaw mundial. Por isso `Player._place` (usado em `_ready` e em `respawn`) põe só a posição no corpo
+e o yaw no `visual`.
 
 **Máquina de estados explícita**, um script por estado em `scenes/player/states/`:
 `Idle, Run, Sprint, Jump, Fall, WallJump, Dodge, Land, Attack, Hurt`. Toda troca passa por
@@ -109,7 +113,7 @@ e `@export_range`) e aparece sozinho no F2:
 | `feedback_config.tres` | `FeedbackConfig` | cores, VFX, personagem (ex.: `anim_blend_time` 0,14, `attack_blend_time` 0,06) |
 | `combat_config.tres` | `CombatConfig` | vida, buffers, mira assistida, dano recebido |
 | `weapons/<arma>/weapon.tres` + um `.tres` por golpe | `WeaponConfig`, `AttackData` | tempos, dano, alcance, arco, hitstop |
-| `dummy_config.tres` | `DummyConfig` | postes/bot: vida, regeneração, patrulha, ataque do agressivo |
+| `dummy_config.tres` | `DummyConfig` | postes/caçador: vida, regeneração, patrulha, ataque do agressivo e o **arremesso do caçador** (aba Alvos do F2) |
 | `audio_config.tres` | `AudioConfig` | volumes |
 
 **Salvar config sempre com `ConfigIO.save_full`** (grava todos os valores; o `ResourceSaver` padrão omite os iguais ao padrão).
@@ -117,12 +121,13 @@ e `@export_range`) e aparece sozinho no F2:
 **Feedback por eventos**: a lógica emite sinais em `GameEvents` (`wall_jump_executed`, `technique_executed`, `attack_started`,
 `hit_landed`, `dummy_warning`, ...). VFX (`scenes/player/feedback/feedback_vfx.gd`), som (`SoundManager`), HUD e modo treino só ouvem.
 
-**Alvos de golpe**: grupo `hittable` com `take_hit(info) -> bool`, `get_hit_center()`, `get_hit_radius()` (Player e `TrainingDummy`).
+**Alvos de golpe**: grupo `hittable` com `take_hit(info) -> bool`, `get_hit_center()`, `get_hit_radius()` (Player, `TrainingDummy` e `HunterBot`).
 **Hitstop** pausa a simulação do Player (`hitstop_ticks`); os tempos do golpe contam em ticks próprios do estado Attack.
 **Tempo de gameplay** em ticks (int) quando a janela é justa (bunny hop, cancel); em segundos (float) para durações longas.
 `physics_interpolation` está ligada: ao teleportar um corpo chame `reset_physics_interpolation()`.
 
-**Apresentação (nunca altera gameplay)**: `character_model.gd` (modelo + animação), `hero_clips.gd`, `attack_poses.gd`,
+**Apresentação (nunca altera gameplay)**: `character_model.gd` (modelo + animação), `hero_clips.gd`, `hero_puppet.gd` (o mesmo
+esqueleto e os mesmos clipes, para o caçador), `attack_poses.gd`,
 `weapon_visual.gd`, `weapon_trail.gd`, `player_camera.gd`, shaders `anime_toon.gdshader`, `outline.gdshader`, `speed_lines.gdshader`,
 `blob_shadow.gd` (sombra redonda).
 
@@ -174,9 +179,19 @@ Regras de design registradas (de `ESCOPO.md`, ainda válidas):
 - **Estado Hurt**: recuo e hitstun; vida zerada = caído ~1,5 s e volta ao início.
 - **`TrainingDummy`** (`scenes/arenas/training_dummy.gd`, `AnimatableBody3D`): modos `STATIC`, `PATROL`, `AGGRESSIVE` (contra-ataca em
   área com aviso vermelho: 10 de dano, recuo). Mostra vida, números de dano e balança. Vida 300, regenera após 2,5 s.
-  Exports de corpo: **`body_scene`** (modelo no lugar dos cilindros), `body_color`, `body_scale`, `title`.
-- **Caçador (`scenes/arenas/HunterBot.tscn`)**: `TrainingDummy` parado com `body_scene = hero.glb`, vermelho, escala 0,942 (1,8/1,91),
-  título "CAÇADOR". É um **placeholder**: o modo/personagem caçador ainda será definido pelo dono.
+  Exports de corpo: `body_color`, `title`. Pontos de extensão para subclasses: `_build_body()`, `_label_text()`, `_react(info)`
+  (reação ao golpe; o poste balança) e `reset_target()`.
+- **Caçador** (`scenes/arenas/HunterBot.tscn` + `hunter_bot.gd`, `class_name HunterBot extends TrainingDummy`): o bot vermelho,
+  título "CAÇADOR". O corpo é um `HeroPuppet` (o `hero.glb` com os clipes do Blender, pintado de vermelho). **Não ataca**: reage,
+  e **só o golpe pesado o arremessa**. Fases (`HunterBot.Phase`): `IDLE` (clipe `idle`; bloqueia o jogador) → `STAGGER` (golpe
+  leve/aéreo/dash: clipe `hurt` e desliza = recuo horizontal × `hit_slide_scale`) → `LAUNCHED` (golpe pesado: voo balístico com
+  velocidade = recuo do golpe × `launch_velocity_scale`, subida mínima `launch_min_up_speed`, gravidade `launch_gravity`; clipe
+  `launched` amostrado pelo progresso do voo; raios detectam parede (rebote `launch_wall_bounce`), teto e chão) → `DOWN` (clipe
+  `knockdown`; desliza com atrito `slide_friction` e fica `knockdown_time` deitado) → `GETUP` (clipe `getup`) → volta
+  **teleportando** ao spawn do caçador (espera enquanto o jogador estiver a menos de 1,2 m dele) com um brilho branco. Voando,
+  deitado ou levantando a colisão dele fica desligada (o jogador atravessa). A etiqueta mostra `ARREMESSO x,x m` (distância do último
+  arremesso, para comparar a força dos golpes). Cair da plataforma (`fall_respawn_height`) o devolve ao spawn. Os números ficam no
+  grupo "Arremesso (caçador)" do `DummyConfig`. `HunterBot.step(delta)` é público: os testes avançam o bot tick a tick.
 
 ## 8. Personagem e animações
 
@@ -185,7 +200,8 @@ Regras de design registradas (de `ESCOPO.md`, ainda válidas):
   o jogo carrega `assets/character/hero.glb` (malha + esqueleto + animações). Altura do modelo 1,91 m, escalado para 1,8 m.
 - **Animações** = Actions do Blender definidas como poses-chave em `tools/blender/hero_animations.py` (Bezier, ciclos sem emenda,
   clavículas, dedos). **Clipes (o jogo procura pelo nome — não renomeie)**: `idle, walk, sprint, air_sprint, air, jump_flip,
-  wall_stick, wall_flip, roll, cartwheel, dash, land, hurt, sword_rest` e os golpes `atk_<anim>`:
+  wall_stick, wall_flip, roll, cartwheel, dash, land, hurt, sword_rest`, os do caçador `launched` (0,8 s), `knockdown` (0,6 s) e
+  `getup` (1,1 s) e os golpes `atk_<anim>`:
   `atk_slash_r, atk_slash_l, atk_overhead, atk_backhand, atk_spin, atk_air_slam, atk_dash_thrust, atk_jab, atk_rising`.
 - **Runtime**: `hero_clips.gd` (`HeroClips`) converte cada clipe uma vez em quadros a 60 Hz (um `Quaternion` por osso animado +
   posição do quadril; ignora `Root`, `HairJoint*`, `J_Sec*`, `J_Adj*`). O jogo amostra por **tempo normalizado** (fase da passada,
@@ -193,12 +209,16 @@ Regras de design registradas (de `ESCOPO.md`, ainda válidas):
   posiciona o soquete da arma a partir do osso da mão direita (`J_Bip_R_Hand`) e mistura parte do corpo no golpe andando
   (pernas seguem a passada). **Giros de corpo inteiro** (mortal do pulo, estrela do dash, mortal do wall jump, giro do pesado) são
   feitos em código no nó `_trick` (o osso `Root` no Blender é só prévia).
+- **Caçador**: `hero_puppet.gd` (`HeroPuppet`) instancia o mesmo `hero.glb`, carrega o `HeroClips` e expõe
+  `show_clip(chave, clipe, u, loop, delta)` (amostra o clipe por tempo normalizado e faz crossfade quando a `chave` muda) e `paint(material)`.
 - A inclinação do corpo ao andar e no sprint vem das **poses do Blender** (`dodge_lean_deg`, 22°, controla a do dash). As molas de
   animação foram removidas — só o cabelo ainda balança por mola.
 - **Editar animação**: abrir `art/character/hero.blend` → Action Editor → mexer na pose → aba Scripting → `exportar_para_o_jogo.py`
   → Run Script → o Godot reimporta o `hero.glb`. Rodar `build_hero.py` de novo **apaga** essas edições manuais.
 - **Verificação visual**: capturas de tela do Godot em headless são pouco confiáveis; as animações foram verificadas por renders
-  do Blender (Cycles, pois Workbench precisa de libEGL).
+  do Blender (Cycles, pois Workbench precisa de libEGL). O jogo real também dá para capturar sem GPU: `xvfb-run` +
+  `LIBGL_ALWAYS_SOFTWARE=1 godot --display-driver x11 --rendering-method gl_compatibility ...` rodando uma cena temporária dentro do
+  projeto (scripts `-s` não enxergam os autoloads); salve com `get_viewport().get_texture().get_image()` após `frame_post_draw`.
 
 ## 9. Armas (visual)
 
@@ -234,7 +254,7 @@ círculo; roxo = muro central; verde = passagens no roxo (com teto); amarelo = c
 - **Eixos**: Blender (x, y, z) → Godot (x, z, −y). Travessas e portas: Blender 0/90/180/270° = Godot +X/−Z/−X/+Z; muros azuis e passagens:
   45/135/225/315° = diagonais (+X,−Z), (−X,−Z), (−X,+Z), (+X,+Z).
 - **Marcadores na cena**: `Spawn` em (8,23; 1,03; 19,86) com yaw 22,5° (olha para o centro; fica entre a travessa +Z e o muro azul
-  (+X,+Z) — o spawn antigo em (0; 0,1; 21) cairia em cima de uma travessa); `HunterSpawn` em (0; 0; 0) com o `HunterBot` (filho do nó `Dummies`, que o R reinicia).
+  (+X,+Z) — o spawn antigo em (0; 0,1; 21) cairia em cima de uma travessa; o corpo nasce sem rotação e o yaw vai para o `visual`); `HunterSpawn` em (0; 0; 0) com o `HunterBot` (filho do nó `Dummies`, que o R reinicia).
   Os 4 postes de treino antigos **saíram** desta arena (o dono: "só vai ter ele de bot"); CombatArena e percurso mantêm os deles.
 - **Colisão**: objetos com sufixo **`-convcolonly`** no Blender viram `StaticBody3D + ConvexPolygonShape3D` no Godot (sem malha de
   triângulos, que enganchava nas emendas). **313 colisores**: `DeckCol` 96 (chão, topo plano por segmento seguindo o degradê),
@@ -267,7 +287,7 @@ círculo; roxo = muro central; verde = passagens no roxo (com teto); amarelo = c
 - **HUD**: SP e vida. **DebugHUD (F1)**: estado e tempo no estado, velocidades, altura dos pés, contato de parede, motivo de bloqueio
   do wall jump (`LIBERADO`/`sem parede`/`não veio de pulo`/`janela pós-pulo expirou`/`mesma parede`/`SP insuficiente`), origem do ar
   (`JUMP`/`FALL`), invulnerabilidade, últimas transições e eventos.
-- **DebugMenu (F2)**: gerado a partir dos `@export` das configs (abas Movimento, Câmera, Visual, Combate, uma por arma/golpe, Áudio);
+- **DebugMenu (F2)**: gerado a partir dos `@export` das configs (abas Movimento, Câmera, Visual, Combate, uma por arma/golpe, **Alvos** = `dummy_config.tres`, Áudio);
   edita ao vivo, **Salvar no .tres** (usa `ConfigIO.save_full`), **Recarregar**, **Padrões**. Editar `.tres` à mão funciona, mas o F2
   reescreve o arquivo inteiro.
 
@@ -281,8 +301,9 @@ Sem música.
 
 `tools/run_tests.sh` (GUT, config em `.gutconfig.json`: pasta `res://tests/`, prefixo `test_`, sai ao terminar).
 - **Unitários (7)**: áudio, regras de combate, `ConfigIO`, regras de movimento, setup do projeto, SP, matemática do wall jump.
-- **Integração (10)**: bunny hop, modelo do personagem (clipes presentes), combate, arena de combate, menu de debug, dash, chão,
-  **arena flutuante**, percurso de treino (bots), wall jump.
+- **Integração (11)**: bunny hop, modelo do personagem (clipes presentes), combate, arena de combate, menu de debug, dash, chão,
+  **arena flutuante** (inclui "o personagem anda para onde olha"), percurso de treino (bots), wall jump e **caçador**
+  (`test_hunter_bot.gd`: arremesso, rebote em parede, deslize, volta ao spawn, golpe pesado do Player real).
 - **`tests/helpers/player_driver.gd`**: monta o mundo e dirige o Player tick a tick com `PlayerInput` sintético (`step`, `step_until`,
   `press_jump`, `look_yaw`, `add_dummy`, `add_block`...). Em testes de cena inteira use `player.external_control = true` e
   `await d.ready_physics(self)` antes de mover. Convenção do yaw: **frente = (−sin yaw, −cos yaw)**; yaw 0 olha para −Z.
@@ -323,6 +344,11 @@ Sem música.
 7. **Mudar clipe/nome de animação** exige ajustar `character_model.gd` (e os `AttackData` em `config/weapons`).
 8. **Config editada à mão vs F2**: o F2 salva com `save_full` e reordena/gera todos os valores.
 9. **Python do Blender**: só 3.11 (roda `bpy` 4.2.0). Não migre o `bpy` sem testar os scripts.
+10. **O corpo do Player nunca gira.** Atribuir `global_transform` com rotação ao Player (spawn, teleporte) faz o modelo andar de
+    lado (aconteceu: 22,5° torto depois da arena nova). Use `Player.respawn`/`_place`: posição no corpo, yaw no `visual`.
+11. **`AnimatableBody3D` com `sync_to_physics = true`** (o padrão) desfaz na hora a atribuição de `global_position` e só aplica
+    no próximo passo da física. O `HunterBot` usa `sync_to_physics = false` (ele não empurra ninguém).
+12. **Tipos Variant**: o projeto trata "variável inferida de Variant" como erro (ex.: `var s: String = fila.pop_front()`).
 
 ## 18. Histórico resumido (do `git log`)
 
@@ -337,12 +363,17 @@ Sem música.
    (`25443c4`); golpes com o corpo todo e impulsos que decaem (`995c8af`); golpes leves/pesados feitos à mão (`bb2cecd`).
 7. **Arena flutuante** (`ebc2efc`, `425f949`, `b9e729e`, `677621f`, `e798e12`): plataforma sobre as nuvens vira a cena inicial; sem
    arquibancada/telas/globo; espada nova; colisão convexa; **desenho atual com travessas, muros azuis, roxo com passagens, degradê e caçador**.
+8. **Caçador que voa**: corpo do Player sem rotação (conserta o andar torto), `HunterBot` com os clipes do personagem, golpe
+   pesado arremessa, clipes `launched`/`knockdown`/`getup` no Blender, aba Alvos no F2.
 
 ## 19. Em aberto
 
-- **Validação do dono**: os dois últimos commits de arena (`677621f`, `e798e12`) ainda não foram confirmados no jogo. Só foram
-  verificados por testes e por renders do Blender (planta e corte); falta olhar no Godot: neon, escala do bot, sensação do degradê e das passagens.
-- **Modo caçador**: o bot vermelho é só um alvo. O dono ainda não definiu o que o caçador faz (comportamento, spawn, regras).
+- **Validação do dono**: os últimos commits (arena `677621f`/`e798e12` e o caçador que voa) ainda não foram confirmados no jogo.
+  Foram verificados por testes, renders do Blender e capturas do jogo real com render por software (sem GPU); falta olhar no
+  Godot: neon, escala do bot, sensação do degradê e das passagens, **força do arremesso** (`launch_velocity_scale`) e as poses de
+  voo, queda e levantar.
+- **Modo caçador**: o bot vermelho agora reage e voa, mas continua **sem agir**. O dono ainda não definiu o que o caçador faz
+  (ataques, perseguição, regras). Hoje ele volta ao spawn teleportando (simples e previsível); andar de volta fica como evolução.
 - **Espada**: clarear o material (oferecido) e registrar origem/licença no `CREDITS.md`.
 - **Docs**: atualizar os trechos velhos de `ROTEIRO_TESTE.md`/`ESCOPO.md` listados na seção 15.
 - **Infra**: não há CI (um workflow que rode `tools/run_tests.sh` com Godot headless seria útil) e não há branch `main`.
@@ -352,7 +383,7 @@ Sem música.
 
 ## 20. Glossário (termos do dono)
 
-**poste** = `TrainingDummy`; **caçador** = futuro personagem/modo (hoje o bot vermelho); **leve/pesado** = golpes (clique/segurar);
+**poste** = `TrainingDummy`; **caçador** = futuro personagem/modo (hoje o bot vermelho, que reage e é arremessado); **leve/pesado** = golpes (clique/segurar);
 **back-coming** = subida colada na parede após contato na base; **side jump** = wall jump que lança para a frente; **cancel** = 1/2 junto do
 wall jump; **swap cancel** = trocar de arma na recuperação; **dodge cancel** = dash que corta a recuperação; **esquiva perfeita** = dash no
 instante do golpe; **estrela** = dash em cambalhota lateral; **cambalhota** = rolamento do pouso forte; **mortal** = giro do pulo/wall jump;

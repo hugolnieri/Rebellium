@@ -36,6 +36,18 @@ func test_spawn_faces_the_center() -> void:
 	assert_gt(forward.dot(to_center.normalized()), 0.99, "começa virado para o centro")
 
 
+func test_character_faces_the_direction_it_walks() -> void:
+	# O yaw do spawn não pode ficar no corpo: o visual recebe um yaw do mundo e encararia 22,5° fora do caminho.
+	d.look_yaw = 1.0
+	d.step(30, Vector2(0, 1))
+	var velocity := player.get_horizontal_velocity()
+	assert_gt(velocity.length(), 3.0, "está andando")
+	var heading := atan2(-velocity.x, -velocity.z)
+	var facing := player.visual.global_rotation.y
+	assert_almost_eq(wrapf(facing - heading, -PI, PI), 0.0, 0.05, "o personagem encara para onde anda")
+	assert_almost_eq(player.global_rotation.y, 0.0, 0.001, "o corpo do jogador fica sem rotação")
+
+
 func test_black_base_is_the_lowest_point_and_the_floor_rises_outward() -> void:
 	var spawn := arena.get_node("Spawn") as Marker3D
 	player.respawn(Transform3D(Basis(), Vector3(1.5, 2.0, 1.5)))

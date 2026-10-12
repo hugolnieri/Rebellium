@@ -28,8 +28,7 @@ func reset() -> void:
 		var dummy := child as TrainingDummy
 		if dummy == null:
 			continue  # números de dano flutuando
-		dummy.total_damage = 0.0
-		dummy.hp = dummy.config.max_hp
+		dummy.reset_target()
 	_respawn()
 
 
@@ -37,6 +36,6 @@ func _respawn() -> void:
 	var t := spawn.global_transform
 	var yaw := t.basis.get_euler().y
 	player.respawn(Transform3D(Basis(Vector3.UP, yaw), t.origin))
-	player.spawn_transform = player.global_transform
+	player.spawn_transform = Transform3D(Basis(Vector3.UP, yaw), t.origin)
 	player.input_reader.look_yaw = yaw
 	player.input_reader.look_pitch = deg_to_rad(player.camera_config.initial_pitch_deg)

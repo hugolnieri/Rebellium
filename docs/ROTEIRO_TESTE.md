@@ -287,6 +287,7 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 | Golpe aéreo (flutuar e mergulhar) | `air_start_vertical_speed`, `air_active_vertical_speed`, `air_gravity_scale` |
 | Mira assistida, buffer do clique, vida | aba Combate |
 | Postes | `config/dummy_config.tres` (vida, recuperação, intervalo e aviso do agressivo) |
+| Arremesso do caçador | aba **Alvos** (F2) ou `config/dummy_config.tres`, grupo "Arremesso (caçador)": `launch_velocity_scale` (distância), `launch_min_up_speed`/`launch_gravity` (altura e tempo no ar), `launch_wall_bounce`, `slide_friction`, `knockdown_time` |
 
 ## Arena flutuante (cena inicial do jogo; F3 vai para as outras)
 - Plataforma circular sobre as nuvens, à noite, com a cidade lá embaixo. Modelo feito no Blender
@@ -298,8 +299,17 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 - **Muro roxo** de 4,5 m (bom para wall jump) com **4 passagens verdes** de 7 m, cobertas por um teto na altura
   do roxo. Andando, passe pelas passagens; no resto do muro, só wall jump.
 - Ao encostar de lado numa parede andando, você **desliza** nela (não para); a colisão é por blocos convexos.
-- **Caçador** (bot vermelho, cópia do personagem) no centro preto: parado, não age, só recebe dano. É o único bot
-  da arena.
+- **Caçador** (bot vermelho, cópia do personagem) no centro preto: não ataca, só reage. É o único bot da arena.
+  - **Andar reto**: andando para a frente (W) o personagem deve ir exatamente para onde a câmera olha, também logo
+    depois do spawn e depois de cair da borda e voltar (antes ele andava 22,5° de lado, para o centro).
+  - **Golpe leve** (clique): ele cambaleia (animação de dano), desliza um pouco e volta à pose parada.
+  - **Golpe pesado** (segure o clique ~0,27 s): ele é **arremessado** para longe de você, de costas, girando no ar;
+    bate nas paredes e rebate, cai, fica deitado, levanta e **volta ao centro** sozinho (~3 s depois). A etiqueta sobre
+    a cabeça mostra `ARREMESSO x,x m`: compare a Lâmina de Arco (arremesso horizontal longo) com a Presa de Fase
+    (pesado "ascendente": sobe mais, vai menos longe) e o pesado depois de correr/dar dash.
+  - Golpe aéreo e dash só o empurram; ele só bloqueia você enquanto está de pé (voando ou deitado, você atravessa).
+  - Ajuste ao vivo: F2 → aba **Alvos** (`launch_velocity_scale` = alcance, `launch_min_up_speed` = altura).
+  - R reinicia o bot (vida cheia, volta ao centro).
 - Drones em órbita, luzes vermelhas piscando nas antenas,
   propulsores com chama embaixo da plataforma.
 - R reinicia (bot e posição), como na arena de combate.

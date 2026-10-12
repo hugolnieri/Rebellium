@@ -219,3 +219,23 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   dano), no spawn do caçador. Ele usa o `TrainingDummy` com `body_scene`.
 - Parede de lado no chão: o corpo desliza (`floor_block_on_wall = false`). Com o padrão do Godot, o jogador
   parava ao encostar em diagonal, inclusive nas emendas do muro.
+
+## Revisão: personagem anda reto e caçador que voa
+- **Andava em diagonal**: o spawn da arena nova tem yaw de 22,5° (olha para o centro) e `respawn`/`_ready` aplicavam essa
+  rotação no CORPO do Player, mas o jogo trabalha com yaw do MUNDO e o corpo nunca gira: o modelo ficava 22,5° fora do
+  sentido do movimento. Agora `Player._place` zera a rotação do corpo e passa o yaw para o `visual` (`visual.rotation.y`).
+  Isso também corrigiu o sentido padrão do dash e da cambalhota parados (usam a base global do visual).
+  Testes: `test_character_faces_the_direction_it_walks` e `test_respawn_keeps_the_body_unrotated_and_turns_only_the_visual`.
+- **Caçador com os movimentos do personagem**: `HunterBot` (`hunter_bot.gd`, herda de `TrainingDummy`) toca os clipes do
+  `hero.glb` por um `HeroPuppet` (`hero_puppet.gd`): idle de pé, `hurt` ao apanhar, `launched` no ar, `knockdown` ao cair,
+  `getup` ao levantar, com crossfade. Substitui o `body_scene`/`body_scale` do `TrainingDummy` (removidos).
+- **Golpe pesado arremessa**: velocidade = recuo do golpe (`knockback`, `knockback_up`) × `launch_velocity_scale`, subida
+  mínima `launch_min_up_speed`, gravidade própria. Bate nas paredes (rebote), no teto e no chão; ao cair desliza com atrito,
+  fica deitado, levanta e **volta sozinho ao spawn do caçador** (não nasce em cima do jogador: espera). Golpes leves, aéreos
+  e dash só o fazem cambalear e deslizar um pouco. A etiqueta mostra `ARREMESSO x,x m` (distância do último arremesso),
+  para comparar a força dos golpes (Lâmina: recuo 10 / sobe 4; Presa de Fase: recuo 3 / sobe 9, lança para cima).
+- Sem colisão com o jogador enquanto voa, deitado ou levantando (de pé ele bloqueia). Os números ficam no grupo
+  "Arremesso (caçador)" do `DummyConfig` e na aba **Alvos** do F2.
+- **Blender**: 3 clipes novos em `tools/blender/hero_animations.py` (hero.glb regerado por `build_hero.py`):
+  `launched` (0,8 s: arqueado com os braços para cima, depois deitado de costas girando braços e pernas),
+  `knockdown` (0,6 s: bate no chão, quica e acomoda) e `getup` (1,1 s: apoia, senta, agacha e levanta).

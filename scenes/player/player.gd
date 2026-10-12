@@ -97,7 +97,9 @@ func _ready() -> void:
 	sp.depleted.connect(func() -> void: GameEvents.sp_depleted.emit(self))
 	sp.recovered.connect(func() -> void: GameEvents.sp_recovered.emit(self))
 	health = HealthPool.new(combat_config.max_hp)
-	spawn_transform = global_transform
+	var start := global_transform
+	_place(start)
+	spawn_transform = start
 	wall_sensor.setup(self)
 	state_machine.setup(self)
 
@@ -705,7 +707,7 @@ func check_left_ground() -> bool:
 
 ## Teleporta para um ponto (reset/checkpoint), zerando velocidade e restaurando SP.
 func respawn(at: Transform3D) -> void:
-	global_transform = at
+	_place(at)
 	velocity = Vector3.ZERO
 	air_origin = MovementRules.AirOrigin.NONE
 	is_invulnerable = false
@@ -721,6 +723,14 @@ func respawn(at: Transform3D) -> void:
 	sp.refill()
 	reset_physics_interpolation()
 	state_machine.transition_to(&"Idle", "respawn")
+
+
+## O corpo nunca gira: movimento, câmera e visual trabalham com yaw do MUNDO (`visual.rotation.y`).
+## O yaw de um ponto de largada vira só a direção inicial do visual. Se ficasse no corpo, o personagem encararia
+## fora do caminho e o dash/a cambalhota, que partem da frente do visual, sairiam tortos.
+func _place(at: Transform3D) -> void:
+	global_transform = Transform3D(Basis.IDENTITY, at.origin)
+	visual.rotation.y = at.basis.get_euler().y
 
 
 # --- Visual --------------------------------------------------------------------

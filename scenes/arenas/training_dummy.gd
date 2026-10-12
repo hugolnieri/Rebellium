@@ -2,18 +2,18 @@ class_name TrainingDummy
 extends AnimatableBody3D
 ## Poste de treino: alvo dos golpes (grupo "hittable"). Mostra vida, números de dano e balança.
 ## Modos: parado, patrulha (vai e volta) e agressivo (contra-ataca em área com aviso).
-## Com `body_scene` o corpo vira esse modelo (ex.: o caçador vermelho da arena), pintado de `body_color`.
+## O caçador (`HunterBot`) herda daqui e troca o corpo (`_build_body`) e a reação ao golpe (`_react`).
 
 enum Mode { STATIC, PATROL, AGGRESSIVE }
+
+## Altura do centro do corpo (alvo dos golpes) em relação à base.
+const HIT_HEIGHT: float = 1.25
 
 @export var config: DummyConfig
 @export var mode: Mode = Mode.STATIC
 ## Direção da patrulha (local).
 @export var patrol_axis: Vector3 = Vector3.RIGHT
-## Modelo do corpo no lugar dos cilindros (vazio = poste de treino padrão).
-@export var body_scene: PackedScene
 @export var body_color: Color = Color(0.86, 0.84, 0.79)
-@export var body_scale: float = 1.0
 ## Nome mostrado acima do alvo (vazio = nome do modo).
 @export var title: String = ""
 
@@ -28,6 +28,7 @@ var _wobble: Vector2 = Vector2.ZERO
 var _wobble_velocity: Vector2 = Vector2.ZERO
 var _attack_timer: float = 0.0
 var _winding_up: bool = false
+var _collision: CollisionShape3D
 var _pivot: Node3D
 var _hp_label: Label3D
 var _target_material: StandardMaterial3D
@@ -48,7 +49,7 @@ func _ready() -> void:
 
 
 func get_hit_center() -> Vector3:
-	return global_position + Vector3.UP * 1.25
+	return global_position + Vector3.UP * HIT_HEIGHT
 
 
 func get_hit_radius() -> float:
@@ -63,13 +64,24 @@ func take_hit(info: Dictionary) -> bool:
 	total_damage += amount
 	_time_since_hit = 0.0
 	_flash_left = 0.12
-	var knockback: Vector3 = info.get("knockback", Vector3.ZERO)
-	var push := Vector2(knockback.x, knockback.z) * config.wobble_per_knockback * 4.0
-	_wobble_velocity += push
+	_react(info)
 	_spawn_damage_number(amount, info.get("kind", &"light") == CombatRules.KIND_HEAVY)
 	if hp <= 0.0:
 		_broken_left = config.broken_time
 	return true
+
+
+## Zera dano e vida (R na arena). Filhos também voltam ao estado inicial.
+func reset_target() -> void:
+	total_damage = 0.0
+	hp = config.max_hp
+	_broken_left = 0.0
+
+
+## Reação ao golpe: o poste balança (mola). Filhos substituem.
+func _react(info: Dictionary) -> void:
+	var knockback: Vector3 = info.get("knockback", Vector3.ZERO)
+	_wobble_velocity += Vector2(knockback.x, knockback.z) * config.wobble_per_knockback * 4.0
 
 
 func _physics_process(delta: float) -> void:
@@ -133,8 +145,13 @@ func _update_visuals(delta: float) -> void:
 	if _spin_arm != null:
 		_arm_spin = maxf(_arm_spin - delta * TAU * 3.0, 0.0)
 		_spin_arm.rotation.y = TAU - _arm_spin
+	_hp_label.text = _label_text()
+
+
+## Etiqueta sobre o alvo: nome e vida. Filhos acrescentam linhas.
+func _label_text() -> String:
 	var state := "QUEBRADO" if _broken_left > 0.0 else "%d / %d" % [ceili(hp), roundi(config.max_hp)]
-	_hp_label.text = "%s\n%s" % [_mode_name(), state]
+	return "%s\n%s" % [_mode_name(), state]
 
 
 func _mode_name() -> String:
@@ -170,16 +187,23 @@ func _spawn_damage_number(amount: float, big: bool) -> void:
 
 
 func _build() -> void:
-	var collision := CollisionShape3D.new()
+	_build_collision()
+	_build_materials()
+	_build_body()
+	_build_label()
+
+
+func _build_collision() -> void:
+	_collision = CollisionShape3D.new()
 	var shape := CylinderShape3D.new()
 	shape.radius = 0.35
 	shape.height = 2.1
-	collision.shape = shape
-	collision.position = Vector3.UP * 1.05
-	add_child(collision)
+	_collision.shape = shape
+	_collision.position = Vector3.UP * 1.05
+	add_child(_collision)
 
-	var metal := _mat(Color(0.42, 0.44, 0.47), 0.35, 0.8)
-	var dark := _mat(Color(0.08, 0.08, 0.09), 0.6, 0.2)
+
+func _build_materials() -> void:
 	_target_material = _mat(body_color, 0.7, 0.0)
 	_target_material.emission_enabled = true
 	_target_material.emission = Color(1, 1, 1)
@@ -187,23 +211,21 @@ func _build() -> void:
 	_warning_material.emission_enabled = true
 	_warning_material.emission = Color(1.0, 0.1, 0.12)
 
+
+## Corpo do poste (primitivas). Define `_pivot`, que balança. O caçador troca isto pelo boneco do personagem.
+func _build_body() -> void:
+	var metal := _mat(Color(0.42, 0.44, 0.47), 0.35, 0.8)
+	var dark := _mat(Color(0.08, 0.08, 0.09), 0.6, 0.2)
 	_add_mesh(self, _cyl(0.45, 0.5, 0.12), Vector3.UP * 0.06, dark)  # base
 	_pivot = Node3D.new()
 	_pivot.position = Vector3.UP * 0.12
 	add_child(_pivot)
-	if body_scene != null:
-		var body := body_scene.instantiate() as Node3D
-		body.scale = Vector3.ONE * body_scale
-		_pivot.add_child(body)
-		for mesh in body.find_children("*", "MeshInstance3D", true, false):
-			(mesh as MeshInstance3D).material_override = _target_material
-	else:
-		_add_mesh(_pivot, _cyl(0.07, 0.09, 1.0), Vector3.UP * 0.5, metal)  # haste
-		_add_mesh(_pivot, _capsule(0.3, 0.85), Vector3.UP * 1.15, _target_material)  # tronco-alvo
-		for ring_y: float in [0.95, 1.15, 1.35]:
-			_add_mesh(_pivot, _cyl(0.31, 0.31, 0.04), Vector3.UP * ring_y, dark)
-		_add_mesh(_pivot, _sphere(0.17), Vector3.UP * 1.78, _target_material)  # cabeça
-		_add_mesh(_pivot, _cyl(0.32, 0.32, 0.06), Vector3.UP * 1.56, _warning_material)  # anel de aviso
+	_add_mesh(_pivot, _cyl(0.07, 0.09, 1.0), Vector3.UP * 0.5, metal)  # haste
+	_add_mesh(_pivot, _capsule(0.3, 0.85), Vector3.UP * 1.15, _target_material)  # tronco-alvo
+	for ring_y: float in [0.95, 1.15, 1.35]:
+		_add_mesh(_pivot, _cyl(0.31, 0.31, 0.04), Vector3.UP * ring_y, dark)
+	_add_mesh(_pivot, _sphere(0.17), Vector3.UP * 1.78, _target_material)  # cabeça
+	_add_mesh(_pivot, _cyl(0.32, 0.32, 0.06), Vector3.UP * 1.56, _warning_material)  # anel de aviso
 	if mode == Mode.AGGRESSIVE:
 		_spin_arm = Node3D.new()
 		_spin_arm.position = Vector3.UP * 1.25
@@ -215,6 +237,8 @@ func _build() -> void:
 		arm.material_override = _warning_material
 		_spin_arm.add_child(arm)
 
+
+func _build_label() -> void:
 	_hp_label = Label3D.new()
 	_hp_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_hp_label.position = Vector3.UP * 2.35

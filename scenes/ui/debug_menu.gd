@@ -63,6 +63,7 @@ func _build() -> void:
 	_add_tab("Combate", player.combat_config)
 	for weapon in player.weapons:
 		_add_tab(weapon.display_name, weapon)
+	_add_tab("Alvos", load("res://config/dummy_config.tres") as Resource)
 	var sound_manager := get_node_or_null(^"/root/SoundManager")
 	if sound_manager != null:
 		_add_tab("Áudio", sound_manager.get(&"config"))

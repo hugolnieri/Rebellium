@@ -54,6 +54,8 @@ Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`. Contexto completo e estado atu
    próprios do estado Attack, então a pausa não encurta o golpe.
 6. Tempo de gameplay medido em **ticks** (int) quando a janela é justa (bunny hop, cancel);
    em segundos (float, convertidos com o delta fixo) para durações longas.
+10. **O corpo do Player nunca gira**: movimento, câmera e visual usam o yaw do mundo, que vive em `visual.rotation.y`. Para nascer ou
+    teleportar o Player use `Player.respawn`/`_place`, nunca `global_transform = ...` com rotação (o modelo andaria de lado).
 7. Salvar configs sempre com `ConfigIO.save_full` (grava todos os valores; o ResourceSaver padrão
    omite os iguais ao padrão).
 
@@ -80,7 +82,7 @@ tools/             scripts de instalação e de teste
 
 ## Cenas
 - `scenes/arenas/CombatArena.tscn`: postes de treino, HUD de combate, R reinicia.
-- `scenes/arenas/SkyArena.tscn` (principal): arena flutuante sobre as nuvens (modelo do Blender), com o bot caçador vermelho (`HunterBot.tscn`, cópia do personagem que só recebe dano);
+- `scenes/arenas/SkyArena.tscn` (principal): arena flutuante sobre as nuvens (modelo do Blender), com o bot caçador vermelho (`HunterBot.tscn`, cópia do personagem que reage com os clipes do Blender e é arremessada pelo golpe pesado);
   `sky_arena.gd` herda da arena de combate e anima drones, luzes e chamas.
 - `scenes/arenas/TrainingCourse.tscn`: percurso de movimento, cronômetro, checkpoints.
 - `scenes/arenas/Arena.tscn`: arena livre para experimentar.
