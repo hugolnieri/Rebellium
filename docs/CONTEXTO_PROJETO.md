@@ -389,3 +389,10 @@ wall jump; **swap cancel** = trocar de arma na recuperação; **dodge cancel** =
 instante do golpe; **estrela** = dash em cambalhota lateral; **cambalhota** = rolamento do pouso forte; **mortal** = giro do pulo/wall jump;
 **passarela/mureta/borda** = anel externo e seu muro baixo; **muro roxo/vermelho/azul/verde**, **travessa** (muro radial), **passagem** (porta com teto),
 **degradê** (chão inclinado), **base preta** (centro): vocabulário do desenho da arena (seção 10).
+
+
+## Revisão: alinhamento do modelo ao heading
+
+Ao nascer, `InputReader` copia `Player.global_rotation.y` para o yaw inicial da câmera, então W começa seguindo o heading do marcador (na SkyArena, 22,5°). Como `Visual` é filho local do `Player`, `Player._update_visual` converte o heading global em yaw local. Assim a câmera, a trajetória e o modelo começam alinhados. Validação manual no Godot ainda pendente.
+Com `Player._place` (seção 5) o corpo já nasce sem rotação, então essa conversão é a identidade e vale só como salvaguarda;
+`CombatArena._respawn` também já copia o yaw do marcador para a câmera, de modo que o alinhamento inicial não depende só do `InputReader`.

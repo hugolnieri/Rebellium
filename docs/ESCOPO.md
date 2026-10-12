@@ -239,3 +239,9 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - **Blender**: 3 clipes novos em `tools/blender/hero_animations.py` (hero.glb regerado por `build_hero.py`):
   `launched` (0,8 s: arqueado com os braços para cima, depois deitado de costas girando braços e pernas),
   `knockdown` (0,6 s: bate no chão, quica e acomoda) e `getup` (1,1 s: apoia, senta, agacha e levanta).
+
+## Revisão: direção visual ao andar
+
+- Ao nascer, `InputReader` inicia o yaw da câmera com a rotação global do `Player` definida pelo marcador de spawn. `Player._update_visual` converte o heading global para yaw local de `Visual`; câmera, movimento e modelo começam alinhados mesmo com spawn girado.
+- Com `Player._place` (revisão acima) o corpo do Player já nasce sem rotação, então essa conversão para yaw local é a identidade e
+  fica só como salvaguarda; no jogo, `CombatArena._respawn` também já copia o yaw do marcador para a câmera.

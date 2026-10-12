@@ -320,3 +320,10 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 - Parado e andando fica apoiada no ombro; nos golpes acende um halo de energia ao longo da lâmina.
 - Braço livre (esquerdo): balança solto, dobrando o cotovelo na frente e esticando atrás; parado, pende
   relaxado acompanhando a respiração.
+
+
+## Verificação: andar para frente na SkyArena
+
+1. Abra a SkyArena e, sem mexer o mouse, segure W por alguns segundos.
+2. O jogador deve avançar na direção para a qual aponta no spawn, sem desvio diagonal para a direita.
+3. Gire a câmera e repita; W deve seguir o novo frente da câmera e o modelo deve continuar alinhado à trajetória.
