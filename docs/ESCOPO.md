@@ -223,4 +223,4 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 
 ## Revisão: direção visual ao andar
 
-- O yaw de `Visual` é relativo ao `Player`, mas o heading calculado a partir da câmera e do movimento está no mundo. Agora o código subtrai o yaw global do `Player` antes de aplicar a rotação local do modelo, mantendo os dois alinhados também quando a cena inicia com uma rotação no spawn.
+- Ao nascer, `InputReader` inicia o yaw da câmera com a rotação global do `Player` definida pelo marcador de spawn. `Player._update_visual` converte o heading global para yaw local de `Visual`; câmera, movimento e modelo começam alinhados mesmo com spawn girado.
