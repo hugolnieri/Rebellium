@@ -732,7 +732,8 @@ func _update_visual(delta: float) -> void:
 	if facing_override != Vector3.ZERO and state_machine.is_in(&"Attack"):
 		# Golpe: o corpo encara o alvo/câmera.
 		target_yaw = atan2(-facing_override.x, -facing_override.z)
-		visual.rotation.y = target_yaw if instant else lerp_angle(visual.rotation.y, target_yaw,
+		var local_yaw := _visual_local_yaw(target_yaw)
+		visual.rotation.y = local_yaw if instant else lerp_angle(visual.rotation.y, local_yaw,
 			clampf(feedback_config.model_turn_speed * 2.0 * delta, 0.0, 1.0))
 		return
 	elif state_machine.is_in(&"WallJump") and state_machine.current.call(&"is_sticking"):
@@ -752,8 +753,14 @@ func _update_visual(delta: float) -> void:
 		return
 	else:
 		target_yaw = atan2(-horizontal.x, -horizontal.z)
+	target_yaw = _visual_local_yaw(target_yaw)
 	if instant:
 		visual.rotation.y = target_yaw
 		return
 	var weight := clampf(feedback_config.model_turn_speed * delta, 0.0, 1.0)
 	visual.rotation.y = lerp_angle(visual.rotation.y, target_yaw, weight)
+
+
+## Converte um heading do mundo para a rotação local do Visual, filho do Player.
+func _visual_local_yaw(world_yaw: float) -> float:
+	return wrapf(world_yaw - global_rotation.y, -PI, PI)
