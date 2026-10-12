@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/arenas/training_dummy.gd" id="1"]
+[ext_resource type="Resource" path="res://config/dummy_config.tres" id="2"]
+[ext_resource type="PackedScene" path="res://assets/character/hero.glb" id="3"]
+
+[node name="HunterBot" type="AnimatableBody3D"]
+script = ExtResource("1")
+config = ExtResource("2")
+body_scene = ExtResource("3")
+body_color = Color(0.82, 0.08, 0.08, 1)
+body_scale = 0.942
+title = "CAÇADOR"

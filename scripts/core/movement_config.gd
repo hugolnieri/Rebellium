@@ -12,6 +12,8 @@ extends Resource
 @export_range(10.0, 80.0, 1.0, "suffix:°") var floor_max_angle_deg: float = 46.0
 ## Distância de "grude" no chão ao descer degraus/rampas.
 @export_range(0.0, 1.0, 0.01, "suffix:m") var floor_snap_length: float = 0.3
+## Parede de lado no chão: false = desliza nela (padrão do Godot é true, que para o corpo em diagonal).
+@export var floor_block_on_wall: bool = false
 
 @export_group("Chão")
 @export_range(0.5, 30.0, 0.1, "suffix:m/s") var walk_speed: float = 6.0

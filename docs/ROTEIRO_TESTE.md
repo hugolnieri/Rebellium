@@ -291,13 +291,18 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 ## Arena flutuante (cena inicial do jogo; F3 vai para as outras)
 - Plataforma circular sobre as nuvens, à noite, com a cidade lá embaixo. Modelo feito no Blender
   (`art/arena/sky_arena.blend`, gerado por `tools/blender/build_sky_arena.py`).
-- **Passarela externa** com mureta de 1,4 m na borda; dá para pular a mureta e cair (volta ao spawn).
-- **Muro interno** de 5 m (bom para wall jump); nas 4 diagonais um **muro baixo** de 2,5 m fecha a passagem
-  (pule com wall jump ou suba por ele). Colisão por blocos convexos: desliza no muro curvo sem enganchar.
-- Centro plano com os postes de treino em volta do palco de neon.
+- **Chão em degradê**: sobe 1,2 m do centro até a borda; desce do externo para o centro preto, o ponto mais baixo.
+- **Borda vermelha** (mureta de 2,25 m), **4 travessas vermelhas** (N, S, L, O) e **4 muros azuis** de 7 m nas
+  diagonais: todos com 2,25 m e no mesmo círculo, com espaço padrão entre eles. Pular (2,35 m) passa por cima;
+  cair da borda leva de volta ao spawn.
+- **Muro roxo** de 4,5 m (bom para wall jump) com **4 passagens verdes** de 7 m, cobertas por um teto na altura
+  do roxo. Andando, passe pelas passagens; no resto do muro, só wall jump.
+- Ao encostar de lado numa parede andando, você **desliza** nela (não para); a colisão é por blocos convexos.
+- **Caçador** (bot vermelho, cópia do personagem) no centro preto: parado, não age, só recebe dano. É o único bot
+  da arena.
 - Drones em órbita, luzes vermelhas piscando nas antenas,
   propulsores com chama embaixo da plataforma.
-- R reinicia (postes e posição), como na arena de combate.
+- R reinicia (bot e posição), como na arena de combate.
 
 ## Espada (Lâmina de Arco)
 - A Lâmina de Arco usa o modelo 3D enviado (`art/weapons/arc_blade_source.usdz`, convertido por

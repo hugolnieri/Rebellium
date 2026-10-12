@@ -79,7 +79,7 @@ tools/             scripts de instalação e de teste
 
 ## Cenas
 - `scenes/arenas/CombatArena.tscn`: postes de treino, HUD de combate, R reinicia.
-- `scenes/arenas/SkyArena.tscn` (principal): arena flutuante sobre as nuvens (modelo do Blender), postes de treino;
+- `scenes/arenas/SkyArena.tscn` (principal): arena flutuante sobre as nuvens (modelo do Blender), com o bot caçador vermelho (`HunterBot.tscn`, cópia do personagem que só recebe dano);
   `sky_arena.gd` herda da arena de combate e anima drones, luzes e chamas.
 - `scenes/arenas/TrainingCourse.tscn`: percurso de movimento, cronômetro, checkpoints.
 - `scenes/arenas/Arena.tscn`: arena livre para experimentar.

@@ -209,3 +209,13 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Muro interno com 5 m; as passagens ganham um muro de 2,5 m. Globo holográfico removido do centro.
 - Colisão da arena refeita: um bloco convexo por segmento de muro/mureta e prismas para chão e palco
   (antes era uma malha de triângulos, com emendas onde o personagem enganchava).
+
+## Revisão: arena com chão em degradê e caçador
+- Borda vermelha, travessas vermelhas e muros azuis com 2,25 m (metade do muro roxo, que baixou para 4,5 m).
+  Os muros azuis e as travessas formam um círculo com espaço padrão entre eles.
+- Muro roxo com 0,75 m de grossura, 4 passagens de 7 m com teto na altura do roxo (colisão em blocos convexos).
+- Chão em degradê de 1,2 m, do centro preto (ponto mais baixo) até a borda.
+- Postes de treino saíram da SkyArena; fica o bot "caçador" (cópia do personagem em vermelho, parado, só recebe
+  dano), no spawn do caçador. Ele usa o `TrainingDummy` com `body_scene`.
+- Parede de lado no chão: o corpo desliza (`floor_block_on_wall = false`). Com o padrão do Godot, o jogador
+  parava ao encostar em diagonal, inclusive nas emendas do muro.

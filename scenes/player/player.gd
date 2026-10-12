@@ -111,6 +111,7 @@ func apply_body_config() -> void:
 	model.apply_body_height(config.body_height)
 	floor_max_angle = deg_to_rad(config.floor_max_angle_deg)
 	floor_snap_length = config.floor_snap_length
+	floor_block_on_wall = config.floor_block_on_wall
 
 
 func _physics_process(delta: float) -> void:

@@ -2,6 +2,7 @@ class_name TrainingDummy
 extends AnimatableBody3D
 ## Poste de treino: alvo dos golpes (grupo "hittable"). Mostra vida, números de dano e balança.
 ## Modos: parado, patrulha (vai e volta) e agressivo (contra-ataca em área com aviso).
+## Com `body_scene` o corpo vira esse modelo (ex.: o caçador vermelho da arena), pintado de `body_color`.
 
 enum Mode { STATIC, PATROL, AGGRESSIVE }
 
@@ -9,6 +10,12 @@ enum Mode { STATIC, PATROL, AGGRESSIVE }
 @export var mode: Mode = Mode.STATIC
 ## Direção da patrulha (local).
 @export var patrol_axis: Vector3 = Vector3.RIGHT
+## Modelo do corpo no lugar dos cilindros (vazio = poste de treino padrão).
+@export var body_scene: PackedScene
+@export var body_color: Color = Color(0.86, 0.84, 0.79)
+@export var body_scale: float = 1.0
+## Nome mostrado acima do alvo (vazio = nome do modo).
+@export var title: String = ""
 
 var hp: float = 0.0
 var total_damage: float = 0.0
@@ -131,6 +138,8 @@ func _update_visuals(delta: float) -> void:
 
 
 func _mode_name() -> String:
+	if title != "":
+		return title
 	match mode:
 		Mode.PATROL:
 			return "POSTE MÓVEL"
@@ -171,7 +180,7 @@ func _build() -> void:
 
 	var metal := _mat(Color(0.42, 0.44, 0.47), 0.35, 0.8)
 	var dark := _mat(Color(0.08, 0.08, 0.09), 0.6, 0.2)
-	_target_material = _mat(Color(0.86, 0.84, 0.79), 0.7, 0.0)
+	_target_material = _mat(body_color, 0.7, 0.0)
 	_target_material.emission_enabled = true
 	_target_material.emission = Color(1, 1, 1)
 	_warning_material = _mat(Color(0.25, 0.04, 0.05), 0.5, 0.0)
@@ -182,12 +191,19 @@ func _build() -> void:
 	_pivot = Node3D.new()
 	_pivot.position = Vector3.UP * 0.12
 	add_child(_pivot)
-	_add_mesh(_pivot, _cyl(0.07, 0.09, 1.0), Vector3.UP * 0.5, metal)  # haste
-	_add_mesh(_pivot, _capsule(0.3, 0.85), Vector3.UP * 1.15, _target_material)  # tronco-alvo
-	for ring_y: float in [0.95, 1.15, 1.35]:
-		_add_mesh(_pivot, _cyl(0.31, 0.31, 0.04), Vector3.UP * ring_y, dark)
-	_add_mesh(_pivot, _sphere(0.17), Vector3.UP * 1.78, _target_material)  # cabeça
-	_add_mesh(_pivot, _cyl(0.32, 0.32, 0.06), Vector3.UP * 1.56, _warning_material)  # anel de aviso
+	if body_scene != null:
+		var body := body_scene.instantiate() as Node3D
+		body.scale = Vector3.ONE * body_scale
+		_pivot.add_child(body)
+		for mesh in body.find_children("*", "MeshInstance3D", true, false):
+			(mesh as MeshInstance3D).material_override = _target_material
+	else:
+		_add_mesh(_pivot, _cyl(0.07, 0.09, 1.0), Vector3.UP * 0.5, metal)  # haste
+		_add_mesh(_pivot, _capsule(0.3, 0.85), Vector3.UP * 1.15, _target_material)  # tronco-alvo
+		for ring_y: float in [0.95, 1.15, 1.35]:
+			_add_mesh(_pivot, _cyl(0.31, 0.31, 0.04), Vector3.UP * ring_y, dark)
+		_add_mesh(_pivot, _sphere(0.17), Vector3.UP * 1.78, _target_material)  # cabeça
+		_add_mesh(_pivot, _cyl(0.32, 0.32, 0.06), Vector3.UP * 1.56, _warning_material)  # anel de aviso
 	if mode == Mode.AGGRESSIVE:
 		_spin_arm = Node3D.new()
 		_spin_arm.position = Vector3.UP * 1.25

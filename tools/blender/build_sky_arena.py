@@ -10,10 +10,13 @@ para o chão), sem malha visível; o Godot cria um StaticBody3D com ConvexPolygo
 Isso evita as emendas de uma colisão por triângulos (personagem enganchando, normal da parede pulando).
 Os nós "Drone_*", "Beacon_*" e "Flame_*" são animados por scenes/arenas/sky_arena.gd.
 
-Medidas (metros, chão da plataforma em z = 0):
-  anel externo   r 17–24,5   passarela, com mureta de 1,4 m na borda (r 24,5–26)
-  muro interno   r 15,5–17   5 m de altura (bom para wall jump); nas 4 diagonais um muro baixo de 2,5 m
-  centro         r < 15,5    chão liso, palco com anéis de neon
+Medidas (metros; o centro preto é o ponto mais baixo, z = 0, e o chão sobe 1,2 m até a borda):
+  borda vermelha  r 24,5–26   mureta de 2,25 m (metade do muro roxo), 1,5 m de grossura
+  travessas       4 muros vermelhos radiais (N, S, L, O) de r 20 até a borda
+  círculo azul    4 muros azuis de 7 m nas diagonais (r 20), mesma altura do vermelho
+  muro roxo       r 13,8–14,6, 4,5 m de altura (bom para wall jump); nas diagonais, 4 passagens
+                  de 7 m com teto (verde) na altura do roxo
+  centro preto    r < 3,9, altura 0: spawn do caçador (bot vermelho por enquanto)
 
 Uso:  blender -b -P tools/blender/build_sky_arena.py    ou    python3 tools/blender/build_sky_arena.py
 """
@@ -33,13 +36,23 @@ OUT_GLB = os.path.join(ROOT, "assets", "arena", "sky_arena.glb")
 TAU = math.tau
 SEG = 96  # segmentos de um círculo completo
 
-R_RIM_OUT, R_RIM_IN, RIM_H = 26.0, 24.5, 1.4
-R_WALL_OUT, R_WALL_IN, WALL_H = 17.0, 15.5, 5.0
-GATE_H = WALL_H * 0.5  # muro baixo que fecha cada passagem
-TIERS = []  # arquibancada (r_in, r_out, altura) — removida: o centro é plano
-GATE_ANGLES = [TAU / 8, 3 * TAU / 8, 5 * TAU / 8, 7 * TAU / 8]
-GATE_HALF = 0.15  # rad (≈ 4,7 m de passagem no muro)
-BASE_TOP, BASE_BOTTOM = 0.0, -1.2
+# Borda do mapa (vermelha, já existia) e medidas derivadas.
+R_RIM_OUT, R_RIM_IN = 26.0, 24.5
+T_RED = R_RIM_OUT - R_RIM_IN  # grossura do muro vermelho
+T_THIN = T_RED / 2  # azul, roxo e teto das passagens: metade do vermelho
+R_RING = 20.0  # círculo das travessas vermelhas e dos muros azuis
+R_PURPLE = 14.2  # muro roxo central
+H_PURPLE = 4.5  # um pouco menor que os 5 m de antes
+H_RED = H_PURPLE / 2  # vermelho e azul: metade do roxo
+BLUE_LEN = 7.0  # comprimento de cada muro azul = largura de cada passagem
+R_BASE = 3.9  # centro preto (ponto mais baixo)
+FLOOR_RISE = 1.2  # o chão sobe linearmente do centro até a borda
+BASE_BOTTOM = -1.2  # fundo do casco
+RIM_TOP = FLOOR_RISE + H_RED  # topo da borda vermelha
+DIAGONALS = [TAU / 8, 3 * TAU / 8, 5 * TAU / 8, 7 * TAU / 8]  # passagens (roxo) e muros azuis
+SPOKES = [0.0, TAU / 4, TAU / 2, 3 * TAU / 4]  # travessas vermelhas (N, S, L, O)
+BLUE_HALF = BLUE_LEN / 2 / R_RING  # meio-ângulo de cada muro azul
+DOOR_HALF = BLUE_LEN / 2 / R_PURPLE  # meio-ângulo de cada passagem no roxo
 
 
 def log(*args):
@@ -314,13 +327,18 @@ class Builder:
         return obj
 
 
-def gaps(r_in, r_out):
-    """Setores entre as passagens (a0, a1)."""
+def between_doors():
+    """Setores do muro roxo entre as passagens (a0, a1)."""
     out = []
-    for i, g in enumerate(GATE_ANGLES):
-        nxt = GATE_ANGLES[(i + 1) % len(GATE_ANGLES)] + (TAU if i == len(GATE_ANGLES) - 1 else 0)
-        out.append((g + GATE_HALF, nxt - GATE_HALF))
+    for i, d in enumerate(DIAGONALS):
+        nxt = DIAGONALS[(i + 1) % len(DIAGONALS)] + (TAU if i == len(DIAGONALS) - 1 else 0)
+        out.append((d + DOOR_HALF, nxt - DOOR_HALF))
     return out
+
+
+def door_ranges():
+    """Setores das passagens (verdes) no muro roxo."""
+    return [(d - DOOR_HALF, d + DOOR_HALF) for d in DIAGONALS]
 
 
 # --- Peças ---------------------------------------------------------------------------------------
@@ -339,10 +357,23 @@ def convex_ring(name, r_in, r_out, z0, z1, parent, a0=0.0, a1=TAU):
     n = max(1, int(round(SEG * (a1 - a0) / TAU)))
     for i in range(n):
         a, b = a0 + (a1 - a0) * i / n, a0 + (a1 - a0) * (i + 1) / n
-        pts = [(r * math.cos(t), r * math.sin(t)) for r, t in ((r_in, a), (r_out, a), (r_out, b), (r_in, b))]
-        verts = [(x, y, z0) for x, y in pts] + [(x, y, z1) for x, y in pts]
-        faces = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
-        _collider("%s_%02d" % (name, i), verts, faces, parent)
+        ring = [(r * math.cos(t), r * math.sin(t)) for r, t in ((r_in, a), (r_out, a), (r_out, b), (r_in, b))]
+        convex_seg("%s_%02d" % (name, i), ring, z0, [z1] * 4, parent)
+
+
+def convex_seg(name, ring, z_bot, z_top, parent):
+    """Bloco convexo de 4 cantos (x, y) em ordem; cada canto tem o seu topo em z_top[i]."""
+    verts = [(x, y, z_bot) for x, y in ring] + [(x, y, z) for (x, y), z in zip(ring, z_top)]
+    faces = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+    _collider(name, verts, faces, parent)
+
+
+def convex_floor(name, r0, r1, parent):
+    """Um bloco convexo por segmento da faixa de chão (o topo de cada um segue o degradê)."""
+    for i in range(SEG):
+        a, b = TAU * i / SEG, TAU * (i + 1) / SEG
+        ring = [(r * math.cos(t), r * math.sin(t)) for r, t in ((r0, a), (r1, a), (r1, b), (r0, b))]
+        convex_seg("%s_%02d" % (name, i), ring, BASE_BOTTOM, [floor_h(r) for r in (r0, r1, r1, r0)], parent)
 
 
 def convex_disc(name, r, z0, z1, parent):
@@ -353,72 +384,117 @@ def convex_disc(name, r, z0, z1, parent):
     _collider(name, verts, faces, parent)
 
 
-def gate_ranges():
-    return [(g - GATE_HALF, g + GATE_HALF) for g in GATE_ANGLES]
+def floor_h(r):
+    """Altura do chão no raio r: 0 no centro preto, FLOOR_RISE a partir da borda interna da mureta."""
+    t = (min(max(r, R_BASE), R_RIM_IN) - R_BASE) / (R_RIM_IN - R_BASE)
+    return FLOOR_RISE * t
+
+
+def polar(r, a, z):
+    return Vector((r * math.cos(a), r * math.sin(a), z))
+
+
+def floor_band(b, mat, r0, r1, tile=4.0):
+    """Faixa do chão entre dois raios; o topo acompanha o degradê."""
+    for i in range(SEG):
+        a, c = TAU * i / SEG, TAU * (i + 1) / SEG
+        pts = [polar(r0, a, floor_h(r0)), polar(r1, a, floor_h(r1)), polar(r1, c, floor_h(r1)),
+               polar(r0, c, floor_h(r0))]
+        b.quad(pts, [(q.x / tile, q.y / tile) for q in pts], mat)
+
+
+def floor_strip(b, r0, r1, mat, lift=0.01, tile=1.0):
+    """Faixa fina colada no chão (zebrado); acompanha o degradê."""
+    for i in range(SEG):
+        a, c = TAU * i / SEG, TAU * (i + 1) / SEG
+        pts = [polar(r0, a, floor_h(r0) + lift), polar(r1, a, floor_h(r1) + lift),
+               polar(r1, c, floor_h(r1) + lift), polar(r0, c, floor_h(r0) + lift)]
+        b.quad(pts, [(q.x / tile, q.y / tile) for q in pts], mat)
+
+
+def radial_wall(b, name, a, r0, r1, thickness, height, mat, parent):
+    """Travessa radial de r0 a r1 (ângulo a). O topo fica `height` acima do chão em cada ponto."""
+    d = Vector((math.cos(a), math.sin(a), 0.0))
+    t = Vector((-math.sin(a), math.cos(a), 0.0)) * (thickness / 2)
+    corners = [d * r + t * s for r, s in ((r0, -1), (r1, -1), (r1, 1), (r0, 1))]
+    rs = (r0, r1, r1, r0)
+    tops = [floor_h(r) + height for r in rs]
+    pts = [(c.x, c.y, BASE_BOTTOM) for c in corners] + [(c.x, c.y, z) for c, z in zip(corners, tops)]
+    uv = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    for quad in ((0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)):
+        b.quad([pts[i] for i in quad], uv, mat)
+    convex_seg(name, [(c.x, c.y) for c in corners], BASE_BOTTOM, tops, parent)
 
 
 def build_platform(m, root):
-    # Chão + casco.
+    # Chão em degradê: 0 no centro preto, sobe até FLOOR_RISE na borda interna da mureta.
     b = Builder()
-    b.disc(R_RIM_OUT, BASE_TOP, m["floor"])
-    b.ring(0.0, R_RIM_OUT, BASE_BOTTOM, BASE_TOP, m["hull"], top=False, bottom=True, inner=False)
+    floor_band(b, m["floor"], R_BASE, R_RIM_IN)
+    b.ring(0.0, R_RIM_OUT, BASE_BOTTOM, FLOOR_RISE, m["hull"], top=False, bottom=True, inner=False)
     b.finish("Deck", root)
-    convex_disc("DeckCol", R_RIM_OUT, BASE_BOTTOM, BASE_TOP, root)
-    # Mureta da borda.
+    convex_floor("DeckCol", R_BASE, R_RIM_IN, root)
+    # Centro preto: ponto mais baixo do jogo (onde fica o spawn do caçador).
     b = Builder()
-    b.ring(R_RIM_IN, R_RIM_OUT, BASE_TOP, RIM_H, m["wall"], side_mat=m["hull"], tile=3.0)
+    b.disc(R_BASE, 0.0, m["trim"], tile=2.0)
+    b.finish("Base", root)
+    convex_disc("BaseCol", R_BASE, BASE_BOTTOM, 0.0, root)
+    # Borda do mapa (vermelha), com a mesma altura das travessas.
+    b = Builder()
+    b.ring(R_RIM_IN, R_RIM_OUT, BASE_BOTTOM, RIM_TOP, m["wall"], side_mat=m["hull"], tile=3.0)
     b.finish("Rim", root)
-    convex_ring("RimCol", R_RIM_IN, R_RIM_OUT, BASE_TOP, RIM_H, root)
-    # Muro interno (bom para wall jump) e, nas passagens, um muro baixo com metade da altura.
+    convex_ring("RimCol", R_RIM_IN, R_RIM_OUT, BASE_BOTTOM, RIM_TOP, root)
+    # Travessas vermelhas (N, S, L, O) e muros azuis (diagonais), todos no mesmo círculo.
     b = Builder()
-    for a0, a1 in gaps(R_WALL_IN, R_WALL_OUT):
-        b.ring(R_WALL_IN, R_WALL_OUT, BASE_TOP, WALL_H, m["wall"], a0, a1, tile=3.0)
-        convex_ring("WallCol%d" % int(a0 * 100), R_WALL_IN, R_WALL_OUT, BASE_TOP, WALL_H, root, a0, a1)
-    for a0, a1 in gate_ranges():
-        b.ring(R_WALL_IN, R_WALL_OUT, BASE_TOP, GATE_H, m["wall"], a0, a1, tile=3.0)
-        convex_ring("GateCol%d" % int(a0 * 100), R_WALL_IN, R_WALL_OUT, BASE_TOP, GATE_H, root, a0, a1)
-    b.finish("InnerWall", root)
-    # Palco central.
+    for k, a in enumerate(SPOKES):
+        radial_wall(b, "SpokeCol%d" % k, a, R_RING, R_RIM_IN + 0.05, T_RED, H_RED, m["wall"], root)
+    blue_top = floor_h(R_RING) + H_RED
+    for a in DIAGONALS:
+        a0, a1 = a - BLUE_HALF, a + BLUE_HALF
+        b.ring(R_RING - T_THIN / 2, R_RING + T_THIN / 2, BASE_BOTTOM, blue_top, m["wall"], a0, a1, tile=3.0)
+        convex_ring("BlueCol%d" % round(math.degrees(a)), R_RING - T_THIN / 2, R_RING + T_THIN / 2,
+                    BASE_BOTTOM, blue_top, root, a0, a1)
+    b.finish("RedBlueWalls", root)
+    # Muro roxo central: 4 passagens (verdes), cada uma com teto na altura do roxo.
     b = Builder()
-    b.ring(0.0, 3.2, BASE_TOP, 0.35, m["wall"], inner=False, tile=2.0)
-    b.finish("Dais", root)
-    convex_disc("DaisCol", 3.2, BASE_TOP, 0.35, root)
+    r_in, r_out = R_PURPLE - T_THIN / 2, R_PURPLE + T_THIN / 2
+    purple_top = floor_h(R_PURPLE) + H_PURPLE
+    for k, (a0, a1) in enumerate(between_doors()):
+        b.ring(r_in, r_out, BASE_BOTTOM, purple_top, m["wall"], a0, a1, tile=3.0)
+        convex_ring("PurpleCol%d" % k, r_in, r_out, BASE_BOTTOM, purple_top, root, a0, a1)
+    lintel_bottom = purple_top - T_THIN
+    for k, (a0, a1) in enumerate(door_ranges()):
+        b.ring(r_in, r_out, lintel_bottom, purple_top, m["wall"], a0, a1, bottom=True, tile=3.0)
+        convex_ring("LintelCol%d" % k, r_in, r_out, lintel_bottom, purple_top, root, a0, a1)
+    b.finish("PurpleWall", root)
 
 
 def build_neon(m, root):
     b = Builder()
     eps = 0.01
-    # Passarela: faixa no pé da mureta e no topo da mureta.
-    b.ring(R_RIM_IN - 0.06, R_RIM_IN - eps, 0.05, 0.14, m["cyan"], top=True, outer=False)
-    b.ring(R_RIM_IN - 0.02, R_RIM_IN + 0.12, RIM_H, RIM_H + 0.02, m["cyan"], inner=False, outer=False)
+    # Borda: faixa ciano rente ao chão na face interna e ciano no topo da mureta.
+    b.ring(R_RIM_IN - 0.06, R_RIM_IN - eps, FLOOR_RISE + 0.05, FLOOR_RISE + 0.14, m["cyan"], top=True, outer=False)
+    b.ring(R_RIM_IN - 0.02, R_RIM_IN + 0.12, RIM_TOP, RIM_TOP + 0.02, m["cyan"], inner=False, outer=False)
     b.ring(R_RIM_OUT + eps, R_RIM_OUT + 0.06, -0.5, -0.4, m["blue"], inner=False, top=True)
-    for a0, a1 in gaps(R_WALL_IN, R_WALL_OUT):
-        # Muro interno: faixa laranja no meio da face externa e ciano no topo.
-        b.ring(R_WALL_OUT + eps, R_WALL_OUT + 0.06, 1.5, 1.6, m["orange"], a0, a1, inner=False)
-        b.ring(R_WALL_IN - 0.06, R_WALL_IN - eps, 1.5, 1.6, m["magenta"], a0, a1, outer=False)
-        b.ring(R_WALL_OUT + eps, R_WALL_OUT + 0.06, 4.2, 4.28, m["cyan"], a0, a1, inner=False)
-        b.ring(R_WALL_IN - 0.06, R_WALL_IN - eps, 4.2, 4.28, m["cyan"], a0, a1, outer=False)
-        b.ring(R_WALL_IN - 0.02, R_WALL_IN + 0.1, WALL_H, WALL_H + 0.02, m["cyan"], a0, a1, inner=False,
-               outer=False, caps=False)
-        # Espelhos dos degraus: magenta e ciano alternados por setor.
-        for k, (r_in, r_out, h) in enumerate(TIERS):
-            mat = m["magenta"] if k % 2 == 0 else m["cyan"]
-            b.ring(r_in - 0.05, r_in - eps, h - 0.14, h - 0.06, mat, a0, a1, top=True, outer=False)
-    for a0, a1 in gate_ranges():
-        b.ring(R_WALL_IN - 0.02, R_WALL_IN + 0.1, GATE_H, GATE_H + 0.02, m["cyan"], a0, a1, inner=False,
-               outer=False, caps=False)
-        b.ring(R_WALL_OUT + eps, R_WALL_OUT + 0.06, 1.5, 1.6, m["orange"], a0, a1, inner=False)
-        b.ring(R_WALL_IN - 0.06, R_WALL_IN - eps, 1.5, 1.6, m["magenta"], a0, a1, outer=False)
-    # Chão: faixa zebrada perto do muro e anéis no centro.
-    b.ring(R_WALL_OUT + 0.4, R_WALL_OUT + 0.9, BASE_TOP, BASE_TOP + 0.01, m["hazard"], inner=False, outer=False,
-           tile=1.0)
-    b.ring(R_RIM_IN - 1.2, R_RIM_IN - 0.9, BASE_TOP, BASE_TOP + 0.01, m["hazard"], inner=False, outer=False,
-           tile=1.0)
-    b.ring(7.8, 8.05, BASE_TOP, BASE_TOP + 0.012, m["cyan"], inner=False, outer=False)
-    b.ring(5.0, 5.15, BASE_TOP, BASE_TOP + 0.012, m["orange"], inner=False, outer=False)
-    b.ring(3.2, 3.3, 0.0, 0.36, m["cyan"], inner=False)
-    b.ring(1.6, 1.75, 0.35, 0.37, m["magenta"], inner=False, outer=False)
-    b.ring(2.4, 2.5, 0.35, 0.37, m["cyan"], inner=False, outer=False)
+    # Muro roxo: laranja por fora, magenta por dentro, ciano perto do topo; luz rente ao teto das passagens.
+    zf = floor_h(R_PURPLE)
+    p_in, p_out = R_PURPLE - T_THIN / 2, R_PURPLE + T_THIN / 2
+    top = zf + H_PURPLE
+    for a0, a1 in between_doors():
+        b.ring(p_out + eps, p_out + 0.06, zf + 1.5, zf + 1.6, m["orange"], a0, a1, inner=False)
+        b.ring(p_in - 0.06, p_in - eps, zf + 1.5, zf + 1.6, m["magenta"], a0, a1, outer=False)
+        b.ring(p_out + eps, p_out + 0.06, top - 0.5, top - 0.42, m["cyan"], a0, a1, inner=False)
+        b.ring(p_in - 0.06, p_in - eps, top - 0.5, top - 0.42, m["cyan"], a0, a1, outer=False)
+        b.ring(p_in - 0.02, p_out + 0.02, top, top + 0.02, m["cyan"], a0, a1, inner=False, outer=False, caps=False)
+    for a0, a1 in door_ranges():
+        lintel = top - T_THIN - 0.005
+        b.ring(p_in - 0.02, p_out + 0.02, lintel, lintel + 0.02, m["cyan"], a0, a1, top=False, bottom=True,
+               inner=False, outer=False, caps=False)
+    # Chão: zebrado perto da borda e perto do muro roxo; centro preto com contorno e anéis (alvo do caçador).
+    floor_strip(b, R_RIM_IN - 1.2, R_RIM_IN - 0.9, m["hazard"])
+    floor_strip(b, p_out + 0.4, p_out + 0.9, m["hazard"])
+    b.ring(R_BASE - 0.12, R_BASE - 0.02, 0.0, 0.012, m["cyan"], inner=False, outer=False)
+    b.ring(1.6, 1.75, 0.0, 0.012, m["magenta"], inner=False, outer=False)
+    b.ring(2.4, 2.5, 0.0, 0.012, m["cyan"], inner=False, outer=False)
     b.finish("Neon", root)
 
 
@@ -497,16 +573,16 @@ def build_antennas(m, root):
         corners = [(x + s * dx, y + s * dy) for dx, dy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
         for k in range(4):
             cx, cy = corners[k]
-            b.beam((cx, cy, RIM_H), (x + (cx - x) * 0.3, y + (cy - y) * 0.3, RIM_H + h), 0.08, m["truss"])
+            b.beam((cx, cy, RIM_TOP), (x + (cx - x) * 0.3, y + (cy - y) * 0.3, RIM_TOP + h), 0.08, m["truss"])
         for level in range(1, int(h)):
-            z = RIM_H + level
+            z = RIM_TOP + level
             f = 1 - 0.7 * level / h
             pts = [(x + (cx - x) * f, y + (cy - y) * f, z) for cx, cy in corners]
             for k in range(4):
                 b.beam(pts[k], pts[(k + 1) % 4], 0.05, m["truss"])
-        b.box((x, y, RIM_H + 0.15), (1.2, 1.2, 0.3), m["trim"])
+        b.box((x, y, RIM_TOP + 0.15), (1.2, 1.2, 0.3), m["trim"])
         # Prato.
-        dish_z = RIM_H + h * 0.55
+        dish_z = RIM_TOP + h * 0.55
         out = Vector((math.cos(a), math.sin(a), 0))
         dc = Vector((x, y, dish_z)) + out * 0.6
         b.beam((x, y, dish_z), dc, 0.12, m["trim"])
@@ -530,7 +606,7 @@ def build_antennas(m, root):
         beacon = Builder()
         beacon.cylinder((0, 0, -0.12), 0.12, 0.24, m["red"], sides=10)
         obj = beacon.finish("Beacon_%d" % i, root)
-        obj.location = (x, y, RIM_H + h + 0.12)
+        obj.location = (x, y, RIM_TOP + h + 0.12)
 
 
 def build_drones(m, root):

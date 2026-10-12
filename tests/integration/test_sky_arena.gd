@@ -1,6 +1,6 @@
 extends GutTest
-## Arena flutuante (modelo do Blender): colisão do chão, muro interno serve para wall jump e queda
-## da plataforma volta ao spawn.
+## Arena flutuante (modelo do Blender): chão em degradê (centro preto = ponto mais baixo), muro roxo serve
+## para wall jump e tem passagens verdes, o caçador vermelho é o único bot e a queda volta ao spawn.
 
 const ARENA: PackedScene = preload("res://scenes/arenas/SkyArena.tscn")
 const Driver = preload("res://tests/helpers/player_driver.gd")
@@ -22,38 +22,65 @@ func before_each() -> void:
 	d.step(20)
 
 
-func test_player_stands_on_the_platform_deck() -> void:
+func test_player_stands_on_the_spawn() -> void:
+	var spawn := arena.get_node("Spawn") as Marker3D
 	assert_true(player.is_on_floor(), "pisa no chão gerado pelo Blender")
-	assert_almost_eq(player.global_position.y, 0.0, 0.1)
+	assert_almost_eq(player.global_position.y, spawn.global_position.y, 0.1)
+
+
+func test_spawn_faces_the_center() -> void:
+	var spawn := arena.get_node("Spawn") as Marker3D
+	var forward := -spawn.global_basis.z
+	var to_center := -spawn.global_position
+	to_center.y = 0.0
+	assert_gt(forward.dot(to_center.normalized()), 0.99, "começa virado para o centro")
+
+
+func test_black_base_is_the_lowest_point_and_the_floor_rises_outward() -> void:
+	var spawn := arena.get_node("Spawn") as Marker3D
+	player.respawn(Transform3D(Basis(), Vector3(1.5, 2.0, 1.5)))
+	d.step(60)
+	assert_true(player.is_on_floor(), "centro preto tem chão")
+	assert_almost_eq(player.global_position.y, 0.0, 0.1, "centro preto é o ponto mais baixo")
+	assert_gt(spawn.global_position.y, player.global_position.y + 0.8, "o chão sobe em degradê até a borda")
 
 
 func test_inner_wall_allows_wall_jump() -> void:
-	# Da passarela (z = 21) correndo para o centro, o muro interno fica em z = 17.
-	d.step_until(func() -> bool: return player.global_position.z < 19.0, 60, Vector2(0, 1))
+	# De fora do muro roxo (r = 14,6), andando para o centro a partir de z = -17.
+	player.respawn(Transform3D(Basis(Vector3.UP, PI), Vector3(0.0, 1.0, -17.0)))
+	d.look_yaw = PI
+	d.step_until(func() -> bool: return player.global_position.z > -16.0, 60, Vector2(0, 1))
 	d.press_jump()
 	d.step(1, Vector2(0, 1))
 	assert_gt(d.step_until(func() -> bool: return player.wall_sensor.has_contact, 90, Vector2(0, 1)), 0,
-		"encostou no muro interno")
+		"encostou no muro roxo")
 	d.press_jump()
 	d.step(1)
 	assert_eq(player.get_state_name(), &"WallJump")
 
 
 func test_falling_off_the_platform_respawns() -> void:
+	var spawn := arena.get_node("Spawn") as Marker3D
 	player.respawn(Transform3D(Basis(), Vector3(40, -25, 0)))
 	await wait_physics_frames(3)
-	assert_almost_eq(player.global_position.z, 21.0, 0.2, "voltou ao spawn depois de cair")
+	assert_lt(player.global_position.distance_to(spawn.global_position), 0.3, "voltou ao spawn depois de cair")
 
 
-func test_gate_low_wall_blocks_walking_through() -> void:
-	# Passagem na diagonal (+X, -Z): o muro baixo fecha a entrada andando.
-	var dir := Vector3(1, 0, -1).normalized()
-	player.respawn(Transform3D(Basis(), dir * 20.0 + Vector3.UP * 0.05))
-	d.look_yaw = PI * 0.75  # olhando para o centro
+func test_purple_wall_blocks_walking_but_green_doors_let_through() -> void:
+	# O muro roxo fecha o caminho (de -z para o centro)...
+	player.respawn(Transform3D(Basis(Vector3.UP, PI), Vector3(0.0, 1.0, -17.0)))
+	d.look_yaw = PI
 	d.step(120, Vector2(0, 1))
 	var r := Vector2(player.global_position.x, player.global_position.z).length()
-	assert_gt(r, 16.9, "parou no muro baixo (r = %.2f)" % r)
+	assert_gt(r, 14.4, "parou no muro roxo (r = %.2f)" % r)
 	assert_true(player.is_on_floor())
+	# ...mas a passagem verde na diagonal (-X, -Z) deixa entrar andando.
+	var dir := Vector3(-1, 0, -1).normalized()
+	player.respawn(Transform3D(Basis(), dir * 17.5 + Vector3.UP))
+	d.look_yaw = -0.75 * PI  # olhando para o centro
+	d.step(120, Vector2(0, 1))
+	r = Vector2(player.global_position.x, player.global_position.z).length()
+	assert_lt(r, 10.0, "passou pela passagem verde (r = %.2f)" % r)
 
 
 func test_wall_collision_is_smooth_convex_blocks() -> void:
@@ -64,12 +91,31 @@ func test_wall_collision_is_smooth_convex_blocks() -> void:
 
 
 func test_sliding_along_the_curved_wall_does_not_snag() -> void:
-	# Passarela encostada no muro (r = 17,5), andando na tangente e empurrando para dentro: desliza.
-	player.respawn(Transform3D(Basis(), Vector3(0, 0.05, 17.5)))
-	d.look_yaw = PI * 0.5 - 0.35  # para -X, um pouco virado contra o muro
+	# Passarela colada no muro roxo por fora (r = 15,3), andando na tangente e empurrando para dentro.
+	player.respawn(Transform3D(Basis(), Vector3(0.0, 1.0, -15.3)))
+	d.look_yaw = PI * 0.5 + 0.35
 	d.step(20, Vector2(0, 1))
 	var slowest := INF
 	for i in 60:
 		d.step(1, Vector2(0, 1))
 		slowest = minf(slowest, player.get_horizontal_speed())
 	assert_gt(slowest, 3.0, "não engancha nas emendas do muro (mínimo %.2f m/s)" % slowest)
+
+
+func test_hunter_bot_is_the_only_bot_on_the_map() -> void:
+	var bots: Array = arena.get_node("Dummies").get_children().filter(
+		func(n: Node) -> bool: return n is TrainingDummy)
+	assert_eq(bots.size(), 1, "só o caçador é bot na arena")
+	assert_eq(String(bots[0].name), "HunterBot")
+
+
+func test_hunter_bot_stands_on_the_black_base_and_only_takes_damage() -> void:
+	var bot := arena.get_node("Dummies/HunterBot") as TrainingDummy
+	var hunter_spawn := arena.get_node("HunterSpawn") as Marker3D
+	assert_true(bot.is_in_group(&"hittable"), "é alvo dos golpes")
+	assert_eq(bot.mode, TrainingDummy.Mode.STATIC, "parado: não faz nada, só recebe dano")
+	assert_lt(bot.global_position.distance_to(hunter_spawn.global_position), 0.05, "nasce no spawn do caçador")
+	assert_gt(bot.find_children("*", "MeshInstance3D", true, false).size(), 0, "corpo é o modelo do personagem")
+	var max_hp: float = bot.config.max_hp
+	assert_true(bot.take_hit({"damage": 10.0, "kind": &"light", "knockback": Vector3.ZERO}), "aceita dano")
+	assert_almost_eq(bot.hp, max_hp - 10.0, 0.01)
