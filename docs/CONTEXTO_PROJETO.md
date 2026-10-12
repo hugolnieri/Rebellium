@@ -358,3 +358,8 @@ wall jump; **swap cancel** = trocar de arma na recuperação; **dodge cancel** =
 instante do golpe; **estrela** = dash em cambalhota lateral; **cambalhota** = rolamento do pouso forte; **mortal** = giro do pulo/wall jump;
 **passarela/mureta/borda** = anel externo e seu muro baixo; **muro roxo/vermelho/azul/verde**, **travessa** (muro radial), **passagem** (porta com teto),
 **degradê** (chão inclinado), **base preta** (centro): vocabulário do desenho da arena (seção 10).
+
+
+## Revisão: alinhamento do modelo ao heading
+
+A rotação de `Visual` é local ao `Player`, enquanto a direção de movimento calculada pela câmera está no espaço global. `Player._update_visual` converte o heading do mundo para o yaw local subtraindo `Player.global_rotation.y`. Isso alinha o modelo e a trajetória quando o jogador nasce com uma rotação, como na `SkyArena`. Validação manual no Godot ainda pendente.
