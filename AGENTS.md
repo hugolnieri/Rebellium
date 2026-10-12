@@ -72,7 +72,9 @@ normalmente; os `.glb`/`.blend` já estão versionados. Se o ambiente bloquear i
 - **Português**, informal e direto; respostas curtas. O dono manda pedidos curtos, muitas vezes com um desenho/imagem: trate o desenho
   como especificação. Se algo for ambíguo, escolha a leitura mais provável, implemente e **liste no fim as decisões que tomou**.
 - O dono **não é especialista em git**: dê sempre comandos prontos. "Não mudou nada" quase sempre é cache do `.godot` ou não ter puxado.
-- Entrega: implemente → rode os testes e o headless → commit + push na branch padrão → diga como atualizar (comandos acima) e o que olhar.
+- Entrega: implemente → rode os testes e o headless → **atualize a documentação** (nova seção "Revisão: ..." em `docs/ESCOPO.md`, passos de
+  teste em `docs/ROTEIRO_TESTE.md` e, se o estado do jogo mudou, `docs/CONTEXTO_PROJETO.md`) → commit + push na branch padrão → diga como
+  atualizar (comandos acima) e o que olhar.
 - Desfazer um experimento que não agradou é normal e rápido. Não discuta; ajuste.
 - Preferências recorrentes: movimento fluido (vira na hora para a câmera, golpear não trava o corpo), animação natural feita à mão no
   Blender (sem filtros), tudo ajustável ao vivo (F2).

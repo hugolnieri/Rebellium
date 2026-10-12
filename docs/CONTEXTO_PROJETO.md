@@ -40,6 +40,8 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
 - **Convenções de commit**: mensagem em português, título curto com prefixo do assunto (`arena: ...`, `fase-N: ...`),
   corpo em tópicos. Antes de commitar: `tools/run_tests.sh` passando e `godot --headless --quit-after 120` sem erros.
   O fluxo estabelecido é commit direto na branch padrão (o dono puxa dela). Não reescreva histórico; só abra PR se pedirem.
+- **Documentação a cada revisão**: nova seção "Revisão: ..." em `docs/ESCOPO.md`, passos de teste em `docs/ROTEIRO_TESTE.md` e, se o
+  estado do jogo mudou, este arquivo.
 - **Preferências de design recorrentes**: movimento fluido e responsivo (virar na hora para a câmera, sem travar ao golpear);
   animação "natural" e feita à mão no Blender, não por filtros; números ajustáveis ao vivo (F2); nada de número mágico.
 
