@@ -22,7 +22,8 @@ python3 tools/blender/export_hero.py  # só exporta o hero.blend editado → ass
 python3 tools/blender/build_sky_arena.py  # recria a arena flutuante (art/arena/sky_arena.blend + assets/arena/sky_arena.glb)
 python3 tools/blender/build_sword.py      # converte art/weapons/arc_blade_source.usdz → assets/weapons/arc_blade.glb
 ```
-Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`.
+Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`. Contexto completo e estado atual do jogo: `docs/CONTEXTO_PROJETO.md`
+(o `AGENTS.md` da raiz é o equivalente deste arquivo para outros agentes, como o Codex: mantenha as regras sincronizadas).
 
 ## Arquitetura obrigatória
 1. **Nenhum número mágico de gameplay.** Todo valor vem de um Resource em `config/`:
