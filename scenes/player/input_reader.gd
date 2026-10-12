@@ -22,6 +22,10 @@ var _forward_prev_pressed_tick: int = PlayerInput.NEVER
 
 
 func _ready() -> void:
+	var player := get_parent() as Player
+	if player != null:
+		# A câmera e o movimento começam alinhados ao heading definido pelo spawn.
+		look_yaw = player.global_rotation.y
 	look_pitch = deg_to_rad(camera_config.initial_pitch_deg)
 	capture_mouse(true)
 
