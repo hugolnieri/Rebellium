@@ -105,7 +105,11 @@ func _update_shake(delta: float) -> void:
 
 func _follow(delta: float) -> void:
 	var cfg := camera_config
-	global_position = player.get_global_transform_interpolated().origin + Vector3.UP * cfg.pivot_height
+	# O `top_level = true` do _ready guarda a rotação que o Player tinha naquele instante (a do spawn girado, quando a
+	# cena o instancia girado): o centro da câmera nunca gira, só os nós Yaw/Pitch (senão a vista fica torta em
+	# relação ao movimento, que usa o look_yaw puro).
+	global_transform = Transform3D(Basis.IDENTITY,
+		player.get_global_transform_interpolated().origin + Vector3.UP * cfg.pivot_height)
 	yaw_node.rotation = Vector3(0.0, player.input_reader.look_yaw, 0.0)
 	pitch_node.rotation = Vector3(player.input_reader.look_pitch, 0.0, 0.0)
 	var input := player.current_input

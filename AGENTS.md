@@ -24,7 +24,7 @@ testes GUT 9.7.1 (headless). Blender (`bpy` 4.2.0, Python 3.11) gera por código
   golpes aéreos e de dash, hitstop, rastro, esquiva perfeita.
 - Personagem (base VRoid CC0) e **todas as animações feitas no Blender** (`hero.blend` → `hero.glb`); o jogo as toca direto nos ossos
   (`HeroClips`) com crossfade. Menu F2 edita todas as configs ao vivo.
-- **216 testes passam**; `godot --headless --quit-after 120` abre sem erros.
+- **220 testes passam**; `godot --headless --quit-after 120` abre sem erros.
 - Os commits de arena (`677621f`, `e798e12`) e o do caçador que voa **ainda não foram validados pelo dono dentro do jogo**.
 
 ## Comandos
@@ -67,6 +67,8 @@ normalmente; os `.glb`/`.blend` já estão versionados. Se o ambiente bloquear i
 10. **Apresentação nunca altera gameplay**: `character_model.gd` e o resto de `scenes/player/` visual só leem o Player.
 11. **O corpo do Player nunca gira**: movimento, câmera e visual usam o yaw do mundo, que vive em `visual.rotation.y`. Para nascer ou
     teleportar o Player use `Player.respawn`/`_place`, nunca `global_transform = ...` com rotação (o modelo andaria de lado).
+    A câmera é `top_level` e também **não herda rotação** (`PlayerCamera._follow` zera o centro; só `Yaw`/`Pitch` giram): `top_level = true`
+    guarda a rotação do pai no instante do `_ready`. Nenhuma cena instancia o Player girado.
 12. Paleta greybox: preto, cinza escuro, branco sujo, metal; acentos (vermelho, violeta, azul elétrico, verde ácido) para feedback.
     Exceções: o personagem (traje azul-marinho de gola alta, cabelo branco, descalço) e as armas com brilho próprio (ciano / laranja).
 
@@ -105,7 +107,7 @@ scenes/arenas/     SkyArena (principal), CombatArena, TrainingCourse, Arena, Tra
 scenes/ui/         HUD, HUD de debug (F1), menu de debug (F2), HUD de combate e de treino
 scripts/core/      eventos, configs, regras puras, utilitários
 tests/unit/        testes de lógica pura (7 arquivos)
-tests/integration/ testes com o Player real e física headless (11 arquivos); test_training_course.gd tem bots que completam o percurso
+tests/integration/ testes com o Player real e física headless (12 arquivos); test_training_course.gd tem bots que completam o percurso
 tests/helpers/     player_driver.gd: dirige o Player tick a tick com PlayerInput sintético
 tools/             install_godot.sh, run_tests.sh, gen_sfx.py e tools/blender/ (build_hero, hero_animations, export_hero, build_sky_arena, build_sword)
 art/               fontes editáveis (hero.blend, sky_arena.blend, arc_blade_source.usdz); `.gdignore`

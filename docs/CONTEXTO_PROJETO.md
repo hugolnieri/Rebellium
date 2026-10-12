@@ -16,7 +16,7 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
 - **Cena principal**: arena flutuante sobre as nuvens (`scenes/arenas/SkyArena.tscn`), com um bot vermelho
   ("caçador") no centro: não ataca, mas reage com as animações do personagem e é **arremessado pelo golpe pesado**.
   **F3** alterna: SkyArena → CombatArena → TrainingCourse → Arena.
-- **Qualidade hoje**: 216 testes passando (18 arquivos: 7 unitários + 11 de integração) e
+- **Qualidade hoje**: 220 testes passando (19 arquivos: 7 unitários + 12 de integração) e
   `godot --headless --quit-after 120` sem erros. ~8,4 mil linhas de GDScript (com testes) e ~2,5 mil de Python (tools).
 - **Repositório**: `github.com/hugolnieri/Rebellium`, 42 commits. **Só existe uma branch no GitHub e ela é a padrão:
   `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
@@ -94,7 +94,8 @@ O mapa de input está em `project.godot`; **só `scenes/player/input_reader.gd` 
 O `step(input, delta)` é público: os testes dirigem o Player tick a tick com `external_control = true`.
 **O corpo do Player nunca gira** (rotação sempre identidade): movimento, câmera e visual usam o yaw do **mundo**, e
 `visual.rotation.y` recebe um yaw mundial. Por isso `Player._place` (usado em `_ready` e em `respawn`) põe só a posição no corpo
-e o yaw no `visual`.
+e o yaw no `visual`. **A câmera (`PlayerCamera`) também nunca herda rotação**: ela é `top_level`, só os nós `Yaw`/`Pitch` giram
+(com o `look_yaw`) e `_follow` zera a rotação do centro a cada quadro. Nenhuma cena instancia o Player girado.
 
 **Máquina de estados explícita**, um script por estado em `scenes/player/states/`:
 `Idle, Run, Sprint, Jump, Fall, WallJump, Dodge, Land, Attack, Hurt`. Toda troca passa por
@@ -301,8 +302,9 @@ Sem música.
 
 `tools/run_tests.sh` (GUT, config em `.gutconfig.json`: pasta `res://tests/`, prefixo `test_`, sai ao terminar).
 - **Unitários (7)**: áudio, regras de combate, `ConfigIO`, regras de movimento, setup do projeto, SP, matemática do wall jump.
-- **Integração (11)**: bunny hop, modelo do personagem (clipes presentes), combate, arena de combate, menu de debug, dash, chão,
-  **arena flutuante** (inclui "o personagem anda para onde olha"), percurso de treino (bots), wall jump e **caçador**
+- **Integração (12)**: bunny hop, modelo do personagem (clipes presentes), combate, arena de combate, menu de debug, dash, chão,
+  **arena flutuante** (inclui "W/A/S/D andam relativos à câmera e o personagem encara para onde anda"), **câmera**
+  (`test_player_camera.gd`: a vista segue o `look_yaw` mesmo com o Player instanciado girado), percurso de treino (bots), wall jump e **caçador**
   (`test_hunter_bot.gd`: arremesso, rebote em parede, deslize, volta ao spawn, golpe pesado do Player real).
 - **`tests/helpers/player_driver.gd`**: monta o mundo e dirige o Player tick a tick com `PlayerInput` sintético (`step`, `step_until`,
   `press_jump`, `look_yaw`, `add_dummy`, `add_block`...). Em testes de cena inteira use `player.external_control = true` e
@@ -346,6 +348,10 @@ Sem música.
 9. **Python do Blender**: só 3.11 (roda `bpy` 4.2.0). Não migre o `bpy` sem testar os scripts.
 10. **O corpo do Player nunca gira.** Atribuir `global_transform` com rotação ao Player (spawn, teleporte) faz o modelo andar de
     lado (aconteceu: 22,5° torto depois da arena nova). Use `Player.respawn`/`_place`: posição no corpo, yaw no `visual`.
+    **O mesmo vale para a câmera**: `top_level = true` guarda a rotação que o pai tinha naquele instante (o `.tscn` da SkyArena
+    instanciava o Player girado 22,5°), e a vista ficava 22,5° fora do movimento (W andava na diagonal da tela). Por isso o
+    centro da câmera é zerado em `_follow` e o Player da SkyArena não tem rotação. Teste em `test_player_camera.gd` e
+    `test_wasd_walk_relative_to_the_camera`. Para conferir no jogo real, meça câmera x movimento x modelo com a captura por software (seção 8).
 11. **`AnimatableBody3D` com `sync_to_physics = true`** (o padrão) desfaz na hora a atribuição de `global_position` e só aplica
     no próximo passo da física. O `HunterBot` usa `sync_to_physics = false` (ele não empurra ninguém).
 12. **Tipos Variant**: o projeto trata "variável inferida de Variant" como erro (ex.: `var s: String = fila.pop_front()`).
@@ -365,6 +371,8 @@ Sem música.
    arquibancada/telas/globo; espada nova; colisão convexa; **desenho atual com travessas, muros azuis, roxo com passagens, degradê e caçador**.
 8. **Caçador que voa**: corpo do Player sem rotação (conserta o andar torto), `HunterBot` com os clipes do personagem, golpe
    pesado arremessa, clipes `launched`/`knockdown`/`getup` no Blender, aba Alvos no F2.
+9. **Câmera alinhada** (andar em diagonal, de verdade): o centro da câmera herdava os 22,5° do Player instanciado girado na
+   SkyArena; `PlayerCamera._follow` agora o zera, a cena instancia o Player sem rotação e há testes da câmera.
 
 ## 19. Em aberto
 

@@ -327,3 +327,6 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 1. Abra a SkyArena e, sem mexer o mouse, segure W por alguns segundos.
 2. O jogador deve avançar na direção para a qual aponta no spawn, sem desvio diagonal para a direita.
 3. Gire a câmera e repita; W deve seguir o novo frente da câmera e o modelo deve continuar alinhado à trajetória.
+4. Repita com A, S e D: A anda para a esquerda da câmera, S para trás (vindo na sua direção) e D para a direita, sempre em linha
+   reta na tela e com o personagem de frente para onde anda (nunca de lado). Vale logo ao nascer, depois de R e depois de cair da borda.
+5. Com W segurado e o mouse parado, o personagem se afasta da câmera em linha reta: você o vê de costas, no mesmo ponto da tela.

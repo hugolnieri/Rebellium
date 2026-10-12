@@ -56,6 +56,7 @@ Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`. Contexto completo e estado atu
    em segundos (float, convertidos com o delta fixo) para durações longas.
 10. **O corpo do Player nunca gira**: movimento, câmera e visual usam o yaw do mundo, que vive em `visual.rotation.y`. Para nascer ou
     teleportar o Player use `Player.respawn`/`_place`, nunca `global_transform = ...` com rotação (o modelo andaria de lado).
+    A câmera (`top_level`) também não herda rotação: só os nós `Yaw`/`Pitch` giram (`PlayerCamera._follow` zera o centro).
 7. Salvar configs sempre com `ConfigIO.save_full` (grava todos os valores; o ResourceSaver padrão
    omite os iguais ao padrão).
 

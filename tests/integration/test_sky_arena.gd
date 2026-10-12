@@ -48,6 +48,40 @@ func test_character_faces_the_direction_it_walks() -> void:
 	assert_almost_eq(player.global_rotation.y, 0.0, 0.001, "o corpo do jogador fica sem rotação")
 
 
+## Para onde a câmera olha (yaw do mundo).
+func _view_yaw() -> float:
+	var forward := -(player.get_node("PlayerCamera") as PlayerCamera).camera.global_basis.z
+	return atan2(-forward.x, -forward.z)
+
+
+func test_wasd_walk_relative_to_the_camera() -> void:
+	# O que se vê (câmera) e para onde as teclas andam (look_yaw) têm de coincidir: W vai para a frente da câmera,
+	# A para a esquerda, S para trás e D para a direita. (A câmera herdava os 22,5° do spawn girado e W saía torto.)
+	await wait_process_frames(3)
+	d.look_yaw = player.input_reader.look_yaw
+	var view := _view_yaw()
+	assert_almost_eq(wrapf(view - d.look_yaw, -PI, PI), 0.0, 0.01, "a câmera olha para o look_yaw")
+	var spawn := arena.get_node("Spawn") as Marker3D
+	var keys := {
+		"W": [Vector2(0, 1), 0.0],
+		"A": [Vector2(-1, 0), PI / 2.0],
+		"S": [Vector2(0, -1), PI],
+		"D": [Vector2(1, 0), -PI / 2.0],
+	}
+	for key: String in keys:
+		var move: Vector2 = keys[key][0]
+		var expected: float = keys[key][1]
+		player.respawn(Transform3D(Basis(Vector3.UP, spawn.global_rotation.y), spawn.global_position))
+		d.step(25, move)
+		var velocity := player.get_horizontal_velocity()
+		assert_gt(velocity.length(), 2.5, "%s anda" % key)
+		var heading := atan2(-velocity.x, -velocity.z)
+		assert_almost_eq(wrapf(heading - view - expected, -PI, PI), 0.0, 0.05,
+			"%s anda para o lado certo da câmera" % key)
+		assert_almost_eq(wrapf(player.visual.global_rotation.y - heading, -PI, PI), 0.0, 0.05,
+			"e o personagem encara para onde anda (%s)" % key)
+
+
 func test_black_base_is_the_lowest_point_and_the_floor_rises_outward() -> void:
 	var spawn := arena.get_node("Spawn") as Marker3D
 	player.respawn(Transform3D(Basis(), Vector3(1.5, 2.0, 1.5)))

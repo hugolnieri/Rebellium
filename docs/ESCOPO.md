@@ -245,3 +245,15 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Ao nascer, `InputReader` inicia o yaw da câmera com a rotação global do `Player` definida pelo marcador de spawn. `Player._update_visual` converte o heading global para yaw local de `Visual`; câmera, movimento e modelo começam alinhados mesmo com spawn girado.
 - Com `Player._place` (revisão acima) o corpo do Player já nasce sem rotação, então essa conversão para yaw local é a identidade e
   fica só como salvaguarda; no jogo, `CombatArena._respawn` também já copia o yaw do marcador para a câmera.
+
+## Revisão: câmera torta (o andar em diagonal que sobrou)
+- **Causa real**: o `.tscn` da SkyArena instanciava o Player girado 22,5° (a rotação do spawn). A câmera é `top_level` e, quando
+  isso é ligado no `_ready`, o Godot guarda a rotação global que o pai tinha naquele instante: o centro da câmera ficava girado
+  22,5° para sempre, e a vista olhava 45° enquanto W/A/S/D andavam pelo `look_yaw` (22,5°). Resultado: W saía na diagonal da tela
+  (rumo ao centro da arena) e A/S/D também ficavam tortas. A correção anterior só tinha acertado o modelo, não a câmera.
+- Correção: `PlayerCamera._follow` zera a rotação do centro a cada quadro (só `Yaw`/`Pitch` giram) e o Player da SkyArena
+  passa a ser instanciado sem rotação (o yaw do spawn vem do marcador `Spawn`).
+- Conferido no jogo real (SkyArena, câmera real, input real, render por software): W anda 0,0° em relação à câmera, A +90°, S 180°,
+  D −90°, e o modelo encara exatamente o sentido do movimento. Antes: câmera 22,5° fora.
+- Testes: `test_player_camera.gd` (a vista segue o `look_yaw` mesmo com o Player instanciado girado) e
+  `test_wasd_walk_relative_to_the_camera` (SkyArena real). Os dois falham sem a correção, com o erro de 22,5°.

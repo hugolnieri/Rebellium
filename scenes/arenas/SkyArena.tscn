@@ -145,7 +145,7 @@ mesh = SubResource("cityplane")
 transform = Transform3D(0.92388, 0, 0.382683, 0, 1, 0, -0.382683, 0, 0.92388, 8.23, 1.03, 19.86)
 
 [node name="Player" parent="." instance=ExtResource("player")]
-transform = Transform3D(0.92388, 0, 0.382683, 0, 1, 0, -0.382683, 0, 0.92388, 8.23, 1.03, 19.86)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.23, 1.03, 19.86)
 
 [node name="HUD" parent="." instance=ExtResource("hud")]
 
