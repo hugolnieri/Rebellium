@@ -362,4 +362,4 @@ instante do golpe; **estrela** = dash em cambalhota lateral; **cambalhota** = ro
 
 ## Revisão: alinhamento do modelo ao heading
 
-A rotação de `Visual` é local ao `Player`, enquanto a direção de movimento calculada pela câmera está no espaço global. `Player._update_visual` converte o heading do mundo para o yaw local subtraindo `Player.global_rotation.y`. Isso alinha o modelo e a trajetória quando o jogador nasce com uma rotação, como na `SkyArena`. Validação manual no Godot ainda pendente.
+Ao nascer, `InputReader` copia `Player.global_rotation.y` para o yaw inicial da câmera, então W começa seguindo o heading do marcador (na SkyArena, 22,5°). Como `Visual` é filho local do `Player`, `Player._update_visual` converte o heading global em yaw local. Assim a câmera, a trajetória e o modelo começam alinhados. Validação manual no Godot ainda pendente.
