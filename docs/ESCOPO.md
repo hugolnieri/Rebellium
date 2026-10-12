@@ -219,3 +219,8 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   dano), no spawn do caçador. Ele usa o `TrainingDummy` com `body_scene`.
 - Parede de lado no chão: o corpo desliza (`floor_block_on_wall = false`). Com o padrão do Godot, o jogador
   parava ao encostar em diagonal, inclusive nas emendas do muro.
+
+
+## Revisão: direção visual ao andar
+
+- O yaw de `Visual` é relativo ao `Player`, mas o heading calculado a partir da câmera e do movimento está no mundo. Agora o código subtrai o yaw global do `Player` antes de aplicar a rotação local do modelo, mantendo os dois alinhados também quando a cena inicia com uma rotação no spawn.
