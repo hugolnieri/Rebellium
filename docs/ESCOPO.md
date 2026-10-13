@@ -257,3 +257,6 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
   D −90°, e o modelo encara exatamente o sentido do movimento. Antes: câmera 22,5° fora.
 - Testes: `test_player_camera.gd` (a vista segue o `look_yaw` mesmo com o Player instanciado girado) e
   `test_wasd_walk_relative_to_the_camera` (SkyArena real). Os dois falham sem a correção, com o erro de 22,5°.
+
+## Revisão: parar de andar sem atraso
+- Ao soltar W o personagem deslizava ~0,2 s (desaceleração 45 m/s² a partir de 10 m/s) e a passada ainda levava ~0,2 s para sumir. `ground_deceleration` foi para 120 m/s² e a passada some a `run_stop_rate` = 16/s (FeedbackConfig). Ajustáveis no F2 (Movimento / Visual).

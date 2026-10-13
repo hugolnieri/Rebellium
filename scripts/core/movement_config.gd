@@ -21,7 +21,7 @@ extends Resource
 ## Aceleração no chão até a velocidade alvo.
 @export_range(1.0, 300.0, 0.5, "suffix:m/s²") var ground_acceleration: float = 60.0
 ## Desaceleração no chão (sem input ou acima da velocidade alvo).
-@export_range(1.0, 300.0, 0.5, "suffix:m/s²") var ground_deceleration: float = 45.0
+@export_range(1.0, 300.0, 0.5, "suffix:m/s²") var ground_deceleration: float = 120.0
 
 @export_group("Pulo e ar")
 ## Altura do pulo do chão.

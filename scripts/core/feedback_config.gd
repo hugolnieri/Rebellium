@@ -46,6 +46,8 @@ extends Resource
 @export_group("Transições da animação")
 ## Crossfade ao trocar de animação (estado/clipe); nos golpes a entrada é mais rápida.
 @export_range(0.0, 0.6, 0.01, "suffix:s") var anim_blend_time: float = 0.14
+## Rapidez com que a passada some ao parar (a de entrar na corrida é 5/s): parar de segurar a tecla tem de aparecer logo.
+@export_range(1.0, 40.0, 0.5, "suffix:1/s") var run_stop_rate: float = 16.0
 @export_range(0.0, 0.6, 0.01, "suffix:s") var attack_blend_time: float = 0.06
 ## Cabelo: mola mole para movimento secundário.
 @export_range(0.2, 15.0, 0.1, "suffix:Hz") var hair_spring_frequency: float = 2.8

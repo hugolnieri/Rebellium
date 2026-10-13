@@ -28,6 +28,7 @@ bank_strength = 0.0
 roll_ball_height = 0.36
 dash_cartwheel = true
 anim_blend_time = 0.14
+run_stop_rate = 16.0
 attack_blend_time = 0.06
 hair_spring_frequency = 2.8
 hair_spring_damping = 0.3

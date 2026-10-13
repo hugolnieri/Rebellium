@@ -330,7 +330,7 @@ func _process(delta: float) -> void:
 	var sprinting := state == &"Sprint"
 
 	var target_run := clampf(speed / cfg.walk_speed, 0.0, 1.4) if grounded else 0.0
-	_run_amount = move_toward(_run_amount, target_run, delta * 5.0)
+	_run_amount = move_toward(_run_amount, target_run, delta * (5.0 if target_run > _run_amount else fb.run_stop_rate))
 	var stride := lerpf(fb.stride_length_walk, fb.stride_length_sprint,
 		clampf((speed - cfg.walk_speed) / maxf(cfg.sprint_speed - cfg.walk_speed, 0.01), 0.0, 1.0))
 	if grounded:
