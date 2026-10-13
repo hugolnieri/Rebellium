@@ -7,13 +7,23 @@ extends RefCounted
 ## O osso Root (prévia dos giros no Blender) e os ossos do cabelo/olhos ficam de fora.
 ##
 ## Uma pose é um Array: [Quaternion por osso de `bones` ..., Vector3 posição do quadril].
+##
+## Os clipes saem sempre do hero.glb, mas tocam em QUALQUER modelo do VRoid (ex.: um personagem exportado do
+## VRoid Studio): todos têm os mesmos ossos J_Bip_* em T-pose com descanso neutro, então `bind()` liga cada osso
+## pelo nome e a pose vale direto (o quadril escala com a altura; modelo virado para +Z é espelhado).
 
+const SOURCE_SCENE: PackedScene = preload("res://assets/character/hero.glb")
 const SAMPLE_RATE: float = 60.0
 const SKIPPED_PREFIXES: Array[String] = ["Root", "HairJoint", "J_Sec", "J_Adj"]
 
-## Ossos animados (índices do Skeleton3D), na ordem das poses.
+## Ossos animados (índices do Skeleton3D do hero.glb), na ordem das poses.
 static var bones: PackedInt32Array = PackedInt32Array()
+## Nomes dos ossos animados (mesma ordem): é por eles que outros modelos se ligam aos clipes.
+static var bone_names: PackedStringArray = PackedStringArray()
 static var hips_slot: int = -1
+## Descanso do quadril e altura da cabeça no hero.glb (referência para outros modelos).
+static var source_hips_rest: Vector3 = Vector3.ZERO
+static var source_head_height: float = 1.0
 ## clipe -> {"frames": Array[Array], "length": float}
 static var _cache: Dictionary = {}
 
@@ -38,9 +48,77 @@ static func load_from(rig: Node, skeleton: Skeleton3D, hips_bone: int) -> void:
 	var list := animated.keys()
 	list.sort()
 	bones = PackedInt32Array(list)
+	bone_names = PackedStringArray()
+	for bone: int in bones:
+		bone_names.append(skeleton.get_bone_name(bone))
 	hips_slot = bones.find(hips_bone)
+	source_hips_rest = skeleton.get_bone_rest(hips_bone).origin
+	var head := skeleton.find_bone("J_Bip_C_Head")
+	if head >= 0:
+		source_head_height = skeleton.get_bone_global_rest(head).origin.y
 	for clip_name: StringName in player.get_animation_list():
 		_cache[clip_name] = _bake(player.get_animation(clip_name), skeleton, hips_bone)
+
+
+## Carrega os clipes do hero.glb se ainda não estiverem carregados.
+static func ensure_loaded() -> void:
+	if not _cache.is_empty():
+		return
+	var rig := SOURCE_SCENE.instantiate() as Node3D
+	var skeleton := rig.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	load_from(rig, skeleton, skeleton.find_bone("J_Bip_C_Hips"))
+	rig.free()
+
+
+## Liga os clipes a um esqueleto qualquer do VRoid (pelo nome dos ossos).
+static func bind(skeleton: Skeleton3D, hips_bone: int) -> Binding:
+	ensure_loaded()
+	return Binding.new(skeleton, hips_bone)
+
+
+## Liga as poses dos clipes aos ossos de um esqueleto (o do herói ou outro modelo do VRoid).
+class Binding:
+	var skeleton: Skeleton3D
+	## Índice do osso neste esqueleto para cada osso animado (-1 = o modelo não tem esse osso).
+	var targets: PackedInt32Array = PackedInt32Array()
+	var hips_bone: int = -1
+	## Modelo virado para +Z (VRM 1.0): espelha as poses; quem usa gira o modelo 180° (`facing_flipped`).
+	var facing_flipped: bool = false
+	var _hips_rest: Vector3 = Vector3.ZERO
+	var _hips_scale: float = 1.0
+
+	func _init(target: Skeleton3D, hips: int) -> void:
+		skeleton = target
+		hips_bone = hips
+		for bone_name in HeroClips.bone_names:
+			targets.append(target.find_bone(bone_name))
+		_hips_rest = target.get_bone_rest(hips).origin
+		var source_hips := HeroClips.source_hips_rest
+		_hips_scale = _hips_rest.y / source_hips.y if source_hips.y > 0.001 else 1.0
+		var foot := target.find_bone("J_Bip_L_Foot")
+		var toe := target.find_bone("J_Bip_L_ToeBase")
+		if foot >= 0 and toe >= 0:
+			facing_flipped = target.get_bone_global_rest(toe).origin.z > target.get_bone_global_rest(foot).origin.z
+
+	## Altura da cabeça deste modelo em T-pose (para escalar todos à mesma altura).
+	func head_height() -> float:
+		var head := skeleton.find_bone("J_Bip_C_Head")
+		return skeleton.get_bone_global_rest(head).origin.y if head >= 0 else HeroClips.source_head_height
+
+	func apply(pose: Array) -> void:
+		var count := targets.size()
+		for slot in count:
+			var bone := targets[slot]
+			if bone < 0:
+				continue
+			var q: Quaternion = pose[slot]
+			if facing_flipped:
+				q = Quaternion(-q.x, q.y, -q.z, q.w)
+			skeleton.set_bone_pose_rotation(bone, q)
+		var offset: Vector3 = (pose[count] as Vector3) - HeroClips.source_hips_rest
+		if facing_flipped:
+			offset = Vector3(-offset.x, offset.y, -offset.z)
+		skeleton.set_bone_pose_position(hips_bone, _hips_rest + offset * _hips_scale)
 
 
 static func _skipped(bone_name: String) -> bool:

@@ -30,6 +30,9 @@ extends Resource
 @export var attack_jump_cancel: bool = true
 ## Golpe (leve ou pesado) durante o dash corta o embalo do dash.
 @export var attack_cancels_dash_momentum: bool = true
+## Golpe no meio do dash NO AR: conta como golpe de chão (combo leve normal), volta à velocidade de um
+## pulo normal e, sem direcional, freia até parar no lugar do golpe com esta desaceleração.
+@export_range(0.0, 200.0, 1.0, "suffix:m/s²") var air_dash_attack_stop_deceleration: float = 40.0
 
 @export_group("Combo")
 ## Sem acertar por este tempo, o contador de combo zera.

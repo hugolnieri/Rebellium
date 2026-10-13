@@ -19,6 +19,7 @@ Para rodar: `godot --path .` ou abra o projeto no editor e aperte F5. Abre a **a
 | F1 | liga/desliga HUD de debug |
 | F2 | menu de ajustes ao vivo (movimento, câmera, visual, combate, cada arma e golpe, áudio) |
 | F3 | troca de cena |
+| F4 | menu de personagem (modelo e cores; salva ao fechar) |
 | R | reinicia (volta ao início; no percurso zera cronômetro, na arena zera os postes) |
 
 ## HUD de debug (F1): o que cada linha diz
@@ -79,21 +80,16 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 - **Ajuste fino**: o peso da câmera é `wall_jump_camera_weight` (padrão 0,3). Olhar para a frente no salto
   estica a distância.
 
-### Trecho 3: borda de 3,6 m → **back-coming duplo**
-- **Como passar**:
-  1. Encoste na borda segurando W. Pule e aperte Space de novo **logo em seguida** (pés a menos de 1 m do
-     chão, janela de 6 ticks). Isso é o **back-coming** (cor **verde ácido**): você sobe colado na parede.
-  2. Ainda subindo colado, aperte Space **segurando W** (direcional para a parede): sai um **segundo
-     back-coming** na mesma parede, que leva por cima da borda.
-- **O que observar**: o banner mostra `BACK-COMING` duas vezes. Só vale **um lance extra** por parede.
-- **Testes negativos**:
-  - Um back-coming sozinho sobe ≈ 2,8 m: não chega no topo e você escorrega de volta.
-  - No segundo Space **sem segurar W**, o salto se afasta da parede (wall jump normal).
-  - Encostar e apertar Space **tarde** dá um wall jump normal, que quica para trás.
+### Trecho 3: borda de 3,6 m → **wall jumps no pilar**
+- **Como passar**: vá para o lado **direito**, entre a borda e o pilar escuro de frente para ela. Corra para a borda,
+  pule, e aperte Space ao encostar: o wall jump te joga no pilar; Space de novo no pilar te joga por cima da borda.
+- **Teste negativo (sem reverse wall jump)**: o **back-coming** (Space logo ao encostar, pés perto do chão) sobe colado na
+  borda, mas no topo **é empurrado para fora** e cai do mesmo lado, mesmo segurando W e fazendo o segundo lance.
+  O back-coming nunca leva por cima de parede nenhuma.
 
-### Trecho 4: parede lisa de 4,4 m → **back-coming duplo**
-- **Como passar**: igual ao trecho 3 (back-coming na base, depois Space segurando W).
-- **Teste negativo**: um pulo + wall jump normal não sobe.
+### Trecho 4: parede lisa de 4,4 m → **wall jumps no pilar**
+- **Como passar**: igual ao trecho 3, agora pelo lado **esquerdo** (pilar à esquerda, em cima da borda).
+- **Teste negativo**: um pulo + wall jump normal só na parede lisa não sobe; o back-coming também não.
 
 ### Trecho 5: torre (chaminé) → **wall jumps encadeados**
 - **Como passar**: entre na chaminé (entre a parede de metal baixa à esquerda e a alta à direita). Pule em
@@ -127,8 +123,13 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 - **Dash no ar**: depois de pular, A/D + Space dá um dash lateral que **corta a queda** e **plana**: na primeira
   metade do dash quase não cai (`air_dodge_glide_fraction`, `air_dodge_glide_gravity`), depois volta a cair.
   O impulso sai forte e vai perdendo força (`dodge_speed` 30 m/s, curva `dodge_ease_power`).
-  - **Um por pulo**; recarrega ao aterrissar e a cada wall jump. Dá para emendar: wall jump → dash no ar → wall jump.
-  - Durante o dash no ar, encostar numa parede e apertar Space já dá wall jump.
+  - **Um por pulo**; recarrega ao aterrissar e a cada wall jump.
+  - **Depois de um dash no ar não existe wall jump** até pular de novo do chão: encostar na parede e apertar Space não faz
+    nada (F1 mostra `bloqueado: usou dash no ar`). O wall jump só vale com o pulo normal (`wall_jump_after_air_dash`).
+  - **O dash segue a câmera**: dê um dash para a esquerda e gire o mouse; ele continua indo para a **esquerda da câmera**
+    (no chão e no ar, inclusive no deslize do fim). Desliga em `dodge_follows_camera`.
+  - **Golpe no meio do dash no ar** = golpe leve normal (como no chão): o dash para, a velocidade cai para a de um pulo e,
+    sem direcional, o personagem freia até parar no lugar do golpe e cai. Cliques seguidos continuam o combo leve.
   - Longe da parede, **Space no meio do dash no ar cancela o dash**: para a estrela e volta a cair normalmente,
     na velocidade de andar (sem impulso para cima). Desliga em `air_dodge_jump_cancels`.
   - Ao terminar, você continua caindo com 9 m/s na direção do dash (`air_dodge_exit_speed`).
@@ -241,8 +242,12 @@ Ande até os três postes à frente (POSTE).
    - Clicar rápido demais não pula etapas: o próximo golpe sai quando o atual permite (clique fica guardado ~0,16 s).
 2. **Pesado** (segure o botão esquerdo ~0,27 s, ou botão direito): a arma brilha enquanto carrega e sai um
    giro 360° para a **direita**, mais lento e pesado que acerta em volta (teste com um poste atrás de você). Gasta 15 SP. No meio
-   do combo leve, segurar vira finalizador. **Também funciona no ar** (o personagem flutua girando e o golpe
-   acaba ao tocar o chão). Tempo de carga: F2 → Combate → `heavy_hold_ticks`.
+   do combo leve, segurar vira finalizador. Tempo de carga: F2 → Combate → `heavy_hold_ticks`.
+   **Golpe no pulo (mergulho)**: pule e clique (qualquer clique no ar): o personagem **congela no ar** com a espada erguida,
+   **desce reto com tudo** no ponto onde clicou, o impacto acerta quem estiver em volta (teste com o poste ao lado de onde
+   você cai) e ele fica **ajoelhado com a espada cravada** um tempo antes de levantar (não dá para dash, pulo ou golpe nesse
+   tempo). Ajuste em F2 → aba da arma → "Queda cortante"/"Mergulho de fase" → grupo Mergulho (`plunge_hover_time`,
+   `plunge_speed`, `plunge_landing_time`, `plunge_impact_radius`).
 3. **Troca de arma**: 2 (ou Q). Floreio da arma, flash e som de carga. A **Presa de Fase** tem combo de 4
    golpes rápidos, anda ~8% mais rápido e o pesado (lâmina ascendente) lança para cima.
 5. **Pular golpeando**: aperte Espaço no meio de um golpe no chão → o personagem pula e o golpe **continua**
@@ -313,6 +318,17 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 - Drones em órbita, luzes vermelhas piscando nas antenas,
   propulsores com chama embaixo da plataforma.
 - R reinicia (bot e posição), como na arena de combate.
+
+## Menu de personagem (F4)
+- F4 abre o menu à esquerda (o mouse fica livre). **Modelo**: "Herói" ou "Vroid Casual" (o mesmo modelo de exemplo do VRoid com a
+  roupa original). Troque e veja: as animações (andar, correr, golpes, mergulho) são as mesmas, a arma vai para a mão e a altura
+  é igual.
+- **Cores**: Cabelo, Pele e Olhos tingem o modelo (branco = original). No herói também Traje, Costuras e Emblema (o traje
+  inteiro troca de cor mantendo as dobras; costuras e emblema à parte). "Cores padrão" volta ao original.
+- "Fechar e salvar" (ou F4): a escolha fica salva e vale nas outras cenas e na próxima vez que abrir o jogo.
+- **Seu personagem do VRoid Studio**: monte no VRoid Studio, exporte em **VRM**, e rode
+  `python3 tools/import_vroid.py C:\caminho\personagem.vrm meu_nome` (precisa de Python com Pillow: `pip install pillow`).
+  Abra o Godot, espere importar, F5, F4: ele aparece na lista com as animações do herói.
 
 ## Espada (Lâmina de Arco)
 - A Lâmina de Arco usa o modelo 3D enviado (`art/weapons/arc_blade_source.usdz`, convertido por

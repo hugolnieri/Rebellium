@@ -39,6 +39,8 @@ var sprint_latched: bool = false
 var air_sprinting: bool = false
 ## Dashes usados no ar desde a última aterrissagem/wall jump.
 var air_dodges_used: int = 0
+## Deu dash no ar desde o último pulo do chão: wall jump bloqueado (só vale com o pulo normal).
+var air_dashed: bool = false
 ## Fez dash ou golpe no ar desde que saiu do chão (aterrissa sem cambalhota/agachamento).
 var air_action_used: bool = false
 ## A última aterrissagem foi "limpa" (sem animação de impacto).
@@ -169,6 +171,8 @@ func get_wall_debug_text() -> String:
 func get_wall_jump_block_reason() -> String:
 	if not wall_sensor.has_contact:
 		return "sem parede"
+	if air_dashed and not config.wall_jump_after_air_dash:
+		return "usou dash no ar"
 	if air_origin != MovementRules.AirOrigin.JUMP:
 		return "não veio de pulo" if air_origin == MovementRules.AirOrigin.FALL else "no chão"
 	if not MovementRules.can_wall_jump(air_origin, _is_rising_jump_state(), ticks_since(last_jump_tick),
@@ -287,7 +291,8 @@ func _consume_attack(input: PlayerInput, heavy: bool) -> void:
 
 
 ## Tenta iniciar (ou encadear) um golpe. O tipo sai do contexto:
-## no dash → golpe de dash; no ar → golpe aéreo; no chão → leve (combo) ou pesado.
+## no dash (chão) → golpe de dash; no ar → mergulho (qualquer clique); no chão → leve (combo) ou pesado.
+## No meio de um dash NO AR o golpe conta como de chão (leve/pesado normais, `from_air_dash`).
 func try_attack(input: PlayerInput) -> bool:
 	if tick < action_lock_until_tick:
 		return false
@@ -300,25 +305,24 @@ func try_attack(input: PlayerInput) -> bool:
 	var in_attack := state_machine.is_in(&"Attack")
 	var current_kind: StringName = current.get(&"kind") if in_attack else &""
 	var current_index: int = current.get(&"combo_index") if in_attack else -1
+	var in_dodge := state_machine.is_in(&"Dodge")
+	# Dash no ar (ou golpe que já saiu dele): o golpe conta como se estivesse no chão.
+	var as_ground: bool = not is_on_floor() and (in_dodge or (in_attack and current.get(&"from_air_dash") == true))
 	var kind: StringName
 	var attack: AttackData
 	var index := 0
 	var use_heavy := false
-	if state_machine.is_in(&"Dodge") and light and not heavy:
+	if in_dodge and not as_ground and light and not heavy:
 		# Golpe interrompe o dash (o pesado também: segurando ou botão direito, abaixo).
 		kind = CombatRules.KIND_DASH
 		attack = weapon.dash
-	elif not is_on_floor():
-		# No ar: segurar/botão direito = pesado aéreo; toque = golpe aéreo (um de cada por vez).
-		if heavy and current_kind != CombatRules.KIND_HEAVY:
-			kind = CombatRules.KIND_HEAVY
-			attack = weapon.heavy
-			use_heavy = true
-		elif light and current_kind not in [CombatRules.KIND_AIR, CombatRules.KIND_HEAVY]:
-			kind = CombatRules.KIND_AIR
-			attack = weapon.air
-		else:
+	elif not is_on_floor() and not as_ground:
+		# No ar (pulo, queda, wall jump): qualquer clique é o mergulho, um pesado de cima para baixo.
+		if current_kind == CombatRules.KIND_AIR:
 			return false
+		kind = CombatRules.KIND_AIR
+		attack = weapon.air
+		use_heavy = heavy
 	elif heavy:
 		if current_kind == CombatRules.KIND_HEAVY:
 			return false
@@ -339,6 +343,7 @@ func try_attack(input: PlayerInput) -> bool:
 	_consume_attack(input, use_heavy)
 	state_machine.transition_to(&"Attack", "%s: %s" % [kind, attack.display_name], {
 		"attack": attack, "kind": kind, "combo_index": index, "direction": get_aim_direction(input),
+		"from_air_dash": as_ground,
 	})
 	return true
 
@@ -542,6 +547,7 @@ func do_jump(reason: String, enter_jump_state: bool = true, keep_speed: bool = f
 		velocity.x = horizontal.x
 		velocity.z = horizontal.z
 	velocity.y = config.get_jump_velocity()
+	air_dashed = false
 	mark_jump_origin()
 	wall_sensor.reset_entry()
 	GameEvents.jumped.emit(self)
@@ -575,22 +581,26 @@ func try_dodge(input: PlayerInput) -> bool:
 	if airborne:
 		air_dodges_used += 1
 		air_action_used = true
+		air_dashed = true
 	if side_request:
 		consume_jump_press(input, config.jump_buffer_ticks)
 	else:
 		_consumed_dodge_press_tick = input.dodge_pressed_tick
-	var direction: Vector3
-	if config.dodge_side_only and absf(input.move.x) >= 0.01:
-		direction = MovementRules.side_dash_direction(input.move.x, input.look_yaw)
-	else:
-		direction = MovementRules.dodge_direction(input.move, input.look_yaw,
-			config.dodge_neutral_backward)
+	var side := config.dodge_side_only and absf(input.move.x) >= 0.01
+	var direction := dodge_direction_for(input.move, side, input.look_yaw)
 	if cancelling:
 		GameEvents.technique_executed.emit(self, MovementRules.TECH_DODGE_CANCEL,
 			{"from_state": get_state_name(), "position": global_position})
 	state_machine.transition_to(&"Dodge", "dodge cancel" if cancelling else "dodge",
-		{"direction": direction, "airborne": airborne})
+		{"direction": direction, "airborne": airborne, "move": input.move, "side": side})
 	return true
+
+
+## Direção do dash no mundo para um input (relativo à câmera) e um yaw de câmera.
+func dodge_direction_for(move: Vector2, side: bool, look_yaw: float) -> Vector3:
+	if side:
+		return MovementRules.side_dash_direction(move.x, look_yaw)
+	return MovementRules.dodge_direction(move, look_yaw, config.dodge_neutral_backward)
 
 
 ## Tenta um wall jump (estados aéreos). Retorna true se executou.
@@ -684,6 +694,7 @@ func on_landed() -> void:
 	action_lock_until_tick = PlayerInput.NEVER
 	air_action_used = false
 	air_dodges_used = 0
+	air_dashed = false
 	last_wall_jump_collider = 0
 	back_coming_wall = 0
 	air_origin = MovementRules.AirOrigin.NONE
@@ -717,6 +728,7 @@ func respawn(at: Transform3D) -> void:
 	sprint_latched = false
 	air_sprinting = false
 	air_dodges_used = 0
+	air_dashed = false
 	last_wall_jump_collider = 0
 	back_coming_wall = 0
 	wall_sensor.clear()

@@ -24,7 +24,10 @@ testes GUT 9.7.1 (headless). Blender (`bpy` 4.2.0, Python 3.11) gera por código
   golpes aéreos e de dash, hitstop, rastro, esquiva perfeita.
 - Personagem (base VRoid CC0) e **todas as animações feitas no Blender** (`hero.blend` → `hero.glb`); o jogo as toca direto nos ossos
   (`HeroClips`) com crossfade. Menu F2 edita todas as configs ao vivo.
-- **220 testes passam**; `godot --headless --quit-after 120` abre sem erros.
+- **237 testes passam**; `godot --headless --quit-after 120` abre sem erros.
+- Menu de personagem (**F4**): modelo (herói ou personagens do VRoid em `assets/character/models/`, trazidos por
+  `tools/import_vroid.py`) e cores, salvo em `user://personagem.tres`. Golpe no pulo = mergulho; golpe no dash aéreo = combo leve;
+  dash segue a câmera; wall jump só com pulo normal; o back-coming nunca passa por cima da parede (reverse removido de vez).
 - Os commits de arena (`677621f`, `e798e12`) e o do caçador que voa **ainda não foram validados pelo dono dentro do jogo**.
 
 ## Comandos
@@ -41,6 +44,7 @@ python3 tools/blender/build_hero.py             # recria hero.blend + hero.glb (
 python3 tools/blender/export_hero.py            # só exporta o hero.blend editado
 python3 tools/blender/build_sky_arena.py        # recria a arena (art/arena/sky_arena.blend + assets/arena/sky_arena.glb)
 python3 tools/blender/build_sword.py            # art/weapons/arc_blade_source.usdz -> assets/weapons/arc_blade.glb
+python3 tools/import_vroid.py arquivo.vrm nome  # personagem do VRoid Studio -> assets/character/models/nome.glb (Pillow)
 ```
 
 Os scripts do Blender precisam de `pip install bpy==4.2.0 numpy` (só roda em Python 3.11). Sem isso o jogo e os testes funcionam
@@ -92,6 +96,8 @@ normalmente; os `.glb`/`.blend` já estão versionados. Se o ambiente bloquear i
 - **`class_name` novo** → `godot --headless --import` (senão "Could not find type").
 - **Eixos**: Blender (x, y, z) → Godot (x, z, −y). **Yaw**: frente = (−sin yaw, −cos yaw). Em `.tscn`, `Transform3D(...)` lista a base por linhas.
 - **Clipes de animação** são procurados por nome em `character_model.gd`; não renomeie sem ajustar o código e os `AttackData`.
+- **Clipes x modelos**: o cache do `HeroClips` sai sempre do hero.glb; outros modelos do VRoid só se ligam a ele (`HeroClips.bind`,
+  pelo nome dos ossos). Testes não gravam `user://personagem.tres` (use `set_open(false, false)` no menu).
 - **`AnimatableBody3D` com `sync_to_physics = true`** desfaz atribuições de `global_position` até o próximo passo da física; o
   `HunterBot` usa `false`. O projeto trata "variável inferida de Variant" como erro (`var s: String = fila.pop_front()`).
 - **Wall jump** usa a velocidade de **entrada** na parede (`wall_sensor`), não a de depois do `move_and_slide` (que "come" a componente).
@@ -107,7 +113,7 @@ scenes/arenas/     SkyArena (principal), CombatArena, TrainingCourse, Arena, Tra
 scenes/ui/         HUD, HUD de debug (F1), menu de debug (F2), HUD de combate e de treino
 scripts/core/      eventos, configs, regras puras, utilitários
 tests/unit/        testes de lógica pura (7 arquivos)
-tests/integration/ testes com o Player real e física headless (12 arquivos); test_training_course.gd tem bots que completam o percurso
+tests/integration/ testes com o Player real e física headless (13 arquivos); test_training_course.gd tem bots que completam o percurso
 tests/helpers/     player_driver.gd: dirige o Player tick a tick com PlayerInput sintético
 tools/             install_godot.sh, run_tests.sh, gen_sfx.py e tools/blender/ (build_hero, hero_animations, export_hero, build_sky_arena, build_sword)
 art/               fontes editáveis (hero.blend, sky_arena.blend, arc_blade_source.usdz); `.gdignore`

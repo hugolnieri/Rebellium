@@ -46,6 +46,21 @@ extends Resource
 @export_range(0.0, 2.0, 0.05) var air_gravity_scale: float = 0.35
 @export_range(0.0, 100.0, 1.0) var sp_cost: float = 0.0
 
+@export_group("Mergulho (golpe no pulo)")
+## Golpe no ar vira mergulho: congela no ar, desce reto com tudo no ponto onde clicou e fica preso no chão.
+## (Os tempos de preparação/acerto/recuperação acima não valem para o mergulho; valem os daqui.)
+@export var plunge: bool = false
+## Tempo congelado no ar antes de descer (a espada sobe).
+@export_range(0.0, 1.5, 0.01, "suffix:s") var plunge_hover_time: float = 0.28
+## Velocidade da descida.
+@export_range(5.0, 80.0, 0.5, "suffix:m/s") var plunge_speed: float = 32.0
+## Tempo preso no chão depois do impacto, levantando (sem cancelar).
+@export_range(0.0, 3.0, 0.01, "suffix:s") var plunge_landing_time: float = 0.55
+## Raio do impacto no chão (acerta em volta).
+@export_range(0.3, 8.0, 0.05, "suffix:m") var plunge_impact_radius: float = 2.6
+## Segurança: sem chão por este tempo descendo, o mergulho acaba e vira queda.
+@export_range(0.2, 10.0, 0.1, "suffix:s") var plunge_max_time: float = 3.0
+
 
 func total_time() -> float:
 	return startup + active + recovery

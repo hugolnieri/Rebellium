@@ -7,8 +7,14 @@ extends PlayerState
 ## - A recuperação é cancelável por dash (dodge cancel) e por troca de arma (swap cancel).
 ## - No chão, Espaço pula a qualquer momento do golpe; o golpe continua no ar até o fim.
 ## O tempo do golpe conta em ticks próprios: o hitstop pausa o golpe.
+## - Mergulho (golpe no pulo, `AttackData.plunge`): congela no ar (`plunge_hover_time`), desce reto com tudo
+##   no ponto onde clicou (`plunge_speed`), acerta em volta no impacto (`plunge_impact_radius`) e fica preso
+##   no chão levantando (`plunge_landing_time`), sem cancelar.
+## - Golpe saído do dash no ar (`from_air_dash`): conta como golpe de chão (combo leve normal), gravidade
+##   normal, velocidade de um pulo normal; sem direcional freia até parar no lugar do golpe.
 
 enum Phase { STARTUP, ACTIVE, RECOVERY }
+enum Plunge { NONE, HOVER, DIVE, LANDED }
 
 var attack: AttackData
 var kind: StringName = &""
@@ -18,6 +24,14 @@ var direction: Vector3 = Vector3.FORWARD
 var airborne: bool = false
 ## Gravidade no ar: a do golpe se ele começou no ar; gravidade normal se o pulo veio no meio do golpe.
 var _gravity_scale: float = 1.0
+## Golpe que saiu do meio de um dash no ar (conta como golpe de chão).
+var from_air_dash: bool = false
+var plunge: Plunge = Plunge.NONE
+var _plunge_t: int = 0
+var _hover_ticks: int = 0
+var _landing_ticks: int = 1
+## Ticks da descida até a pose de golpe chegar ao fim (só animação).
+const PLUNGE_SWING_TICKS: int = 6
 
 var _t: int = 0
 var _startup_ticks: int = 1
@@ -33,7 +47,12 @@ func enter(from: StringName, data: Dictionary) -> void:
 	combo_index = data.get("combo_index", 0)
 	direction = data.get("direction", Vector3.FORWARD)
 	airborne = kind == CombatRules.KIND_AIR or not player.is_on_floor()
-	_gravity_scale = attack.air_gravity_scale if airborne else 1.0
+	from_air_dash = data.get("from_air_dash", false)
+	_gravity_scale = attack.air_gravity_scale if airborne and not from_air_dash else 1.0
+	plunge = Plunge.HOVER if attack.plunge and kind == CombatRules.KIND_AIR and airborne else Plunge.NONE
+	_plunge_t = 0
+	_hover_ticks = maxi(player.secs_to_ticks(attack.plunge_hover_time), 0)
+	_landing_ticks = maxi(player.secs_to_ticks(attack.plunge_landing_time), 1)
 	if airborne:
 		player.air_action_used = true
 	_t = 0
@@ -48,7 +67,9 @@ func enter(from: StringName, data: Dictionary) -> void:
 		var horizontal := player.get_horizontal_velocity().limit_length(player.get_walk_speed())
 		player.velocity.x = horizontal.x
 		player.velocity.z = horizontal.z
-	if kind == CombatRules.KIND_AIR and attack.air_start_vertical_speed != 0.0:
+	if plunge != Plunge.NONE:
+		player.velocity = Vector3.ZERO  # congela onde clicou
+	elif kind == CombatRules.KIND_AIR and attack.air_start_vertical_speed != 0.0:
 		player.velocity.y = attack.air_start_vertical_speed
 	GameEvents.attack_started.emit(player, attack, player.get_weapon(), kind)
 
@@ -58,10 +79,18 @@ func exit() -> void:
 
 
 func is_recovery() -> bool:
-	return _t > _startup_ticks + _active_ticks
+	# O mergulho não tem recuperação cancelável: no chão ele fica preso até levantar.
+	return plunge == Plunge.NONE and _t > _startup_ticks + _active_ticks
 
 
 func get_phase() -> Phase:
+	match plunge:
+		Plunge.HOVER:
+			return Phase.STARTUP
+		Plunge.DIVE:
+			return Phase.ACTIVE
+		Plunge.LANDED:
+			return Phase.RECOVERY
 	if _t <= _startup_ticks:
 		return Phase.STARTUP
 	if _t <= _startup_ticks + _active_ticks:
@@ -71,6 +100,13 @@ func get_phase() -> Phase:
 
 ## Progresso 0–1 dentro da fase atual (para a animação procedural).
 func get_phase_progress() -> float:
+	match plunge:
+		Plunge.HOVER:
+			return float(_plunge_t) / maxf(_hover_ticks, 1)
+		Plunge.DIVE:
+			return float(_plunge_t) / PLUNGE_SWING_TICKS
+		Plunge.LANDED:
+			return float(_plunge_t) / _landing_ticks
 	match get_phase():
 		Phase.STARTUP:
 			return float(_t) / maxf(_startup_ticks, 1)
@@ -79,7 +115,15 @@ func get_phase_progress() -> float:
 	return float(_t - _startup_ticks - _active_ticks) / maxf(_recovery_ticks, 1)
 
 
+## Mergulho já no chão, levantando (para a animação).
+func is_plunge_landing() -> bool:
+	return plunge == Plunge.LANDED
+
+
 func physics_update(input: PlayerInput, delta: float) -> void:
+	if plunge != Plunge.NONE:
+		_plunge_update(input, delta)
+		return
 	_t += 1
 	if is_recovery() and player.try_dodge(input):
 		return
@@ -88,7 +132,9 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	if _t >= _chain_ticks and player.try_attack(input):
 		return
 	var phase := get_phase()
-	if airborne:
+	if airborne and from_air_dash:
+		_move_after_air_dash(input, delta)
+	elif airborne:
 		if _t == _startup_ticks + 1 and attack.air_active_vertical_speed != 0.0:
 			player.velocity.y = attack.air_active_vertical_speed
 		player.apply_air_movement(input, delta, _gravity_scale)
@@ -99,9 +145,43 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	else:
 		_move_on_ground(input, delta)
 	if phase == Phase.ACTIVE:
-		_check_hits()
+		_check_hits(attack.reach, attack.arc_deg)
 	if _t >= _startup_ticks + _active_ticks + _recovery_ticks:
 		_finish(input)
+
+
+## Congela → desce reto → preso no chão. Sem dash, pulo, troca nem outro golpe no meio.
+func _plunge_update(input: PlayerInput, delta: float) -> void:
+	_plunge_t += 1
+	match plunge:
+		Plunge.HOVER:
+			player.velocity = Vector3.ZERO
+			if _plunge_t > _hover_ticks:
+				plunge = Plunge.DIVE
+				_plunge_t = 0
+				player.velocity = Vector3.DOWN * attack.plunge_speed
+		Plunge.DIVE:
+			player.velocity = Vector3.DOWN * attack.plunge_speed
+			_check_hits(attack.reach, 360.0)
+			if _plunge_t > player.secs_to_ticks(attack.plunge_max_time):
+				machine.transition_to(&"Fall", "mergulho sem chão")
+		Plunge.LANDED:
+			player.velocity = Vector3(0.0, minf(player.velocity.y, 0.0), 0.0)
+			player.apply_gravity(delta)
+			if _plunge_t >= _landing_ticks:
+				_finish(input)
+
+
+## Golpe saído do dash no ar: andar no ar normal com direcional; sem ele, freia até parar ali.
+func _move_after_air_dash(input: PlayerInput, delta: float) -> void:
+	if input.has_move():
+		player.apply_air_movement(input, delta)
+		return
+	var horizontal := player.get_horizontal_velocity().move_toward(Vector3.ZERO,
+		player.combat_config.air_dash_attack_stop_deceleration * delta)
+	player.velocity.x = horizontal.x
+	player.velocity.z = horizontal.z
+	player.apply_gravity(delta)
 
 
 ## Pulo durante o golpe (no chão): sai pulando SEM interromper o golpe, que segue no ar.
@@ -129,13 +209,23 @@ func _move_on_ground(input: PlayerInput, delta: float) -> void:
 
 
 func post_move(_input: PlayerInput) -> void:
+	if plunge == Plunge.DIVE and player.is_on_floor():
+		# Impacto: acerta em volta e fica preso no chão levantando.
+		plunge = Plunge.LANDED
+		_plunge_t = 0
+		airborne = false
+		player.touch_down_during_action()
+		_check_hits(attack.plunge_impact_radius, 360.0)
+		return
+	if plunge != Plunge.NONE:
+		return
 	if airborne and _t > 1 and player.is_on_floor():
 		# O golpe continua até o fim no chão; só o pulo (ou dash na recuperação) interrompe.
 		airborne = false
 		player.touch_down_during_action()
 
 
-func _check_hits() -> void:
+func _check_hits(reach: float, arc_deg: float) -> void:
 	var origin := player.get_hit_center()
 	for target in player.get_hittables():
 		var id := target.get_instance_id()
@@ -144,7 +234,7 @@ func _check_hits() -> void:
 		var center: Vector3 = target.call(&"get_hit_center")
 		var radius: float = target.call(&"get_hit_radius")
 		if not CombatRules.is_in_attack_area(origin, direction, center, radius,
-				attack.reach, attack.arc_deg, attack.vertical_reach):
+				reach, arc_deg, attack.vertical_reach):
 			continue
 		_hit_ids[id] = true
 		var hitstop := player.secs_to_ticks(attack.hitstop)

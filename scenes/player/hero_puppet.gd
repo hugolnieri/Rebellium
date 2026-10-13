@@ -9,6 +9,7 @@ const MODEL_SCENE: PackedScene = preload("res://assets/character/hero.glb")
 var _rig: Node3D
 var _skeleton: Skeleton3D
 var _hips_bone: int = -1
+var _binding: HeroClips.Binding
 var _current: Array = []
 var _fade_from: Array = []
 var _fade_t: float = 0.0
@@ -22,7 +23,7 @@ func _ready() -> void:
 	add_child(_rig)
 	_skeleton = _rig.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
 	_hips_bone = _skeleton.find_bone(CharacterModel.HIPS_BONE)
-	HeroClips.load_from(_rig, _skeleton, _hips_bone)
+	_binding = HeroClips.bind(_skeleton, _hips_bone)
 
 
 ## Cobre o corpo todo com um material só (ex.: o vermelho do caçador).
@@ -47,7 +48,4 @@ func show_clip(key: int, clip: StringName, u: float, loop: bool, delta: float, b
 		_fade_t += delta
 		pose = HeroClips.blend(_fade_from, pose, smoothstep(0.0, 1.0, _fade_t / _fade_time))
 	_current = pose
-	var bones := HeroClips.bones
-	for slot in bones.size():
-		_skeleton.set_bone_pose_rotation(bones[slot], pose[slot])
-	_skeleton.set_bone_pose_position(_hips_bone, pose[bones.size()])
+	_binding.apply(pose)

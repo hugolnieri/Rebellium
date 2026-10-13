@@ -132,6 +132,9 @@ extends Resource
 @export var air_dodge_jump_cancels: bool = true
 ## Dodge pode interromper estados de recuperação (Land, recuperação do dodge).
 @export var dodge_cancel_enabled: bool = true
+## A direção do dash segue a câmera durante o deslize: dash para a esquerda continua indo para a esquerda
+## da câmera enquanto ela gira (desligado = direção fixa no início do dash).
+@export var dodge_follows_camera: bool = true
 @export_range(0, 20, 1, "suffix:ticks") var dodge_buffer_ticks: int = 3
 
 @export_group("Wall jump")
@@ -164,6 +167,9 @@ extends Resource
 @export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_lock_time: float = 0.3
 ## Proíbe dois wall jumps seguidos na MESMA parede (exceto após back-coming).
 @export var wall_jump_same_wall_lockout: bool = true
+## Wall jump só vale com o pulo normal: depois de um dash no ar ele fica bloqueado até tocar o chão.
+## Ligue para voltar a permitir wall jump depois do dash no ar.
+@export var wall_jump_after_air_dash: bool = false
 ## Distância extra (além do raio) em que a parede conta como tocada.
 @export_range(0.0, 1.0, 0.01, "suffix:m") var wall_detect_distance: float = 0.2
 ## |normal.y| máximo para uma superfície contar como parede.
@@ -187,6 +193,9 @@ extends Resource
 ## Back-coming encadeado: depois de um back-coming, Space com o direcional apontando para a parede
 ## (cosseno mínimo entre o input e a direção da parede) sobe mais um lance em vez de se afastar.
 @export_range(-1.0, 1.0, 0.05) var back_coming_chain_min_dot: float = 0.5
+## Ao passar do topo da parede subindo no back-coming, o corpo é empurrado PARA FORA da parede com esta
+## velocidade até o ápice (sem reverse wall jump: o back-coming nunca leva por cima da parede).
+@export_range(0.0, 10.0, 0.1, "suffix:m/s") var back_coming_top_pop_speed: float = 1.5
 ## Cancel: troca de arma até N ticks do wall jump.
 @export_range(0, 20, 1, "suffix:ticks") var cancel_window_ticks: int = 4
 ## Fração da velocidade de entrada preservada pelo cancel.

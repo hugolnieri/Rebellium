@@ -258,5 +258,27 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 - Testes: `test_player_camera.gd` (a vista segue o `look_yaw` mesmo com o Player instanciado girado) e
   `test_wasd_walk_relative_to_the_camera` (SkyArena real). Os dois falham sem a correção, com o erro de 22,5°.
 
+## Revisão: parar sem atraso
+- Ao soltar W o personagem deslizava ~0,2 s e a passada demorava a sumir: `ground_deceleration` 45 → 120 m/s² e
+  `run_stop_rate` 16/s (FeedbackConfig). F1 mostra o pior quadro do último segundo (ENGASGO acima de 33 ms).
+
+## Revisão: mergulho, dash que segue a câmera, fim do reverse e personagem do VRoid
+- **Wall jump só com o pulo normal**: dash no ar bloqueia o wall jump até o próximo pulo do chão (`wall_jump_after_air_dash`
+  desligado; F1: "usou dash no ar").
+- **Reverse wall jump removido de vez**: o que sobrava dele era o back-coming passar do topo de uma parede baixa (os muros de
+  2,25 m da arena) e o empurrão contra a parede levar o corpo por cima. Agora, ao passar do topo, o corpo é empurrado para fora
+  (`back_coming_top_pop_speed`) até o ápice e cai do mesmo lado. O percurso dependia disso nos trechos 3 e 4: cada um ganhou um
+  pilar de frente para a face (sobe-se com wall jumps face → pilar → por cima), com bots provando.
+- **Dash segue a câmera** (`dodge_follows_camera`): a direção é refeita a cada tick pelo yaw da câmera, inclusive no deslize.
+- **Golpe no pulo = mergulho** (`AttackData.plunge`, nos `air.tres`): qualquer clique no ar congela o personagem onde clicou,
+  ele desce reto com tudo, acerta em volta no impacto e fica preso no chão levantando. Clipe novo `plunge_land` no Blender
+  (ajoelhado com a espada cravada). Substitui o aéreo antigo e o pesado aéreo (giro no ar).
+- **Golpe no dash aéreo** conta como golpe de chão: combo leve normal, velocidade de pulo normal, gravidade normal e, sem
+  direcional, para no lugar do golpe (`air_dash_attack_stop_deceleration`).
+- **Personagem customizável (F4)**: `CharacterLook` salvo por jogador; modelo (herói ou personagens do VRoid) e cores (tintas de
+  cabelo, pele e olhos; no herói, traje/costuras/emblema por uma máscara gerada no `build_hero.py`). Os clipes do herói tocam em
+  qualquer modelo do VRoid pelo nome dos ossos (`HeroClips.bind`). `tools/import_vroid.py` traz um VRM exportado do VRoid Studio
+  (sem Blender); já vem o "Vroid Casual" (HairSample_Male CC0 com a roupa original).
+
 ## Revisão: parar de andar sem atraso
 - Ao soltar W o personagem deslizava ~0,2 s (desaceleração 45 m/s² a partir de 10 m/s) e a passada ainda levava ~0,2 s para sumir. `ground_deceleration` foi para 120 m/s² e a passada some a `run_stop_rate` = 16/s (FeedbackConfig). Ajustáveis no F2 (Movimento / Visual).

@@ -127,6 +127,18 @@ script = ExtResource("greybox")
 size = Vector3(8.5, 0.02, 0.3)
 surface = 5
 
+[node name="LedgePillar" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 3.5, -55.5)
+script = ExtResource("greybox")
+size = Vector3(3, 7, 1)
+surface = 3
+
+[node name="WallPillar" type="StaticBody3D" parent="Geometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 7.35, -65.5)
+script = ExtResource("greybox")
+size = Vector3(3, 7.5, 1)
+surface = 3
+
 [node name="BackComingWall" type="StaticBody3D" parent="Geometry"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 5.8, -81)
 script = ExtResource("greybox")
@@ -180,7 +192,7 @@ shape = SubResource("box1")
 [node name="CP2_Borda" type="Area3D" parent="Checkpoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0, -51)
 monitorable = false
-metadata/label = "Borda (back-coming duplo)"
+metadata/label = "Borda (pilar)"
 
 [node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP2_Borda"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.5)
@@ -189,7 +201,7 @@ shape = SubResource("box2")
 [node name="CP3_BackComing" type="Area3D" parent="Checkpoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 3.6, -62)
 monitorable = false
-metadata/label = "Parede lisa (back-coming)"
+metadata/label = "Parede lisa (pilar)"
 
 [node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP3_BackComing"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3)
@@ -242,7 +254,7 @@ pixel_size = 0.006
 modulate = Color(0.86, 0.84, 0.79, 1)
 outline_modulate = Color(0.04, 0.04, 0.05, 1)
 text = "3 · BORDA
-back-coming + Space segurando W"
+wall jump na borda e no pilar"
 font_size = 64
 outline_size = 12
 
@@ -253,7 +265,7 @@ pixel_size = 0.006
 modulate = Color(0.86, 0.84, 0.79, 1)
 outline_modulate = Color(0.04, 0.04, 0.05, 1)
 text = "4 · PAREDE LISA
-back-coming duplo"
+wall jump na parede e no pilar"
 font_size = 64
 outline_size = 12
 

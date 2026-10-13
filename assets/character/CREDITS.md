@@ -7,3 +7,9 @@
 - Modificações (tools/blender/build_hero.py, no Blender): roupas removidas, traje azul-marinho de gola
   alta pintado (costuras e emblema original), pés descalços, cabelo branco, olhos cinza, pinta no rosto,
   animações criadas como Actions. Arquivo editável: `art/character/hero.blend`; o jogo carrega `hero.glb`.
+
+## Outros modelos (menu de personagem, F4) — `assets/character/models/`
+
+- **vroid_casual.glb**: o mesmo "HairSample_Male" do VRoid Studio (pixiv Inc.), **CC0**, com a roupa original (moletom, calça e
+  tênis), convertido por `tools/import_vroid.py` (texturas reduzidas). Sem outras modificações.
+- Personagens novos feitos no VRoid Studio: confira as condições de uso de cada peça/modelo antes de publicar e registre aqui.

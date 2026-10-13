@@ -21,6 +21,7 @@ python3 tools/blender/build_hero.py   # recria art/character/hero.blend + hero.g
 python3 tools/blender/export_hero.py  # só exporta o hero.blend editado → assets/character/hero.glb
 python3 tools/blender/build_sky_arena.py  # recria a arena flutuante (art/arena/sky_arena.blend + assets/arena/sky_arena.glb)
 python3 tools/blender/build_sword.py      # converte art/weapons/arc_blade_source.usdz → assets/weapons/arc_blade.glb
+python3 tools/import_vroid.py arquivo.vrm nome  # personagem do VRoid Studio → assets/character/models/nome.glb (F4)
 ```
 Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`. Contexto completo e estado atual do jogo: `docs/CONTEXTO_PROJETO.md`
 (o `AGENTS.md` da raiz é o equivalente deste arquivo para outros agentes, como o Codex: mantenha as regras sincronizadas).
@@ -67,7 +68,8 @@ scenes/player/     Player.tscn, câmera, input, estados, sensor de parede, VFX, 
                    (só apresentação: toca os clipes do Blender do `hero.glb` (via `hero_clips.gd`) direto nos ossos,
                    com crossfade nas trocas; lê o
                    Player e nunca altera gameplay)
-assets/character/  personagem exportado (hero.glb: malha + esqueleto + animações; ver CREDITS.md)
+assets/character/  personagem exportado (hero.glb: malha + esqueleto + animações; ver CREDITS.md); `models/` = personagens
+                   do VRoid para o menu de personagem (F4, `CharacterLook`); as animações do herói tocam neles pelo nome dos ossos
 art/character/     hero.blend — fonte editável do personagem e das animações (Actions); `.gdignore`
 art/arena/         sky_arena.blend — fonte editável da arena flutuante
 assets/arena/      sky_arena.glb (objetos "-convcolonly" viram colisão convexa no Godot)
@@ -87,7 +89,8 @@ tools/             scripts de instalação e de teste
   `sky_arena.gd` herda da arena de combate e anima drones, luzes e chamas.
 - `scenes/arenas/TrainingCourse.tscn`: percurso de movimento, cronômetro, checkpoints.
 - `scenes/arenas/Arena.tscn`: arena livre para experimentar.
-- Todas incluem HUD, DebugHUD (F1) e DebugMenu (F2). F3 (autoload `SceneCycler`) alterna entre elas.
+- Todas incluem HUD, DebugHUD (F1) e DebugMenu (F2). F3 (autoload `SceneCycler`) alterna entre elas; F4 (autoload
+  `CharacterMenu`) abre o menu de personagem.
 
 ## Convenções
 - Commits de fase: `fase-N: <resumo>`.

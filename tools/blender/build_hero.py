@@ -3,6 +3,8 @@
 Gera:
   art/character/hero.blend     — arquivo editável (abra no Blender para ver/ajustar as animações)
   assets/character/hero.glb    — o que o jogo carrega (malha + esqueleto + todas as animações)
+  assets/character/hero_suit_mask.png — máscara do traje na textura do corpo, para o menu de personagem
+                                 recolorir (R = traje, G = costuras, B = emblema; fora do traje = pele)
 
 Base: "HairSample_Male", modelo de exemplo do VRoid Studio (pixiv), licença CC0 (uso comercial,
 edição e redistribuição livres), baixado de github.com/madjin/vrm-samples na primeira execução
@@ -45,6 +47,7 @@ SOURCE_URL = "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/
 SOURCE = os.path.join(CACHE, "HairSample_Male.vrm")
 OUT_BLEND = os.path.join(ROOT, "art", "character", "hero.blend")
 OUT_GLB = os.path.join(ROOT, "assets", "character", "hero.glb")
+OUT_MASK = os.path.join(ROOT, "assets", "character", "hero_suit_mask.png")
 
 DROP_MATERIALS = ("CLOTH",)
 DROP_BONES = ("J_Sec_C_Hood", "J_Sec_L_HoodString", "J_Sec_R_HoodString")
@@ -164,11 +167,12 @@ def write_pixels(img, arr):
     img.pack()
 
 
-def paint_mesh(obj, material_key, shade, dilate=3, write=True):
-    """Para cada texel coberto pelas faces com o material, chama shade(pos3d, rgba) → rgba."""
+def paint_mesh(obj, material_key, shade, dilate=3, write=True, base=None):
+    """Para cada texel coberto pelas faces com o material, chama shade(pos3d, rgba) → rgba.
+    `base`: imagem de partida para o resultado (padrão: a própria textura)."""
     img = image_of(material_key)
     src = read_pixels(img)
-    out = src.copy()
+    out = src.copy() if base is None else base.copy()
     h, w = src.shape[:2]
     painted = np.zeros((h, w), bool)
     mesh = obj.data
@@ -192,6 +196,7 @@ def paint_mesh(obj, material_key, shade, dilate=3, write=True):
         painted = grow
     if write:
         write_pixels(img, out)
+    return out
 
 
 def _raster(t2, t3, src, out, painted, shade):
@@ -297,6 +302,37 @@ def suit_shade(p, rgba):
     return result
 
 
+def suit_mask_shade(p, rgba):
+    """Mesmas regiões do suit_shade, como máscara: R = traje, G = costuras, B = metal do emblema."""
+    marker = np.zeros_like(rgba)
+    # Pinta o traje numa cor marcadora para descobrir as costuras e o emblema sem duplicar as regras.
+    global SUIT, SEAM, HEM_SHADOW, EMBLEM_METAL, EMBLEM_DARK
+    saved = SUIT, SEAM, HEM_SHADOW, EMBLEM_METAL, EMBLEM_DARK
+    SUIT, SEAM, HEM_SHADOW, EMBLEM_METAL, EMBLEM_DARK = (np.array([1.0, 0.0, 0.0]), np.array([1.0, 1.0, 0.0]),
+                                                         np.array([1.0, 0.0, 0.0]), np.array([1.0, 0.0, 1.0]),
+                                                         np.array([1.0, 0.0, 0.0]))
+    try:
+        painted = suit_shade(p, rgba)
+    finally:
+        SUIT, SEAM, HEM_SHADOW, EMBLEM_METAL, EMBLEM_DARK = saved
+    skin = (p[:, 2] > COLLAR_TOP) | (np.abs(p[:, 0]) > WRIST_X) | (p[:, 2] < ANKLE_Z)
+    marker[:, 0] = np.where(skin, 0.0, 1.0)
+    marker[:, 1] = np.where(skin, 0.0, painted[:, 1])
+    marker[:, 2] = np.where(skin, 0.0, painted[:, 2])
+    marker[:, 3] = 1.0
+    return marker
+
+
+def save_suit_mask(body):
+    img = image_of("Body_00_SKIN")
+    w, h = img.size
+    mask = paint_mesh(body, "Body_00_SKIN", suit_mask_shade, write=False, base=np.zeros((h, w, 4), np.float32))
+    from PIL import Image
+    rgb = (np.clip(mask[::-1, :, :3], 0, 1) * 255).astype(np.uint8)  # Blender: linha 0 embaixo
+    Image.fromarray(rgb, "RGB").save(OUT_MASK, optimize=True)
+    log("máscara do traje", OUT_MASK)
+
+
 def _emblem(p, color):
     """Emblema original: escudo prateado com um chevron (V) escuro, no peito esquerdo."""
     x, y, z = p[:, 0], p[:, 1], p[:, 2]
@@ -393,6 +429,7 @@ def main():
     global FOOT_SKIN
     FOOT_SKIN = measure_hand_skin(bpy.data.objects["Body"])
     log("pele das mãos", FOOT_SKIN)
+    save_suit_mask(bpy.data.objects["Body"])
     paint_mesh(bpy.data.objects["Body"], "Body_00_SKIN", suit_shade)
     recolor_white("HAIR", (0.66, 0.68, 0.76), (0.97, 0.97, 1.0))
     recolor_white("FaceBrow", (0.55, 0.56, 0.62), (0.8, 0.81, 0.86))

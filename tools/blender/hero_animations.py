@@ -30,6 +30,7 @@ Clipes e como o jogo os amostra (tempo normalizado 0–1):
   atk_<golpe>  0 prontidão · 0,35 preparação · 0,6 acerto · 1 acompanhamento
   launched     0 recebendo o golpe · 1 de costas pronto para bater no chão (pelo PROGRESSO do voo do alvo)
   knockdown, getup   pelo tempo (queda de costas e levantar); só o caçador usa launched/knockdown/getup
+  plunge_land        pelo tempo preso no chão depois do golpe no pulo (ajoelhado, espada cravada, levanta)
 """
 import math
 
@@ -395,6 +396,25 @@ def hurt_keys():
 def sword_rest_keys():
     rest = over(READY, pose(shoulder_r=(14.3, 4.0, 5.7), elbow_r=(68.8, 0, 0), wrist_r=(63.0, -5.7, -22.3)))
     return [(0, rest), (12, rest)]
+
+
+# --- Mergulho: impacto ajoelhado com a espada cravada e levantar -----------------------------------
+
+PLUNGE_IMPACT = over(READY, pose(
+    hips_pos=(0, -0.47, -0.06), hips=(-10, 0, 0), spine=(-32, 0, 0), chest=(-12, 0, 0), upper_chest=(0, 0, 0),
+    neck=(12, 0, 0), head=(26, 0, 0),
+    thigh_l=(98, 0, -10), knee_l=(-102, 0, 0), foot_l=(14, 0, 10),
+    thigh_r=(14, 0, 10), knee_r=(-96, 0, 0), foot_r=(30, 0, -10), toe_r=(55, 0, 0),
+    shoulder_r=(50, 6, 0), elbow_r=(8, 0, 0), wrist_r=(-88, 0, 0),
+    shoulder_l=(22, 0, -58), elbow_l=(32, 0, 0), grip_l=0.4))
+
+
+def plunge_land_keys():
+    """Golpe no pulo, no chão: bate ajoelhado com a espada cravada na frente, fica um tempo e levanta."""
+    settle = over(PLUNGE_IMPACT, pose(hips_pos=(0, -0.45, -0.06), spine=(-29, 0, 0), head=(22, 0, 0)))
+    push = lerp_pose(PLUNGE_IMPACT, READY, 0.45)
+    push = over(push, pose(spine=(-26, 0, 0), shoulder_r=(40, 6, 0), elbow_r=(20, 0, 0)))
+    return [(0, PLUNGE_IMPACT), (20, settle), (32, push), (44, READY)]
 
 
 # --- Arremesso: voo, queda de costas e levantar ------------------------------------------------------
@@ -934,6 +954,7 @@ def clips(hips_rest_y):
         ("launched", 48, False, launched_keys(), None),
         ("knockdown", 36, False, knockdown_keys(), None),
         ("getup", 66, False, getup_keys(), None),
+        ("plunge_land", 44, False, plunge_land_keys(), None),
     ]
     for name in ATTACKS:
         out.append(("atk_" + name, ATTACK_FRAMES, False, attack_keys(name), root_spin if name == "spin" else None))

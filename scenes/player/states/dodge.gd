@@ -7,14 +7,21 @@ extends PlayerState
 ## depois volta a cair; ou suspende a gravidade se `air_dodge_suspends_gravity` → segue com `air_dodge_exit_speed`.
 ## Espaço no meio do dash no ar cancela o dash (`air_dodge_jump_cancels`) e volta a cair.
 ## `player.is_invulnerable` fica true durante `dodge_invulnerability` desde o início.
+## Com `dodge_follows_camera`, a direção é refeita a cada tick a partir do yaw da câmera: um dash para a
+## esquerda continua indo para a esquerda da câmera enquanto ela gira (inclusive no deslize do fim).
 
 var _direction: Vector3 = Vector3.FORWARD
 var _airborne: bool = false
+## Input (relativo à câmera) que pediu o dash; refaz a direção quando a câmera gira.
+var _move: Vector2 = Vector2.ZERO
+var _side: bool = false
 
 
 func enter(_from: StringName, data: Dictionary) -> void:
 	_direction = data.get("direction", -player.visual.global_basis.z)
 	_airborne = data.get("airborne", false)
+	_move = data.get("move", Vector2.ZERO)
+	_side = data.get("side", false)
 	player.is_invulnerable = cfg().dodge_invulnerability > 0.0
 	_set_dash_velocity(0)
 	if _airborne:
@@ -37,6 +44,7 @@ func is_recovery() -> bool:
 func physics_update(input: PlayerInput, delta: float) -> void:
 	var t := machine.ticks_in_state()
 	player.is_invulnerable = t < player.secs_to_ticks(cfg().dodge_invulnerability)
+	_follow_camera(input)
 	# Golpe saindo do dash (estocada).
 	if player.try_attack(input):
 		return
@@ -51,8 +59,10 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 	if t < dash:
 		_set_dash_velocity(t)
 	else:
-		var horizontal := player.get_horizontal_velocity().move_toward(Vector3.ZERO,
-			cfg().dodge_slide_deceleration * delta)
+		var horizontal := player.get_horizontal_velocity()
+		if cfg().dodge_follows_camera and _move != Vector2.ZERO:
+			horizontal = _direction * horizontal.length()  # o deslize também acompanha a câmera
+		horizontal = horizontal.move_toward(Vector3.ZERO, cfg().dodge_slide_deceleration * delta)
 		player.velocity.x = horizontal.x
 		player.velocity.z = horizontal.z
 	player.apply_gravity(delta)
@@ -63,6 +73,14 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 			player.air_origin = MovementRules.AirOrigin.FALL
 			player.left_floor_tick = player.tick
 			machine.transition_to(&"Fall", "fim do dodge no ar")
+
+
+func _follow_camera(input: PlayerInput) -> void:
+	if not cfg().dodge_follows_camera or _move == Vector2.ZERO:
+		return
+	var direction := player.dodge_direction_for(_move, _side, input.look_yaw)
+	if direction.length_squared() > 0.0001:
+		_direction = direction
 
 
 ## Espaço durante o dash: cancela o movimento e pula, mantendo parte do embalo.

@@ -299,14 +299,24 @@ func _back_coming_on(height: float) -> void:
 	d.step_until(func() -> bool: return d.player.velocity.y < 1.0, 40, FWD)
 
 
-func test_double_back_coming_climbs_wall_too_tall_for_a_single_jump() -> void:
+func test_back_coming_never_carries_over_a_low_wall() -> void:
+	# Sem reverse wall jump: num muro baixo (2,25 m, como os vermelhos da arena) o back-coming sobe colado,
+	# passa do topo e é empurrado para FORA, mesmo segurando W para a parede.
+	await _back_coming_on(2.25)
+	d.step(90, FWD)
+	assert_true(d.player.is_on_floor())
+	assert_almost_eq(d.player.global_position.y, 0.0, 0.05, "voltou ao chão do mesmo lado")
+	assert_gt(d.player.global_position.z, -3.0, "não passou para o outro lado do muro")
+
+
+func test_double_back_coming_does_not_mount_a_4_4_m_wall() -> void:
 	await _back_coming_on(4.4)
 	d.press_jump()
 	d.step(1, FWD)
 	assert_eq(d.wall_jumps[1].technique, MovementRules.TECH_BACK_COMING, "segurando W: sobe mais um lance")
-	d.step(60, FWD)
+	d.step(90, FWD)
 	assert_true(d.player.is_on_floor())
-	assert_almost_eq(d.player.global_position.y, 4.4, 0.05, "em cima da parede de 4,4 m")
+	assert_almost_eq(d.player.global_position.y, 0.0, 0.05, "não sobe em cima da parede (sem reverse)")
 
 
 func test_single_back_coming_does_not_reach_top_of_4_4_m_wall() -> void:
@@ -346,3 +356,33 @@ func test_wall_jump_starts_strong_and_slows_down() -> void:
 		"sai com o impulso inicial")
 	d.step(d.player.secs_to_ticks(d.player.config.wall_jump_boost_decay_time) + 2)
 	assert_almost_eq(d.player.get_horizontal_speed(), cruise, 0.3, "e volta à velocidade normal")
+
+
+func test_air_dash_blocks_wall_jump_until_a_normal_jump() -> void:
+	# Wall jump só com o pulo normal: depois de um dash no ar, encostar na parede não dá wall jump.
+	# (Espaço + D puro seria dash: o direcional fica abaixo do limiar do dash lateral.)
+	const TOWARD_WALL := Vector2(0.7, 0.0)
+	_world(Vector3(0, 0, 0))
+	var wall := d.add_block(Vector3(3.0, 6.0, 0.0), Vector3(1, 12, 20))  # face em x = 2,5
+	await d.ready_physics(self)
+	d.step(5)
+	d.press_jump()
+	d.step(4)
+	d.press_dodge()
+	d.step(1, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge", "dash no ar")
+	assert_gt(d.step_until_wall(wall, 60, Vector2(1, 0)), 0, "chegou na parede")
+	var sp_before := d.player.sp.current
+	d.press_jump()
+	d.step(1, TOWARD_WALL)
+	assert_ne(d.state(), &"WallJump", "sem wall jump depois do dash no ar")
+	assert_eq(d.player.get_wall_jump_block_reason(), "usou dash no ar")
+	assert_eq(d.player.sp.current, sp_before, "não gastou SP")
+	d.step_until(func() -> bool: return d.player.is_on_floor(), 120)
+	d.step(20)
+	d.press_jump()
+	d.step(1, TOWARD_WALL)
+	assert_gt(d.step_until_wall(wall, 60, TOWARD_WALL), -1, "encosta de novo")
+	d.press_jump()
+	d.step(1, TOWARD_WALL)
+	assert_eq(d.state(), &"WallJump", "pulo normal volta a liberar o wall jump")

@@ -180,9 +180,15 @@ func test_landing_after_air_attack_has_no_roll() -> void:
 	d.press_attack()
 	d.step(1)
 	assert_eq(d.state(), &"Attack")
-	d.step_until(func() -> bool: return d.state() == &"Land", 200)
-	assert_eq(d.state(), &"Land")
-	assert_false(d.player.state_machine.current.rolling, "golpe no ar cancela a cambalhota")
+	# O golpe no ar é o mergulho: pousa dentro do golpe (preso no chão) e sai direto para o chão, sem rolar.
+	var seen_land := false
+	for i in 200:
+		d.step(1)
+		seen_land = seen_land or d.state() == &"Land"
+		if d.state() != &"Attack":
+			break
+	assert_true(d.player.is_on_floor())
+	assert_false(seen_land, "golpe no ar não passa pela aterrissagem (nem cambalhota)")
 	d.step(30)
 	d.player.respawn(Transform3D(Basis(), Vector3(0, 12, 0)))
 	d.step_until(func() -> bool: return d.state() == &"Land", 200)
@@ -297,3 +303,30 @@ func test_air_dash_with_space_and_side_key() -> void:
 	d.step(1, Vector2(-1, 0))
 	assert_eq(d.state(), &"Dodge")
 	assert_lt(d.player.velocity.x, -15.0)
+
+
+func test_dash_follows_the_camera_while_sliding() -> void:
+	# Dash para a esquerda: se a câmera gira, o dash continua indo para a esquerda DELA.
+	d.press_dodge()
+	d.step(1, Vector2(-1, 0))
+	assert_eq(d.state(), &"Dodge")
+	assert_gt(d.player.velocity.normalized().dot(Vector3.LEFT), 0.99, "começa para a esquerda (−X)")
+	d.look_yaw = PI / 2.0  # câmera virou 90° para a esquerda: a esquerda dela agora é +Z
+	d.step(3)
+	var flat := d.player.get_horizontal_velocity().normalized()
+	assert_gt(flat.dot(Vector3.BACK), 0.99, "o dash acompanhou a câmera (%s)" % flat)
+	d.step(40)  # deslize do fim do dash também segue a câmera
+	d.look_yaw = PI
+	d.step(1)
+	if d.player.get_horizontal_speed() > 0.5:
+		assert_gt(d.player.get_horizontal_velocity().normalized().dot(Vector3.RIGHT), 0.99,
+			"no deslize final, esquerda da câmera = +X")
+
+
+func test_dash_direction_stays_fixed_when_follow_camera_is_off() -> void:
+	d.player.config.dodge_follows_camera = false
+	d.press_dodge()
+	d.step(1, Vector2(-1, 0))
+	d.look_yaw = PI / 2.0
+	d.step(3)
+	assert_gt(d.player.get_horizontal_velocity().normalized().dot(Vector3.LEFT), 0.99, "direção fixa do início")

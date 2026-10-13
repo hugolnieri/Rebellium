@@ -89,52 +89,108 @@ func test_heavy_hits_all_around_and_costs_sp() -> void:
 	assert_almost_eq(behind.total_damage, _blade().heavy.damage, 0.01, "giro acerta atrás")
 
 
-func test_air_attack_dives_and_lands() -> void:
+func _jump_and_click(heavy: bool = false, hold: bool = false) -> void:
 	await _ready_world()
 	d.press_jump()
 	d.step(12)
-	d.press_attack()
-	d.step(1)
+	d.press_attack(heavy)
+	d.attack_light_held = hold
+	d.step(d.player.combat_config.heavy_hold_ticks + 1 if hold else 1)
+	d.attack_light_held = false
+
+
+func test_air_click_freezes_then_plunges_and_stays_down() -> void:
+	await _jump_and_click()
+	var attack: Node = d.player.state_machine.current
 	assert_eq(d.state(), &"Attack")
-	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_AIR)
-	d.step(d.player.secs_to_ticks(_blade().air.startup) + 3)
-	assert_lt(d.player.velocity.y, -5.0, "mergulha na janela de acerto")
-	var landed := d.step_until(func() -> bool: return d.player.is_on_floor(), 90)
+	assert_eq(attack.kind, CombatRules.KIND_AIR)
+	assert_eq(attack.plunge, attack.Plunge.HOVER, "começa congelado no ar")
+	var frozen_at := d.player.global_position
+	d.step(d.player.secs_to_ticks(_blade().air.plunge_hover_time) - 2, Vector2(1, 0))
+	assert_almost_eq(d.player.global_position.distance_to(frozen_at), 0.0, 0.01, "parado no ar, mesmo com direcional")
+	d.step(4)
+	assert_eq(attack.plunge, attack.Plunge.DIVE, "desce")
+	assert_almost_eq(d.player.velocity.y, -_blade().air.plunge_speed, 0.01, "com tudo")
+	assert_almost_eq(d.player.get_horizontal_speed(), 0.0, 0.001, "reto para baixo, no ponto onde clicou")
+	var landed := d.step_until(func() -> bool: return d.player.is_on_floor(), 60)
 	assert_gt(landed, 0)
+	assert_lt(Vector2(d.player.global_position.x - frozen_at.x, d.player.global_position.z - frozen_at.z).length(),
+		0.05, "caiu embaixo de onde clicou")
 	d.step(1)
-	assert_eq(d.state(), &"Attack", "o golpe continua depois de tocar o chão")
-	assert_false(d.player.state_machine.current.airborne)
-	var ended := d.step_until(func() -> bool: return d.state() != &"Attack", 90)
-	assert_gt(ended, 0)
+	assert_eq(d.state(), &"Attack", "preso no chão levantando")
+	assert_true(attack.is_plunge_landing())
+	var x0 := d.player.global_position
+	d.press_dodge()
+	d.press_jump()
+	d.step(5, Vector2(1, 0))
+	assert_eq(d.state(), &"Attack", "não cancela com dash nem pulo")
+	assert_almost_eq(d.player.global_position.distance_to(x0), 0.0, 0.02, "não anda enquanto levanta")
+	var ended := d.step_until(func() -> bool: return d.state() != &"Attack",
+		d.player.secs_to_ticks(_blade().air.plunge_landing_time) + 5)
+	assert_gt(ended, 0, "levanta depois de plunge_landing_time")
 	assert_ne(d.state(), &"Land", "não passa pela aterrissagem")
 
 
-func test_heavy_in_air_by_holding_left_click() -> void:
-	await _ready_world()
-	d.press_jump()
-	d.step(6)
-	d.press_attack()
-	d.attack_light_held = true
-	d.step(d.player.combat_config.heavy_hold_ticks + 1)
+func test_plunge_hits_the_target_below_on_impact() -> void:
+	var dummy := d.add_dummy(Vector3(1.2, 0, 0))
+	await _jump_and_click()
+	var hit := d.step_until(func() -> bool: return dummy.total_damage > 0.0, 120)
+	assert_gt(hit, 0, "o impacto acerta quem está em volta")
+	assert_almost_eq(dummy.total_damage, _blade().air.damage, 0.01)
+
+
+func test_heavy_in_air_by_holding_left_click_is_the_plunge() -> void:
+	await _jump_and_click(false, true)
 	assert_eq(d.state(), &"Attack")
-	var attack: Node = d.player.state_machine.current
-	assert_eq(attack.kind, CombatRules.KIND_HEAVY)
-	assert_true(attack.airborne, "pesado aéreo")
-	d.attack_light_held = false
-	var ended := d.step_until(func() -> bool: return d.state() != &"Attack", 180)
-	assert_gt(ended, 0, "o pesado aéreo termina (mesmo depois de tocar o chão)")
-	assert_true(d.player.is_on_floor())
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_AIR, "no ar o pesado é o mergulho")
 
 
-func test_heavy_in_air_with_right_click() -> void:
+func test_heavy_in_air_with_right_click_is_the_plunge() -> void:
+	await _jump_and_click(true)
+	assert_eq(d.state(), &"Attack")
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_AIR)
+
+
+func test_attack_during_air_dash_is_a_normal_light_attack() -> void:
+	# No meio do dash no ar o golpe conta como de chão: leve normal, velocidade de pulo e para sem direcional.
 	await _ready_world()
-	d.press_jump()
-	d.step(6)
-	d.press_attack(true)
+	d.player.respawn(Transform3D(Basis(), Vector3(0, 8, 0)))
+	d.step(2)
+	d.press_dodge()
+	d.step(3, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge")
+	assert_false(d.player.is_on_floor(), "dash no ar")
+	d.press_attack()
+	d.step(1)
+	var attack: Node = d.player.state_machine.current
+	assert_eq(d.state(), &"Attack")
+	assert_eq(attack.kind, CombatRules.KIND_LIGHT, "golpe leve normal")
+	assert_eq(attack.combo_index, 0)
+	assert_true(attack.from_air_dash)
+	assert_eq(attack.plunge, attack.Plunge.NONE, "não é o mergulho")
+	assert_lte(d.player.get_horizontal_speed(), d.player.get_walk_speed() + 0.01, "velocidade de um pulo normal")
+	d.step(20)
+	assert_lt(d.player.get_horizontal_speed(), 0.1, "sem direcional, para no lugar do golpe")
+	assert_lt(d.player.velocity.y, 0.0, "cai com a gravidade normal")
+
+
+func test_air_dash_attack_chains_the_light_combo() -> void:
+	await _ready_world()
+	d.player.respawn(Transform3D(Basis(), Vector3(0, 40, 0)))
+	d.step(2)
+	d.press_dodge()
+	d.step(3, Vector2(1, 0))
+	assert_eq(d.state(), &"Dodge")
+	d.press_attack()
 	d.step(1)
 	assert_eq(d.state(), &"Attack")
-	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_HEAVY)
+	assert_eq(d.player.state_machine.current.combo_index, 0)
+	d.step(d.player.secs_to_ticks(_blade().light_combo[0].chain_after))
+	d.press_attack()
+	d.step(1)
 	assert_false(d.player.is_on_floor())
+	assert_eq(d.player.state_machine.current.kind, CombatRules.KIND_LIGHT, "segue o combo leve, não mergulha")
+	assert_eq(d.player.state_machine.current.combo_index, 1)
 
 
 func test_jump_during_ground_attack_keeps_attacking_in_the_air() -> void:

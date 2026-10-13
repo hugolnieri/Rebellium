@@ -78,7 +78,7 @@ func _slot(bone_name: String) -> int:
 func test_blender_clips_are_loaded() -> void:
 	for clip in [&"idle", &"walk", &"sprint", &"air", &"air_sprint", &"jump_flip", &"wall_stick", &"wall_flip",
 			&"roll", &"cartwheel", &"dash", &"land", &"hurt", &"sword_rest", &"atk_slash_r", &"atk_spin",
-			&"atk_air_slam", &"launched", &"knockdown", &"getup"]:
+			&"atk_air_slam", &"launched", &"knockdown", &"getup", &"plunge_land"]:
 		assert_true(HeroClips.has_clip(clip), "clipe %s no hero.glb" % clip)
 
 

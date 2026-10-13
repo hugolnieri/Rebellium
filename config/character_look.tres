@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CharacterLook" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/character_look.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+model_path = ""
+hair_color = Color(1, 1, 1, 1)
+skin_color = Color(1, 1, 1, 1)
+eye_color = Color(1, 1, 1, 1)
+suit_color = Color(0.105, 0.11, 0.165, 1)
+seam_color = Color(0.06, 0.063, 0.098, 1)
+emblem_color = Color(0.86, 0.88, 0.92, 1)

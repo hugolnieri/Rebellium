@@ -20,9 +20,27 @@ uniform float rim_strength : hint_range(0.0, 2.0) = 0.35;
 uniform float rim_power : hint_range(0.5, 16.0) = 4.0;
 // Brilho de técnica/troca de arma (somado ao corpo inteiro).
 uniform vec4 flash_color : source_color = vec4(0.0, 0.0, 0.0, 1.0);
+// Menu de personagem (só o corpo do herói): máscara R = traje, G = costuras, B = emblema; fora do traje = pele.
+// O traje é recolorido pela razão cor escolhida / cor original (mantém dobras e sombras pintadas).
+uniform bool use_recolor = false;
+uniform sampler2D recolor_mask : hint_default_black, filter_linear;
+uniform vec4 suit_base : source_color = vec4(0.105, 0.11, 0.165, 1.0);
+uniform vec4 suit_color : source_color = vec4(0.105, 0.11, 0.165, 1.0);
+uniform vec4 seam_color : source_color = vec4(0.06, 0.063, 0.098, 1.0);
+uniform vec4 emblem_base : source_color = vec4(0.86, 0.88, 0.92, 1.0);
+uniform vec4 emblem_color : source_color = vec4(0.86, 0.88, 0.92, 1.0);
+uniform vec4 skin_tint : source_color = vec4(1.0);
 
 void fragment() {
-	vec4 tex = texture(albedo_tex, UV) * tint;
+	vec4 tex = texture(albedo_tex, UV);
+	if (use_recolor) {
+		vec3 m = texture(recolor_mask, UV).rgb;
+		vec3 suit = tex.rgb * suit_color.rgb / max(suit_base.rgb, vec3(0.001));
+		suit = mix(suit, seam_color.rgb, m.g);
+		suit = mix(suit, tex.rgb * emblem_color.rgb / max(emblem_base.rgb, vec3(0.001)), m.b);
+		tex.rgb = mix(tex.rgb * skin_tint.rgb, suit, m.r);
+	}
+	tex *= tint;
 	ALBEDO = tex.rgb;
 	ALPHA = tex.a;
 	ALPHA_SCISSOR_THRESHOLD = alpha_cut;

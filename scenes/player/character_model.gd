@@ -8,11 +8,17 @@ extends Node3D
 ## o quadro (fase da passada, progresso do dash, fases do golpe) e as trocas de estado viram um
 ## crossfade curto. Por código ficam só: giros de corpo inteiro (mortais, estrela, giro do golpe),
 ## inclinação nas curvas, agachamento do pouso (mistura com o clipe "land"), cabelo, rosto e a arma.
+##
+## Aparência (menu de personagem, F4 → `CharacterLook`): o modelo pode ser o herói ou qualquer personagem do
+## VRoid trazido por tools/import_vroid.py (mesmos ossos: os clipes do herói tocam nele pelo nome dos ossos,
+## `HeroClips.bind`). Cabelo, pele e olhos recebem tintas; o traje do herói é recolorido pela máscara do traje.
 
 const REFERENCE_HEIGHT: float = 1.8
 const MODEL_SCENE: PackedScene = preload("res://assets/character/hero.glb")
 const TOON_SHADER: Shader = preload("res://scenes/player/feedback/anime_toon.gdshader")
 const OUTLINE_SHADER: Shader = preload("res://scenes/player/feedback/outline.gdshader")
+## Máscara do traje do herói (gerada por build_hero.py): R = traje, G = costuras, B = emblema.
+const SUIT_MASK: Texture2D = preload("res://assets/character/hero_suit_mask.png")
 ## Altura do modelo original (topo do cabelo), para escalar até REFERENCE_HEIGHT.
 const MODEL_HEIGHT: float = 1.91
 const HIPS_BONE: StringName = &"J_Bip_C_Hips"
@@ -61,6 +67,14 @@ var _lean: Node3D
 var _trick: Node3D
 var _socket: Node3D
 var _materials: Array[ShaderMaterial] = []
+var _binding: HeroClips.Binding
+var _model_path: String = ""
+var _look: CharacterLook
+# Materiais por parte do corpo (para as cores do menu de personagem).
+var _hair_materials: Array[ShaderMaterial] = []
+var _face_materials: Array[ShaderMaterial] = []
+var _eye_materials: Array[ShaderMaterial] = []
+var _body_materials: Array[ShaderMaterial] = []
 
 # Mola só do cabelo (movimento secundário).
 var _pos: Dictionary = {HAIR: Vector3.ZERO}
@@ -123,40 +137,103 @@ func _build() -> void:
 	add_child(_lean)
 	_trick = Node3D.new()
 	_lean.add_child(_trick)
-	_rig = MODEL_SCENE.instantiate() as Node3D
-	_rig_scale = REFERENCE_HEIGHT / MODEL_HEIGHT
-	_rig.scale = Vector3.ONE * _rig_scale
-	_trick.add_child(_rig)
-	_skeleton = _rig.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
-	_hips_bone = _skeleton.find_bone(HIPS_BONE)
-	_hand_bone = _skeleton.find_bone(RIGHT_HAND_BONE)
-	_hips_rest = _skeleton.get_bone_rest(_hips_bone).origin
-	# O quadril fica na origem de _trick, então o mortal/cambalhota gira em torno dele.
-	_trick.position = Vector3(0, _hips_rest.y * _rig_scale, 0)
-	_rig.position = -_hips_rest * _rig_scale
-	var node: Node = _skeleton
-	while node != _rig:
-		_skeleton_xform = (node as Node3D).transform * _skeleton_xform
-		node = node.get_parent()
-	HeroClips.load_from(_rig, _skeleton, _hips_bone)
-	for bone in HeroClips.bones:
-		var bone_name := _skeleton.get_bone_name(bone)
+	HeroClips.ensure_loaded()
+	for bone_name in HeroClips.bone_names:
 		var is_leg := LEG_BONE_KEYS.any(func(key: String) -> bool: return bone_name.contains(key))
 		_upper_weights.append(0.0 if is_leg else 1.0)
 		var is_arm := SWORD_ARM_KEYS.any(func(key: String) -> bool: return bone_name.begins_with(key))
 		_sword_arm_weights.append(1.0 if is_arm else 0.0)
+	# Testes (controle externo) usam a aparência padrão; o jogo usa a salva pelo jogador.
+	apply_look(CharacterLook.new() if player.external_control else CharacterLook.load_user())
+
+
+## Aplica a aparência (modelo + cores). Trocar de modelo recria o corpo e leva a arma junto.
+func apply_look(look: CharacterLook) -> void:
+	_look = look
+	if look.resolved_model_path() != _model_path:
+		_load_rig(look.resolved_model_path())
+	_apply_colors()
+
+
+func get_model_path() -> String:
+	return _model_path
+
+
+func _load_rig(path: String) -> void:
+	var scene := load(path) as PackedScene
+	if scene == null:
+		push_warning("Modelo %s não abriu; usando o herói." % path)
+		scene = MODEL_SCENE
+		path = CharacterLook.HERO_MODEL
+	var old_rig := _rig
+	_model_path = path
+	_rig = scene.instantiate() as Node3D
+	_skeleton = _rig.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	_hips_bone = _skeleton.find_bone(HIPS_BONE)
+	_hand_bone = _skeleton.find_bone(RIGHT_HAND_BONE)
+	_hips_rest = _skeleton.get_bone_rest(_hips_bone).origin
+	_binding = HeroClips.bind(_skeleton, _hips_bone)
+	# Todo modelo fica com a mesma altura do herói (a cápsula do jogador não muda).
+	var model_height := MODEL_HEIGHT * _binding.head_height() / HeroClips.source_head_height
+	_rig_scale = REFERENCE_HEIGHT / model_height
+	_rig.scale = Vector3.ONE * _rig_scale
+	if _binding.facing_flipped:
+		_rig.rotation.y = PI  # VRM 1.0 olha para +Z
+	_trick.add_child(_rig)
+	# O quadril fica na origem de _trick, então o mortal/cambalhota gira em torno dele.
+	_trick.position = Vector3(0, _hips_rest.y * _rig_scale, 0)
+	_rig.position = -(_rig.basis * _hips_rest)
+	_skeleton_xform = Transform3D.IDENTITY
+	var node: Node = _skeleton
+	while node != _rig:
+		_skeleton_xform = (node as Node3D).transform * _skeleton_xform
+		node = node.get_parent()
+	_hair_roots = PackedInt32Array()
 	var head := _skeleton.find_bone(HEAD_BONE)
 	for i in _skeleton.get_bone_count():
 		if _skeleton.get_bone_parent(i) == head and _skeleton.get_bone_name(i).begins_with("HairJoint"):
 			_hair_roots.append(i)
 	_setup_materials()
 	_face = _rig.find_child("Face", true, false) as MeshInstance3D
+	_blink_shape = -1
+	_brow_shape = -1
 	if _face != null:
 		_blink_shape = _find_blend_shape(_face.mesh, "Fcl_EYE_Close")
 		_brow_shape = _find_blend_shape(_face.mesh, "Fcl_BRW_Angry")
 	# Encaixe da arma: posicionado por código a cada quadro (escala desfeita para a arma).
 	_socket = Node3D.new()
 	_rig.add_child(_socket)
+	if old_rig != null:
+		old_rig.queue_free()
+		if weapon_visual != null:
+			_equip()  # a arma antiga sai junto com o corpo antigo
+		if not _current.is_empty():
+			_apply_pose(_current)
+
+
+## Cores do menu de personagem nos materiais de cada parte do corpo.
+func _apply_colors() -> void:
+	var fb := _fb()
+	var base := CharacterLook.new()
+	var hero := _model_path == CharacterLook.HERO_MODEL
+	for material in _hair_materials:
+		material.set_shader_parameter(&"tint", fb.hair_color * _look.hair_color)
+	for material in _face_materials:
+		material.set_shader_parameter(&"tint", fb.face_tint * _look.skin_color)
+	for material in _eye_materials:
+		material.set_shader_parameter(&"tint", _look.eye_color)
+	for material in _body_materials:
+		material.set_shader_parameter(&"use_recolor", hero)
+		if hero:
+			material.set_shader_parameter(&"recolor_mask", SUIT_MASK)
+			material.set_shader_parameter(&"suit_base", base.suit_color)
+			material.set_shader_parameter(&"suit_color", _look.suit_color)
+			material.set_shader_parameter(&"seam_color", _look.seam_color)
+			material.set_shader_parameter(&"emblem_base", base.emblem_color)
+			material.set_shader_parameter(&"emblem_color", _look.emblem_color)
+			material.set_shader_parameter(&"skin_tint", _look.skin_color)
+		else:
+			material.set_shader_parameter(&"tint", _look.skin_color)
 
 
 func _find_blend_shape(mesh: Mesh, suffix: String) -> int:
@@ -172,6 +249,11 @@ func _find_blend_shape(mesh: Mesh, suffix: String) -> int:
 ## Troca os materiais importados por toon (variantes: opaco, dupla face, translúcido).
 func _setup_materials() -> void:
 	var fb := _fb()
+	_materials.clear()
+	_hair_materials.clear()
+	_face_materials.clear()
+	_eye_materials.clear()
+	_body_materials.clear()
 	var cache := {}
 	var shaders := {}
 	var outline := ShaderMaterial.new()
@@ -221,8 +303,14 @@ func _make_toon(source: BaseMaterial3D, shaders: Dictionary, outline: ShaderMate
 		material.set_shader_parameter(&"rim_strength", 0.0)
 		if mat_name.contains("Face_00_SKIN"):
 			material.set_shader_parameter(&"tint", fb.face_tint)
+			_face_materials.append(material)
+		elif mat_name.contains("EyeIris"):
+			_eye_materials.append(material)
 	if mat_name.contains("HAIR"):
 		material.set_shader_parameter(&"tint", fb.hair_color)
+		_hair_materials.append(material)
+	elif mat_name.contains("Body_00_SKIN"):
+		_body_materials.append(material)
 	if not blend and not is_face:
 		var pass_material := outline.duplicate() as ShaderMaterial
 		pass_material.set_shader_parameter(&"albedo_tex", source.albedo_texture)
@@ -236,8 +324,9 @@ func _make_toon(source: BaseMaterial3D, shaders: Dictionary, outline: ShaderMate
 func _equip() -> void:
 	weapon_visual = WeaponVisual.new()
 	_socket.add_child(weapon_visual)
-	trail = WeaponTrail.new()
-	add_child(trail)
+	if trail == null:
+		trail = WeaponTrail.new()
+		add_child(trail)
 	trail.source = weapon_visual
 	_apply_weapon(player.get_weapon())
 
@@ -419,10 +508,7 @@ func _crossfade(target: Array, source: StringName, delta: float) -> Array:
 
 
 func _apply_pose(pose: Array) -> void:
-	var bones := HeroClips.bones
-	for slot in bones.size():
-		_skeleton.set_bone_pose_rotation(bones[slot], pose[slot])
-	_skeleton.set_bone_pose_position(_hips_bone, pose[bones.size()])
+	_binding.apply(pose)
 	_update_socket()
 
 
@@ -482,6 +568,15 @@ func _attack_pose(base: Array, airborne: bool) -> Array:
 	var attack: AttackData = state.get(&"attack")
 	if attack == null:
 		return base
+	if state.call(&"is_plunge_landing"):
+		# Mergulho no chão: bate ajoelhado com a espada cravada, fica um tempo e levanta (clipe do Blender).
+		var landing: float = clampf(state.call(&"get_phase_progress"), 0.0, 1.0)
+		_spin_angle = 0.0
+		if weapon_visual != null:
+			weapon_visual.set_boost(0.6 * (1.0 - landing))
+		if trail != null:
+			trail.emitting = false
+		return HeroClips.sample(&"plunge_land", landing)
 	var clip := StringName("atk_" + attack.anim)
 	if not HeroClips.has_clip(clip):
 		clip = &"atk_slash_r"

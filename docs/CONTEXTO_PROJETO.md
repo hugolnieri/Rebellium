@@ -16,7 +16,7 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
 - **Cena principal**: arena flutuante sobre as nuvens (`scenes/arenas/SkyArena.tscn`), com um bot vermelho
   ("caçador") no centro: não ataca, mas reage com as animações do personagem e é **arremessado pelo golpe pesado**.
   **F3** alterna: SkyArena → CombatArena → TrainingCourse → Arena.
-- **Qualidade hoje**: 220 testes passando (19 arquivos: 7 unitários + 12 de integração) e
+- **Qualidade hoje**: 237 testes passando (20 arquivos: 7 unitários + 13 de integração) e
   `godot --headless --quit-after 120` sem erros. ~8,4 mil linhas de GDScript (com testes) e ~2,5 mil de Python (tools).
 - **Repositório**: `github.com/hugolnieri/Rebellium`, 42 commits. **Só existe uma branch no GitHub e ela é a padrão:
   `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
@@ -80,7 +80,7 @@ python3 tools/blender/build_sword.py         # converte art/weapons/arc_blade_so
 | Botão direito (ou K) | golpe pesado direto |
 | 1 / 2 / Q | Lâmina de Arco / Presa de Fase / alterna (junto do Space do wall jump = **cancel**) |
 | V | troca o ombro da câmera |
-| F1 / F2 / F3 | HUD de debug / menu de ajustes ao vivo / troca de cena |
+| F1 / F2 / F3 / F4 | HUD de debug / menu de ajustes ao vivo / troca de cena / **menu de personagem** (modelo e cores) |
 | R | reinicia (volta ao início; zera cronômetro no percurso e o bot/postes nas arenas) |
 
 O mapa de input está em `project.godot`; **só `scenes/player/input_reader.gd` toca em `Input`**.
@@ -136,13 +136,16 @@ esqueleto e os mesmos clipes, para o caçador), `attack_poses.gd`,
 
 Regras de design registradas (de `ESCOPO.md`, ainda válidas):
 - **Wall jump** só se o jogador entrou no ar por um pulo (ou wall jump) e ainda está em Jump ou dentro da janela pós-pulo
-  (1,2 s). Cair de borda nunca habilita. A mesma parede não vale duas vezes seguidas (exceto após back-coming).
+  (1,2 s). Cair de borda nunca habilita. **Dash no ar também bloqueia** até o próximo pulo do chão (`wall_jump_after_air_dash`
+  desligado; F1 mostra "usou dash no ar"): o wall jump só vale com o pulo normal. A mesma parede não vale duas vezes seguidas
+  (exceto após back-coming).
 - **Reflexão**: `v_out = v_in − 2 (v_in·n) n` no plano horizontal; o impulso vertical é somado à parte; a câmera ajusta a saída
   com peso (0,4) sem apontar para a parede. Saída ×1,25 (mín. 10, máx. 18 m/s) + 2 m/s para frente.
 - **Impulso inicial** do wall jump ×1,6 que decai até a velocidade normal em 0,6 s.
 - **Back-coming**: contato perto da base (pés a ≤ 1,0 m do chão, janela de 6 ticks) → sobe 2,6 m quase na vertical, colado na
-  parede. **Encadeado** uma vez na mesma parede (Space segurando o direcional para a parede, `back_coming_chain_min_dot` 0,5) é
-  assim que se sobe a borda de 3,6 m e a parede lisa de 4,4 m do percurso. **O reverse wall jump foi removido do jogo.**
+  parede. **Encadeado** uma vez na mesma parede (Space segurando o direcional para a parede, `back_coming_chain_min_dot` 0,5).
+  **Nunca leva por cima da parede**: ao passar do topo subindo, o corpo é empurrado para fora (`back_coming_top_pop_speed` 1,5 m/s)
+  até o ápice e cai do mesmo lado. **O reverse wall jump foi removido do jogo** (esse "passar por cima" era o que sobrava dele).
 - **Side jump**: wall jump com incidência ≥ 30° lança para a frente (faísca azul elétrico).
 - **Cancel** (tecla 1/2 até 4 ticks do wall jump): desfaz o lançamento, mantém 50% da velocidade de entrada; SP não volta.
 - **Bunny hop**: Space até 3 ticks após aterrissar preserva a velocidade horizontal (teto 16 m/s).
@@ -150,11 +153,11 @@ Regras de design registradas (de `ESCOPO.md`, ainda válidas):
 
 | Tema | Valor atual |
 |---|---|
-| Chão | andar 6 m/s, sprint 10 m/s (toque duplo em W em ≤ 15 ticks), aceleração 60, desaceleração 45 m/s²; vira na hora para a câmera (andando, correndo e no ar) |
+| Chão | andar 6 m/s, sprint 10 m/s (toque duplo em W em ≤ 15 ticks), aceleração 60, desaceleração 120 m/s²; vira na hora para a câmera (andando, correndo e no ar) |
 | Pulo | altura 2,35 m, subida 0,38 s, gravidade de queda ×1,6, velocidade terminal 30 m/s, coyote 5 ticks, buffer 4 ticks; o pulo do chão volta à velocidade de andar |
 | Corrida no ar | aceleração 30, gravidade ×1,7, 12 SP/s |
 | SP | 100; regenera 25/s após 0,6 s; exaustão até voltar a 20; dash 20, wall jump 18, sprint 12/s |
-| Dash (dodge) | só lateral (limiar 0,75), 30 m/s no início que decai (curva 2,2), 0,65 s, invulnerável 0,15 s, recuperação 0,25 s, sai a 7 m/s com deslize final 14 m/s²; dash jump mantém 70% |
+| Dash (dodge) | só lateral (limiar 0,75), 30 m/s no início que decai (curva 2,2), 0,65 s, invulnerável 0,15 s, recuperação 0,25 s, sai a 7 m/s com deslize final 14 m/s²; dash jump mantém 70%; **a direção segue a câmera** durante o dash e o deslize (`dodge_follows_camera`: dash para a esquerda continua à esquerda da câmera enquanto ela gira) |
 | Dash no ar | 1 por pulo (recarrega no wall jump); planeia na 1ª metade (55% do tempo, gravidade ×0,12); sai a 9 m/s; Space cancela |
 | Wall jump | custo 18 SP, altura 2,6 m, cola na parede 6 ticks (mortal para trás depois), sem controle 0,3 s, golpe bloqueado 0,45 s, pode encadear a partir de 0,08 s |
 | Detector de parede | alcance 0,2 m, normal máx. y 0,35, tolerância de 4 ticks |
@@ -168,11 +171,18 @@ Regras de design registradas (de `ESCOPO.md`, ainda válidas):
   (alcance 6, ângulo 55° se ligar), o golpe não trava o movimento (`attack_move_speed_multiplier` 1,0), pular durante o golpe
   mantém o golpe (`attack_jump_cancel`), golpe corta o impulso do dash.
 - **Lâmina de Arco** (`config/weapons/arc_blade/`, ciano): combo leve de 3 — "Corte direito" (`slash_r`), "Corte de volta" (`slash_l`),
-  "Golpe descendente" (`overhead`); pesado "Giro de arco" (`spin`, giro 360° para a direita, 15 SP); aéreo "Queda cortante"
-  (`air_slam`, mergulho); dash "Estocada relâmpago" (`dash_thrust`). Apoiada no ombro parado/andando (`rest_on_shoulder`).
+  "Golpe descendente" (`overhead`); pesado "Giro de arco" (`spin`, giro 360° para a direita, 15 SP); no pulo "Queda cortante"
+  (`air.tres`, mergulho, 26 de dano); dash "Estocada relâmpago" (`dash_thrust`). Apoiada no ombro parado/andando (`rest_on_shoulder`).
 - **Presa de Fase** (`config/weapons/phase_fang/`, laranja): adaga curva, anda ×1,08, combo leve de 4 — "Furada" (`jab`), "Corte reverso"
   (`backhand`), "Furada dupla" (`jab`), "Corte crescente" (`slash_r`); pesado "Lâmina ascendente" (`rising`, 12 SP, lança para cima);
-  aéreo "Mergulho de fase" (`air_slam`); dash "Bote" (`dash_thrust`). Fica na mão (sem `rest_on_shoulder`).
+  no pulo "Mergulho de fase" (`air.tres`, mergulho, 20 de dano); dash "Bote" (`dash_thrust`). Fica na mão (sem `rest_on_shoulder`).
+- **Golpe no pulo = mergulho** (qualquer clique no ar: toque, segurar ou botão direito; também caindo ou saindo de wall jump):
+  congela no ar onde clicou (`plunge_hover_time`, a espada sobe), desce reto com tudo (`plunge_speed` 32/36 m/s), acerta quem estiver
+  embaixo/em volta no impacto (`plunge_impact_radius`), e fica **preso no chão** ajoelhado com a espada cravada até levantar
+  (`plunge_landing_time` 0,55/0,45 s; sem dash, pulo, troca nem golpe). Valores no grupo "Mergulho" de cada `air.tres`.
+- **Golpe no meio do dash no ar** conta como golpe de chão: combo leve normal (ou o pesado do chão), a velocidade cai para a de um
+  pulo normal e, sem direcional, freia até parar no lugar do golpe (`air_dash_attack_stop_deceleration` 40 m/s²); a gravidade é a
+  normal. Os cliques seguintes continuam o combo leve. No dash do chão o golpe continua sendo a estocada do dash.
 - **Ritmo dos golpes**: recuperação ×1,4 do original e `chain_after = startup + active + 0,8·recovery` (ex.: `light_1` da Lâmina:
   startup 0,176 s, active 0,117 s, recovery 0,666 s, chain_after 0,826 s, dano 12, alcance 2,4 m, arco 150°).
 - **Cancels**: dodge cancel e **swap cancel** (trocar de arma na recuperação); dash com invencibilidade contra golpe = **esquiva perfeita**.
@@ -202,7 +212,7 @@ Regras de design registradas (de `ESCOPO.md`, ainda válidas):
 - **Animações** = Actions do Blender definidas como poses-chave em `tools/blender/hero_animations.py` (Bezier, ciclos sem emenda,
   clavículas, dedos). **Clipes (o jogo procura pelo nome — não renomeie)**: `idle, walk, sprint, air_sprint, air, jump_flip,
   wall_stick, wall_flip, roll, cartwheel, dash, land, hurt, sword_rest`, os do caçador `launched` (0,8 s), `knockdown` (0,6 s) e
-  `getup` (1,1 s) e os golpes `atk_<anim>`:
+  `getup` (1,1 s), `plunge_land` (impacto do mergulho: ajoelhado, espada cravada, levanta) e os golpes `atk_<anim>`:
   `atk_slash_r, atk_slash_l, atk_overhead, atk_backhand, atk_spin, atk_air_slam, atk_dash_thrust, atk_jab, atk_rising`.
 - **Runtime**: `hero_clips.gd` (`HeroClips`) converte cada clipe uma vez em quadros a 60 Hz (um `Quaternion` por osso animado +
   posição do quadril; ignora `Root`, `HairJoint*`, `J_Sec*`, `J_Adj*`). O jogo amostra por **tempo normalizado** (fase da passada,
@@ -210,7 +220,20 @@ Regras de design registradas (de `ESCOPO.md`, ainda válidas):
   posiciona o soquete da arma a partir do osso da mão direita (`J_Bip_R_Hand`) e mistura parte do corpo no golpe andando
   (pernas seguem a passada). **Giros de corpo inteiro** (mortal do pulo, estrela do dash, mortal do wall jump, giro do pesado) são
   feitos em código no nó `_trick` (o osso `Root` no Blender é só prévia).
-- **Caçador**: `hero_puppet.gd` (`HeroPuppet`) instancia o mesmo `hero.glb`, carrega o `HeroClips` e expõe
+- **Qualquer personagem do VRoid**: os clipes saem sempre do `hero.glb`, mas `HeroClips.bind(esqueleto, quadril)` liga as poses a
+  outro esqueleto **pelo nome dos ossos** (`HeroClips.Binding`): todo modelo do VRoid tem os mesmos `J_Bip_*` em T-pose com descanso
+  neutro (o hero.glb também), então a rotação local vale direto; o quadril escala com a altura e modelos virados para +Z (VRM 1.0)
+  são espelhados e girados 180°. Todo modelo é escalado para a mesma altura do herói (altura da cabeça em T-pose).
+- **Menu de personagem (F4, autoload `CharacterMenu`, `scenes/ui/character_menu.gd`)** → `CharacterLook` (`scripts/core/character_look.gd`,
+  padrão `config/character_look.tres`, salvo por jogador em `user://personagem.tres` ao fechar o menu): modelo (o herói ou os `.glb`
+  de `assets/character/models/`), tintas de cabelo, pele e olhos (branco = original) e, só no herói, cores do traje, costuras e emblema.
+  O traje do herói é recolorido no shader toon pela máscara `assets/character/hero_suit_mask.png` (gerada por `build_hero.py`:
+  R = traje, G = costuras, B = emblema; fora do traje = pele), pela razão cor escolhida/cor original (mantém dobras e sombras).
+  `CharacterModel.apply_look()` troca o corpo (recria a arma na mão nova) e as cores. Nos testes (controle externo) vale a aparência padrão.
+- **Trazer um personagem do VRoid Studio**: exportar em VRM → `python3 tools/import_vroid.py arquivo.vrm nome` (só Python + Pillow)
+  → `assets/character/models/nome.glb` (texturas reduzidas, nomes das expressões preservados para piscar, extensões do VRM tiradas)
+  → aparece no F4. Já vem um: `vroid_casual` (o HairSample_Male CC0 com a roupa original do VRoid: moletom, calça e tênis).
+- **Caçador**: `hero_puppet.gd` (`HeroPuppet`) instancia o mesmo `hero.glb`, liga os clipes (`HeroClips.bind`) e expõe
   `show_clip(chave, clipe, u, loop, delta)` (amostra o clipe por tempo normalizado e faz crossfade quando a `chave` muda) e `paint(material)`.
 - A inclinação do corpo ao andar e no sprint vem das **poses do Blender** (`dodge_lean_deg`, 22°, controla a do dash). As molas de
   animação foram removidas — só o cabelo ainda balança por mola.
@@ -277,7 +300,8 @@ círculo; roxo = muro central; verde = passagens no roxo (com teto); amarelo = c
 
 - **`CombatArena.tscn`**: postes parados, móvel, agressivo e um no alto (plataforma com rampa), HUD de combate (hits, dano do combo, DPS), R reinicia.
 - **`TrainingCourse.tscn`**: percurso de movimento com cronômetro, melhor tempo, checkpoints e contador de técnicas: corredor de
-  paredes paralelas (fosso de 16 m), vão de 8 m (side jump), borda de 3,6 m e parede lisa de 4,4 m (back-coming duplo), torre/chaminé
+  paredes paralelas (fosso de 16 m), vão de 8 m (side jump), borda de 3,6 m e parede lisa de 4,4 m (cada uma com um **pilar** de frente:
+  wall jump na face, no pilar e por cima — `LedgePillar` à direita da borda, `WallPillar` à esquerda da parede lisa), torre/chaminé
   (wall jumps encadeados; parede de chegada em 16,5 m). `test_training_course.gd` tem **bots que completam cada trecho** — rode-o ao
   mexer em geometria ou config de movimento.
 - **`Arena.tscn`**: arena livre para experimentar.
@@ -286,11 +310,13 @@ círculo; roxo = muro central; verde = passagens no roxo (com teto); amarelo = c
 ## 12. UI e debug
 
 - **HUD**: SP e vida. **DebugHUD (F1)**: estado e tempo no estado, velocidades, altura dos pés, contato de parede, motivo de bloqueio
-  do wall jump (`LIBERADO`/`sem parede`/`não veio de pulo`/`janela pós-pulo expirou`/`mesma parede`/`SP insuficiente`), origem do ar
+  do wall jump (`LIBERADO`/`sem parede`/`usou dash no ar`/`não veio de pulo`/`janela pós-pulo expirou`/`mesma parede`/`SP insuficiente`),
+  pior quadro do último segundo (`ENGASGO` acima de 33 ms), origem do ar
   (`JUMP`/`FALL`), invulnerabilidade, últimas transições e eventos.
 - **DebugMenu (F2)**: gerado a partir dos `@export` das configs (abas Movimento, Câmera, Visual, Combate, uma por arma/golpe, **Alvos** = `dummy_config.tres`, Áudio);
   edita ao vivo, **Salvar no .tres** (usa `ConfigIO.save_full`), **Recarregar**, **Padrões**. Editar `.tres` à mão funciona, mas o F2
   reescreve o arquivo inteiro.
+- **Menu de personagem (F4)**: modelo e cores (ver seção 8). Só visual; salva ao fechar.
 
 ## 13. Áudio
 
@@ -302,7 +328,9 @@ Sem música.
 
 `tools/run_tests.sh` (GUT, config em `.gutconfig.json`: pasta `res://tests/`, prefixo `test_`, sai ao terminar).
 - **Unitários (7)**: áudio, regras de combate, `ConfigIO`, regras de movimento, setup do projeto, SP, matemática do wall jump.
-- **Integração (12)**: bunny hop, modelo do personagem (clipes presentes), combate, arena de combate, menu de debug, dash, chão,
+- **Integração (13)**: bunny hop, modelo do personagem (clipes presentes), **customização** (`test_character_customization.gd`: modelo
+  do VRoid com os clipes do herói, mesma altura, arma na mão nova, cores nos materiais, menu F4), combate (inclui o mergulho e o golpe
+  no dash aéreo), arena de combate, menu de debug, dash (inclui "o dash segue a câmera"), chão,
   **arena flutuante** (inclui "W/A/S/D andam relativos à câmera e o personagem encara para onde anda"), **câmera**
   (`test_player_camera.gd`: a vista segue o `look_yaw` mesmo com o Player instanciado girado), percurso de treino (bots), wall jump e **caçador**
   (`test_hunter_bot.gd`: arremesso, rebote em parede, deslize, volta ao spawn, golpe pesado do Player real).
@@ -330,6 +358,9 @@ Sem música.
 - `import bpy` deve vir **antes** de `bmesh`/`mathutils`. Render de conferência: Cycles (Workbench falha sem libEGL).
 - `export_scene.gltf(... export_yup=True ...)`: Blender (x, y, z) → Godot (x, z, −y).
 - Após regenerar um `.glb`, rode `godot --headless --import` (o `run_tests.sh` já faz).
+- `build_hero.py` também gera `assets/character/hero_suit_mask.png` (máscara do traje para o menu de personagem).
+- Personagens do VRoid Studio entram por `tools/import_vroid.py` (sem Blender). O Godot importa VRM 0.0 direto como glTF; o script só
+  deixa o arquivo leve e ajeita os nomes das expressões.
 
 ## 17. Armadilhas que já custaram tempo
 
@@ -355,6 +386,10 @@ Sem música.
 11. **`AnimatableBody3D` com `sync_to_physics = true`** (o padrão) desfaz na hora a atribuição de `global_position` e só aplica
     no próximo passo da física. O `HunterBot` usa `sync_to_physics = false` (ele não empurra ninguém).
 12. **Tipos Variant**: o projeto trata "variável inferida de Variant" como erro (ex.: `var s: String = fila.pop_front()`).
+13. **Clipes x modelos**: o cache do `HeroClips` sai SEMPRE do hero.glb (`ensure_loaded`); outros modelos só se ligam a ele
+    (`bind`). Não chame `load_from` com outro modelo (os personagens do VRoid nem têm animações).
+14. **Testes e `user://`**: nada de teste gravar `user://personagem.tres` (é a aparência salva do dono); o menu tem `set_open(false, false)`
+    para fechar sem salvar e o Player de teste (controle externo) usa a aparência padrão.
 
 ## 18. Histórico resumido (do `git log`)
 
@@ -373,13 +408,17 @@ Sem música.
    pesado arremessa, clipes `launched`/`knockdown`/`getup` no Blender, aba Alvos no F2.
 9. **Câmera alinhada** (andar em diagonal, de verdade): o centro da câmera herdava os 22,5° do Player instanciado girado na
    SkyArena; `PlayerCamera._follow` agora o zera, a cena instancia o Player sem rotação e há testes da câmera.
+10. **Mergulho, dash e customização**: wall jump só com o pulo normal (dash no ar bloqueia), back-coming nunca passa por cima da
+   parede (fim do reverse; trechos 3 e 4 do percurso ganharam pilares), dash segue a câmera, golpe no pulo vira mergulho (clipe
+   `plunge_land`), golpe no dash aéreo = combo leve, menu de personagem F4 com modelos do VRoid (`tools/import_vroid.py`).
 
 ## 19. Em aberto
 
 - **Validação do dono**: os últimos commits (arena `677621f`/`e798e12` e o caçador que voa) ainda não foram confirmados no jogo.
   Foram verificados por testes, renders do Blender e capturas do jogo real com render por software (sem GPU); falta olhar no
   Godot: neon, escala do bot, sensação do degradê e das passagens, **força do arremesso** (`launch_velocity_scale`) e as poses de
-  voo, queda e levantar.
+  voo, queda e levantar. Também falta a sensação do **mergulho** (tempo no ar, velocidade, tempo preso no chão), do **dash que segue
+  a câmera** e do menu **F4** com um personagem exportado pelo próprio dono no VRoid Studio.
 - **Modo caçador**: o bot vermelho agora reage e voa, mas continua **sem agir**. O dono ainda não definiu o que o caçador faz
   (ataques, perseguição, regras). Hoje ele volta ao spawn teleportando (simples e previsível); andar de volta fica como evolução.
 - **Espada**: clarear o material (oferecido) e registrar origem/licença no `CREDITS.md`.

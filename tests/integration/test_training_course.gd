@@ -38,11 +38,12 @@ func _block(node_name: String) -> GreyboxBlock:
 var follow_camera := false
 
 
-func _auto_wall_jump_until_landed(max_ticks: int, move: Vector2 = Vector2.ZERO) -> int:
+func _auto_wall_jump_until_landed(max_ticks: int, move: Vector2 = Vector2.ZERO, max_jumps: int = -1) -> int:
 	var count := 0
 	for i in max_ticks:
 		var reason := d.player.get_wall_jump_block_reason()
-		if reason == "" and d.player.wall_sensor.last_contact_tick == d.player.tick:
+		if reason == "" and d.player.wall_sensor.last_contact_tick == d.player.tick \
+				and (max_jumps < 0 or count < max_jumps):
 			if follow_camera:
 				# Como um jogador: câmera virada para onde o salto vai levar.
 				var out := WallJumpMath.reflect_horizontal(d.player.wall_sensor.entry_velocity,
@@ -103,8 +104,34 @@ func test_wide_gap_cannot_be_crossed_with_sprint_jump() -> void:
 	assert_lt(d.player.global_position.y, -1.0, "sprint + pulo não alcança o outro lado")
 
 
-## Encosta na parede, pula, back-coming na base e, segurando W, o segundo back-coming leva ao topo.
-func _double_back_coming() -> void:
+## Entre o pilar e a face: pula na face, salta para o pilar e do pilar para cima da face (wall jumps
+## normais; o back-coming não leva mais por cima de parede nenhuma).
+func _pillar_climb(start: Vector3) -> int:
+	await _teleport(start)
+	follow_camera = true
+	d.step(4, FWD)
+	d.press_jump()
+	d.step(1, FWD)
+	d.step_until(func() -> bool: return d.player.wall_sensor.has_contact, 40, FWD)
+	# Dois saltos: face → pilar → por cima da face (um jogador para de pular aí).
+	return _auto_wall_jump_until_landed(300, Vector2.ZERO, 2)
+
+
+func test_ledge_is_climbed_with_wall_jumps_on_the_pillar() -> void:
+	var jumps := await _pillar_climb(Vector3(4.5, 0, -57.6))
+	assert_eq(jumps, 2, "wall jumps: %d" % jumps)
+	assert_almost_eq(d.player.global_position.y, 3.6, 0.05, "em cima da borda")
+
+
+func test_smooth_wall_is_climbed_with_wall_jumps_on_the_pillar() -> void:
+	var jumps := await _pillar_climb(Vector3(-1.0, 3.6, -67.6))
+	assert_eq(jumps, 2, "wall jumps: %d" % jumps)
+	assert_almost_eq(d.player.global_position.y, 8.0, 0.05, "em cima da parede lisa")
+
+
+func test_double_back_coming_no_longer_climbs_the_ledge() -> void:
+	# Sem reverse wall jump: o back-coming sobe colado, mas no topo é empurrado para fora e cai de volta.
+	await _teleport(Vector3(1.0, 0, -56))
 	d.step_until(func() -> bool: return d.player.wall_sensor.has_contact, 120, FWD)
 	d.step(5, FWD)
 	d.press_jump()
@@ -112,24 +139,11 @@ func _double_back_coming() -> void:
 	d.press_jump()
 	d.step(1, FWD)
 	assert_has(d.techniques, MovementRules.TECH_BACK_COMING)
-	d.step_until(func() -> bool: return d.player.velocity.y > 1.0, 20, FWD)  # sai da parede (fim do colado)
+	d.step_until(func() -> bool: return d.player.velocity.y > 1.0, 20, FWD)
 	d.step_until(func() -> bool: return d.player.velocity.y < 1.0, 40, FWD)
 	d.press_jump()
-	d.step(1, FWD)
-	assert_eq(d.techniques.count(MovementRules.TECH_BACK_COMING), 2, "back-coming encadeado")
-	d.step(60, FWD)
-
-
-func test_double_back_coming_climbs_the_ledge() -> void:
-	await _teleport(Vector3(1.75, 0, -56))
-	await _double_back_coming()
-	assert_almost_eq(d.player.global_position.y, 3.6, 0.05, "em cima da borda")
-
-
-func test_double_back_coming_climbs_the_smooth_wall() -> void:
-	await _teleport(Vector3(1.75, 3.6, -67))
-	await _double_back_coming()
-	assert_almost_eq(d.player.global_position.y, 8.0, 0.05, "em cima da parede lisa")
+	d.step(90, FWD)
+	assert_lt(d.player.global_position.y, 1.0, "não sobe na borda pelo back-coming")
 
 
 func test_smooth_wall_cannot_be_climbed_with_single_jump_wall_jump() -> void:
