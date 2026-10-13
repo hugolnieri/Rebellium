@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cix7lmw1g7cjj"
-path="res://.godot/imported/vroid_casual_F00_000_Hair_00_spe.png-ba2692af5513095819afbe0832acd5e0.ctex"
+path.s3tc="res://.godot/imported/vroid_casual_F00_000_Hair_00_spe.png-ba2692af5513095819afbe0832acd5e0.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "53dbd35a53851447480251f84cc4863e"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/character/models/vroid_casual_F00_000_Hair_00_spe.png"
-dest_files=["res://.godot/imported/vroid_casual_F00_000_Hair_00_spe.png-ba2692af5513095819afbe0832acd5e0.ctex"]
+dest_files=["res://.godot/imported/vroid_casual_F00_000_Hair_00_spe.png-ba2692af5513095819afbe0832acd5e0.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

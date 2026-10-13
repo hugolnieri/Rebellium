@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bwxi0efkffa4s"
-path="res://.godot/imported/arc_blade_futuristic_weapon_3d_model_metallic-futuristic_weapon_3d_model_roughness.jpg-2dcd50b3c05a2e57dcbc8f00d59a27bc.ctex"
+path.s3tc="res://.godot/imported/arc_blade_futuristic_weapon_3d_model_metallic-futuristic_weapon_3d_model_roughness.jpg-2dcd50b3c05a2e57dcbc8f00d59a27bc.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "8b3fd9b5ac551560f2d2f28e5339cc6f"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/weapons/arc_blade_futuristic_weapon_3d_model_metallic-futuristic_weapon_3d_model_roughness.jpg"
-dest_files=["res://.godot/imported/arc_blade_futuristic_weapon_3d_model_metallic-futuristic_weapon_3d_model_roughness.jpg-2dcd50b3c05a2e57dcbc8f00d59a27bc.ctex"]
+dest_files=["res://.godot/imported/arc_blade_futuristic_weapon_3d_model_metallic-futuristic_weapon_3d_model_roughness.jpg-2dcd50b3c05a2e57dcbc8f00d59a27bc.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
