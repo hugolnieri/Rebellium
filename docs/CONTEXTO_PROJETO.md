@@ -16,7 +16,7 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
 - **Cena principal**: tela de preparação (`scenes/ui/Loadout.tscn`), com cinco mapas. A SkyArena
   conserva o caçador que reage e é arremessado pelo golpe pesado. O Revezamento é a arena do
   modo Touch Down, com núcleo central, três rotas e entrega na base adversária.
-- **Qualidade**: 234 testes GUT passando e abertura headless sem erros nesta revisão.
+- **Qualidade**: 235 testes GUT passando e abertura headless sem erros nesta revisão.
 - **Repositório**: `github.com/hugolnieri/Rebellium`, 55 commits (alguns do dono via Codex, como `614b4e2`). **Só existe uma branch no GitHub e ela é a padrão:
   `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
 - **Dono do projeto**: GitHub `hugolnieri`; fala português; testa no Windows (`C:\Dev\Rebellium`).
@@ -505,3 +505,13 @@ reaparece na base inicial e o núcleo volta após breve intervalo. Cair da arena
 dois bots de treino defendem a base adversária. Tempo, limite de entregas e dimensões das
 áreas estão em `config/touchdown_config.tres`, editáveis pelo F2. HUD específico mostra posse,
 distância, pontuação e cronômetro. É um protótipo de objetivo solo, sem rede nem times jogáveis.
+
+## Revisão: topologia do Revezamento
+
+O percurso foi corrigido com base na explicação do minimapa. Cada lado tem spawn baixo
+(altura 0), rampa de saída, escada larga até a estação central (altura 2,4 m) e um gol
+elevado ao lado do spawn, acessível por outra escada. O lado vermelho espelha o azul.
+O núcleo fica na estação, não no mesmo piso do spawn. As escadas têm piso convexo inclinado
+sob degraus visuais e paredes laterais com colisão para wall jumps; o patamar final se
+sobrepõe ao piso do gol para não travar o Player. Um teste de integração percorre a rota
+inteira com o Player real e verifica as alturas dos pisos por raycast.

@@ -344,3 +344,12 @@ vermelho. Dois guardas de treino defendem a aproximação. O HUD mostra tempo, e
 objetivo; cair com o núcleo faz ele voltar ao centro. A partida termina por limite de entregas
 ou tempo, e R reinicia. É um protótipo solo do modo, sem equipes em rede. Duração, limite de
 pontos, coleta e tamanho do gol ficam em `config/touchdown_config.tres` e no F2.
+
+## Revisão: percurso característico do Revezamento
+
+O mapa foi remodelado após a leitura do minimapa pelo dono. Os spawns azul e vermelho ficam
+no piso baixo das extremidades. Ao sair, cada jogador percorre uma rampa curta e uma escadaria
+larga com paredes laterais usadas para saltos, chegando à estação elevada com o núcleo.
+O lado oposto espelha esse acesso. O ponto de entrega fica em uma plataforma elevada ao lado
+do spawn inimigo, alcançada por outra escadaria lateral. A miniatura do menu foi refeita para
+mostrar os níveis e escadas; a lógica de coleta, entrega e reinício permanece a mesma.

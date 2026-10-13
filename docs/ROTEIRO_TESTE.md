@@ -392,3 +392,9 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 3. Recolha o núcleo e caia da arena: ele deve voltar ao centro e o jogador à base azul, sem somar ponto. Tente entrar no gol sem núcleo: nada deve ser pontuado.
 4. Faça três entregas ou aguarde o cronômetro: o HUD deve mostrar o fim da partida. Pressione R para reiniciar; F3 volta ao menu.
 5. Abra F2 e confira a guia Touch Down. Ajuste raio de coleta, dimensões do gol e limite de entregas; confirme o efeito na partida. Clique em SALVAR e reabra a cena para conferir a persistência.
+
+## Revisão: escadas e níveis do Revezamento
+
+1. Entre em REVEZAMENTO: o spawn azul deve estar no nível baixo, com o gol azul acima e ao lado. Corra pela rampa curta e depois pela escadaria azul até a estação central elevada; não deve haver parede invisível ou degrau que prenda o personagem.
+2. Pegue o núcleo no centro. Siga reto pela escadaria vermelha, desça a rampa até o spawn vermelho, vire para a escada lateral e suba ao gol vermelho. A entrega deve pontuar somente dentro da área elevada.
+3. Teste wall jumps nas paredes laterais das escadas e confirme que os dois lados são espelhados. Confira também as rotas curtas ao redor do núcleo e a miniatura atualizada no menu.
