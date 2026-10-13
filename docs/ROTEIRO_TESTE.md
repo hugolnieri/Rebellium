@@ -351,3 +351,15 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 ## Atraso de comandos (investigação)
 - F1 mostra FPS e o **pior quadro do último segundo** (ENGASGO acima de 33 ms). Se o atraso coincidir com picos ali, a causa é desempenho/engasgo de render (primeiro uso de efeitos, MSAA 4x, sombra da lua, vsync), não o input.
 - Esperas embutidas nos controles: golpe leve só dispara ao SOLTAR o clique (para distinguir do pesado, que exige segurar 16 ticks); sprint exige toque duplo em W; o encadeamento do combo só abre em `chain_after`. O input é lido a 60 Hz e a imagem mostra o estado interpolado (um tick atrás).
+
+## Revisão: conferir o novo HUD
+
+1. Abra a SkyArena com F5. Confira VIDA/SP no canto inferior esquerdo e atalhos F1–F4 no rodapé.
+2. Use 1, 2 e Q: o cartão selecionado deve ter contorno/detalhe laranja; o outro fica ciano.
+3. Gaste SP com dash/sprint: barra e valor devem acompanhar o recurso; EXAUSTO aparece quando esgotado.
+4. Acerte o caçador: confira barra vermelha, vida, combo, DPS e último golpe. Pesado mantém distância de arremesso.
+5. Aperte R e espere a regeneração: valores dos alvos devem voltar ao máximo.
+6. Alterne F3: combate nas arenas de combate/SkyArena; percurso mantém cronômetro; arena livre mantém vida/SP.
+7. Redimensione a janela (16:9, 4:3 e ultrawide) e confira margens, textos e mira central.
+8. F2 → Visual → HUD: altere cores de painel, contorno, seleção e barras; confirme resposta ao vivo.
+9. Confira F1/F2/F4: menus continuam recebendo mouse normalmente; o HUD não intercepta cliques.

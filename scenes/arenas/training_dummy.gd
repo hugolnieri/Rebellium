@@ -31,6 +31,7 @@ var _winding_up: bool = false
 var _collision: CollisionShape3D
 var _pivot: Node3D
 var _hp_label: Label3D
+var _health_fill: MeshInstance3D
 var _target_material: StandardMaterial3D
 var _warning_material: StandardMaterial3D
 var _flash_left: float = 0.0
@@ -146,6 +147,8 @@ func _update_visuals(delta: float) -> void:
 		_arm_spin = maxf(_arm_spin - delta * TAU * 3.0, 0.0)
 		_spin_arm.rotation.y = TAU - _arm_spin
 	_hp_label.text = _label_text()
+	_health_fill.scale.x = maxf(clampf(hp / maxf(config.max_hp, 0.001), 0.0, 1.0), 0.001)
+	_health_fill.visible = hp > 0.0
 
 
 ## Etiqueta sobre o alvo: nome e vida. Filhos acrescentam linhas.
@@ -241,12 +244,34 @@ func _build_body() -> void:
 func _build_label() -> void:
 	_hp_label = Label3D.new()
 	_hp_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_hp_label.position = Vector3.UP * 2.35
+	_hp_label.position = Vector3.UP * 2.6
 	_hp_label.font_size = 40
 	_hp_label.outline_size = 10
 	_hp_label.pixel_size = 0.005
 	_hp_label.modulate = Color(0.86, 0.84, 0.79)
 	add_child(_hp_label)
+	var background: MeshInstance3D = _health_quad(Color(0.025, 0.04, 0.065), Vector2(0.86, 0.065))
+	background.position = Vector3.UP * 2.35
+	add_child(background)
+	_health_fill = _health_quad(Color(1.0, 0.2, 0.3), Vector2(0.82, 0.04))
+	_health_fill.position = Vector3.UP * 2.35
+	_health_fill.material_override.render_priority = 1
+	add_child(_health_fill)
+
+
+func _health_quad(color: Color, dimensions: Vector2) -> MeshInstance3D:
+	var quad: QuadMesh = QuadMesh.new()
+	quad.size = dimensions
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.albedo_color = color
+	var instance: MeshInstance3D = MeshInstance3D.new()
+	instance.mesh = quad
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return instance
 
 
 func _add_mesh(parent: Node3D, mesh: Mesh, pos: Vector3, material: Material) -> void:

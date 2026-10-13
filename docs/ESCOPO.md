@@ -282,3 +282,12 @@ Rede/multiplayer, arte final (modelos e animações feitos à mão), música.
 
 ## Revisão: parar de andar sem atraso
 - Ao soltar W o personagem deslizava ~0,2 s (desaceleração 45 m/s² a partir de 10 m/s) e a passada ainda levava ~0,2 s para sumir. `ground_deceleration` foi para 120 m/s² e a passada some a `run_stop_rate` = 16/s (FeedbackConfig). Ajustáveis no F2 (Movimento / Visual).
+
+## Revisão: HUD vetorial inspirado no conceito aprovado
+
+Vida/SP em barras recortadas com valores, cartões de armas com seleção laranja, painel COMBATE,
+mira discreta e atalhos F1–F4 no rodapé. Layout escala com a janela; centro da ação continua livre.
+Silhuetas de lâmina são vetoriais originais. Alvos têm barra vermelha e mantêm nome, vida e distância do arremesso.
+Cores de painel, contorno e seleção ficam em FeedbackConfig, editáveis no F2 (Visual).
+Nenhuma regra de movimento, combate ou persistência foi alterada. Modificações locais anteriores em
+project.godot e arquivos de importação foram preservadas e não fazem parte desta revisão.

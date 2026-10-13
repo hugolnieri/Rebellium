@@ -451,3 +451,10 @@ instante do golpe; **estrela** = dash em cambalhota lateral; **cambalhota** = ro
 Ao nascer, `InputReader` copia `Player.global_rotation.y` para o yaw inicial da câmera, então W começa seguindo o heading do marcador (na SkyArena, 22,5°). Como `Visual` é filho local do `Player`, `Player._update_visual` converte o heading global em yaw local. Assim a câmera, a trajetória e o modelo começam alinhados. Validação manual no Godot ainda pendente.
 Com `Player._place` (seção 5) o corpo já nasce sem rotação, então essa conversão é a identidade e vale só como salvaguarda;
 `CombatArena._respawn` também já copia o yaw do marcador para a câmera, de modo que o alinhamento inicial não depende só do `InputReader`.
+
+## Revisão: HUD vetorial
+
+HUD de vida/SP com barras recortadas e valores; cartões de armas no canto superior direito,
+painel de combate, mira e atalhos no rodapé. Renderização compartilhada em scenes/ui/hud_canvas.gd,
+com escala proporcional à janela. FeedbackConfig expõe cores de painel, contorno e seleção no F2.
+Alvos mantêm etiquetas e distância de arremesso e agora mostram barra de vida vermelha.

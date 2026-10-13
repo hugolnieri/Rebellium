@@ -87,7 +87,10 @@ extends Resource
 @export_range(1.0, 60.0, 0.5, "suffix:m") var shadow_max_distance: float = 20.0
 
 @export_group("HUD")
-@export var sp_bar_color: Color = Color(0.12, 0.62, 1.0)
+@export var hud_accent_color: Color = Color(0.25, 0.9, 1.0)
+@export var hud_panel_color: Color = Color(0.025, 0.04, 0.065, 0.86)
+@export var hud_selected_color: Color = Color(1.0, 0.73, 0.3)
+@export var sp_bar_color: Color = Color(0.05, 0.85, 1.0)
 @export var sp_exhausted_color: Color = Color(0.92, 0.12, 0.15)
 @export var hp_bar_color: Color = Color(0.62, 1.0, 0.12)
 
