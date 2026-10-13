@@ -1,8 +1,7 @@
 # REBELLIUM — Contexto completo do projeto
 
-Documento de passagem de bastão. Descreve **o jogo como está hoje** (branch
-`claude/lucid-ramanujan-wy8xe5`, commit `9353741`; última revisão: mergulho no pulo, dash que segue a câmera, fim do reverse e
-personagem do VRoid no F4), como o código se organiza, como se trabalha com o dono e o que está em aberto.
+Documento de passagem de bastão. Descreve **o jogo como está hoje** na branch
+`claude/lucid-ramanujan-wy8xe5`, como o código se organiza, como se trabalha com o dono e o que está em aberto.
 Em caso de divergência, **o código e os `.tres` mandam**: `docs/ESCOPO.md` e `docs/ROTEIRO_TESTE.md` são diários
 de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes: `AGENTS.md` (e `CLAUDE.md`).
 
@@ -14,11 +13,10 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
   não usar nomes, assets ou termos de outros jogos.
 - **Stack**: Godot 4.7.2-stable, GDScript **tipado**, física Jolt a 60 ticks fixos, testes GUT 9.7.1 (headless).
   Blender (módulo `bpy` 4.2.0, Python 3.11) gera por código o personagem, as animações, a arena e a espada.
-- **Cena principal**: arena flutuante sobre as nuvens (`scenes/arenas/SkyArena.tscn`), com um bot vermelho
-  ("caçador") no centro: não ataca, mas reage com as animações do personagem e é **arremessado pelo golpe pesado**.
-  **F3** abre a seleção de mapas: SkyArena, CombatArena, TrainingCourse ou Arena.
-- **Qualidade hoje**: 228 testes passando (20 arquivos: 7 unitários + 13 de integração) e
-  `godot --headless --quit-after 120` sem erros. ~10 mil linhas de GDScript (com testes) e ~2,8 mil de Python (tools).
+- **Cena principal**: tela de preparação (`scenes/ui/Loadout.tscn`), com cinco mapas. A SkyArena
+  conserva o caçador que reage e é arremessado pelo golpe pesado. O Revezamento é a arena do
+  modo Touch Down, com núcleo central, três rotas e entrega na base adversária.
+- **Qualidade**: 234 testes GUT passando e abertura headless sem erros nesta revisão.
 - **Repositório**: `github.com/hugolnieri/Rebellium`, 55 commits (alguns do dono via Codex, como `614b4e2`). **Só existe uma branch no GitHub e ela é a padrão:
   `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
 - **Dono do projeto**: GitHub `hugolnieri`; fala português; testa no Windows (`C:\Dev\Rebellium`).
@@ -493,3 +491,17 @@ modal sobre a tela e é salva via `CharacterLook`; a arma inicial usa `LoadoutCo
 Os cartões de mapas usam miniaturas em `assets/ui/map_previews.png`, e o fundo é
 `assets/ui/main_menu_arena.png`. São ilustrações de interface originais, não cenas adicionais
 nem mapas novos. A guia Treino seleciona `TrainingCourse`; não há recursos de rede ou loja.
+
+## Revisão: Revezamento / Touch Down
+
+`scenes/arenas/TouchdownArena.tscn` é um novo mapa solo. Sua fonte editável é
+`art/arena/relay_arena.blend`; `tools/blender/build_relay_arena.py` gera o GLB com colisões
+convexas, e `tools/blender/render_relay_preview.py` gera a miniatura do menu. A geometria tem
+bases azul e vermelha, corredor direto e dois desvios laterais, mantendo a estrutura das
+referências enviadas pelo dono com arte própria.
+
+O jogador inicia na base azul, coleta o núcleo no centro e marca no gol vermelho. Ao pontuar,
+reaparece na base inicial e o núcleo volta após breve intervalo. Cair da arena perde a posse;
+dois bots de treino defendem a base adversária. Tempo, limite de entregas e dimensões das
+áreas estão em `config/touchdown_config.tres`, editáveis pelo F2. HUD específico mostra posse,
+distância, pontuação e cronômetro. É um protótipo de objetivo solo, sem rede nem times jogáveis.

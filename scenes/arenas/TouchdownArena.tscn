@@ -1,0 +1,183 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/arenas/touchdown_arena.gd" id="arena"]
+[ext_resource type="Resource" path="res://config/touchdown_config.tres" id="config"]
+[ext_resource type="PackedScene" path="res://assets/arena/relay_arena.glb" id="platform"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://scenes/arenas/TrainingDummy.tscn" id="dummy"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugHUD.tscn" id="debug_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugMenu.tscn" id="debug_menu"]
+[ext_resource type="Script" path="res://scenes/ui/touchdown_hud.gd" id="mode_hud"]
+[ext_resource type="Shader" path="res://scenes/arenas/sky/clouds.gdshader" id="clouds"]
+
+[sub_resource type="ProceduralSkyMaterial" id="skymat"]
+sky_top_color = Color(0.025, 0.055, 0.13, 1)
+sky_horizon_color = Color(0.2, 0.34, 0.5, 1)
+ground_bottom_color = Color(0.035, 0.05, 0.08, 1)
+ground_horizon_color = Color(0.2, 0.32, 0.43, 1)
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("skymat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.48, 0.62, 0.85, 1)
+ambient_light_energy = 0.85
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.6
+fog_enabled = true
+fog_light_color = Color(0.14, 0.20, 0.32, 1)
+fog_density = 0.0025
+
+[sub_resource type="FastNoiseLite" id="noise"]
+frequency = 0.006
+fractal_octaves = 5
+
+[sub_resource type="NoiseTexture2D" id="cloudnoise"]
+width = 512
+height = 512
+seamless = true
+noise = SubResource("noise")
+
+[sub_resource type="ShaderMaterial" id="cloudmat"]
+render_priority = -1
+shader = ExtResource("clouds")
+shader_parameter/noise_tex = SubResource("cloudnoise")
+shader_parameter/color = Color(0.52, 0.64, 0.77, 1)
+shader_parameter/city_tint = Color(0.34, 0.47, 0.7, 1)
+shader_parameter/scale = 0.004
+shader_parameter/wind = Vector2(0.003, 0.001)
+shader_parameter/coverage = 0.42
+shader_parameter/softness = 0.28
+shader_parameter/opacity = 0.85
+shader_parameter/fade_radius = 900.0
+
+[sub_resource type="PlaneMesh" id="cloudplane"]
+size = Vector2(1600, 1600)
+
+[sub_resource type="SphereShape3D" id="ball_area_shape"]
+radius = 1.45
+
+[sub_resource type="BoxShape3D" id="goal_area_shape"]
+size = Vector3(4, 3.2, 8.8)
+
+[sub_resource type="SphereMesh" id="ball_mesh"]
+radius = 0.48
+height = 0.96
+radial_segments = 24
+rings = 12
+
+[sub_resource type="StandardMaterial3D" id="ball_material"]
+albedo_color = Color(0.78, 0.92, 1, 1)
+metallic = 0.55
+roughness = 0.18
+emission_enabled = true
+emission = Color(0.35, 0.82, 1, 1)
+emission_energy_multiplier = 3.0
+
+[node name="TouchdownArena" type="Node3D"]
+script = ExtResource("arena")
+config = ExtResource("config")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-45, 26, 0)
+light_color = Color(0.72, 0.84, 1, 1)
+light_energy = 1.3
+shadow_enabled = true
+
+[node name="Platform" parent="." instance=ExtResource("platform")]
+
+[node name="Clouds" type="MeshInstance3D" parent="."]
+position = Vector3(0, -65, 0)
+cast_shadow = 0
+mesh = SubResource("cloudplane")
+surface_material_override/0 = SubResource("cloudmat")
+
+[node name="BlueLight" type="OmniLight3D" parent="."]
+position = Vector3(-32, 5, 0)
+light_color = Color(0.12, 0.60, 1, 1)
+light_energy = 1.8
+omni_range = 17.0
+
+[node name="RedLight" type="OmniLight3D" parent="."]
+position = Vector3(32, 5, 0)
+light_color = Color(1, 0.16, 0.30, 1)
+light_energy = 1.8
+omni_range = 17.0
+
+[node name="CoreLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 4, 0)
+light_color = Color(0.72, 0.3, 1, 1)
+light_energy = 2.0
+omni_range = 14.0
+
+[node name="Spawn" type="Marker3D" parent="."]
+position = Vector3(-33, 0.12, 0)
+rotation = Vector3(0, -1.570796, 0)
+
+[node name="Player" parent="." instance=ExtResource("player")]
+position = Vector3(-33, 0.12, 0)
+
+[node name="CarriedBall" type="Node3D" parent="Player"]
+position = Vector3(0, 1.75, -0.65)
+visible = false
+
+[node name="Orb" type="MeshInstance3D" parent="Player/CarriedBall"]
+mesh = SubResource("ball_mesh")
+surface_material_override/0 = SubResource("ball_material")
+
+[node name="Ball" type="Area3D" parent="."]
+position = Vector3(0, 1.0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ball"]
+shape = SubResource("ball_area_shape")
+
+[node name="Orb" type="MeshInstance3D" parent="Ball"]
+mesh = SubResource("ball_mesh")
+surface_material_override/0 = SubResource("ball_material")
+
+[node name="BallLabel" type="Label3D" parent="Ball"]
+position = Vector3(0, 1.05, 0)
+billboard = 1
+text = "NÚCLEO"
+font_size = 64
+outline_size = 12
+
+[node name="EnemyGoal" type="Area3D" parent="."]
+position = Vector3(35, 1.6, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EnemyGoal"]
+shape = SubResource("goal_area_shape")
+
+[node name="GoalLabel" type="Label3D" parent="EnemyGoal"]
+position = Vector3(0, 2.5, 0)
+billboard = 1
+text = "BASE VERMELHA"
+font_size = 64
+outline_size = 12
+
+[node name="Dummies" type="Node3D" parent="."]
+
+[node name="GuardA" parent="Dummies" instance=ExtResource("dummy")]
+position = Vector3(26, 0, -3)
+mode = 2
+
+[node name="GuardB" parent="Dummies" instance=ExtResource("dummy")]
+position = Vector3(26, 0, 3)
+mode = 2
+
+[node name="HUD" parent="." instance=ExtResource("hud")]
+
+[node name="DebugHUD" parent="." instance=ExtResource("debug_hud")]
+
+[node name="DebugMenu" parent="." instance=ExtResource("debug_menu")]
+
+[node name="TouchdownHUD" type="CanvasLayer" parent="."]
+script = ExtResource("mode_hud")

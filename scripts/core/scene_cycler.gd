@@ -8,6 +8,7 @@ const SCENES: Array[String] = [
 	"res://scenes/arenas/CombatArena.tscn",
 	"res://scenes/arenas/TrainingCourse.tscn",
 	"res://scenes/arenas/Arena.tscn",
+	"res://scenes/arenas/TouchdownArena.tscn",
 ]
 var open_maps_on_ready: bool = false
 

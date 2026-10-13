@@ -40,3 +40,6 @@ signal sprint_started(player: Node)
 ## Poste agressivo: aviso antes do golpe e o golpe em si.
 signal dummy_warning(dummy: Node)
 signal dummy_attack(dummy: Node)
+## Modo Touch Down: o jogador pegou o núcleo e entregou na base adversária.
+signal touchdown_ball_picked(player: Node)
+signal touchdown_scored(player: Node, score: int)

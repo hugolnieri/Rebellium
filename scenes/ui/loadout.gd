@@ -4,6 +4,7 @@ extends Control
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/Player.tscn")
 const BACKDROP: Texture2D = preload("res://assets/ui/main_menu_arena.png")
 const MAP_ATLAS: Texture2D = preload("res://assets/ui/map_previews.png")
+const RELAY_PREVIEW: Texture2D = preload("res://assets/ui/relay_arena_preview.png")
 const CYAN: Color = Color(0.23, 0.91, 1.0)
 const WHITE: Color = Color(0.94, 0.97, 1.0)
 const MUTED: Color = Color(0.62, 0.69, 0.78)
@@ -13,10 +14,10 @@ const COLORS: Array[Array] = [
 	["eye_color", "Olhos", false], ["suit_color", "Traje", true],
 	["seam_color", "Costuras", true], ["emblem_color", "Emblema", true],
 ]
-const MAP_NAMES: Array[String] = ["ARENA CELESTE", "ARENA DE COMBATE", "PERCURSO", "ARENA LIVRE"]
+const MAP_NAMES: Array[String] = ["ARENA CELESTE", "ARENA DE COMBATE", "PERCURSO", "ARENA LIVRE", "REVEZAMENTO"]
 const MAP_DETAILS: Array[String] = [
 	"Caçador • arena vertical", "Combate • alvos de treino",
-	"Movimento • percurso cronometrado", "Prática • espaço aberto",
+	"Movimento • percurso cronometrado", "Prática • espaço aberto", "Touch Down • entregue o núcleo",
 ]
 
 var look: CharacterLook
@@ -155,10 +156,14 @@ func _build_match_side(body: HBoxContainer) -> void:
 	panel.add_child(column)
 	column.add_child(_label("PREPARE SUA PARTIDA", 28, WHITE))
 	column.add_child(_label("ESCOLHA O MAPA", 14, MUTED))
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(scroll)
 	var list := VBoxContainer.new()
 	list.add_theme_constant_override("separation", 9)
-	list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(list)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
 	for i: int in SceneCycler.SCENES.size():
 		var card := Button.new()
 		card.custom_minimum_size.y = 84.0
@@ -176,10 +181,13 @@ func _build_match_side(body: HBoxContainer) -> void:
 		card_row.add_theme_constant_override("separation", 14)
 		card.add_child(card_row)
 		var thumb := TextureRect.new()
-		var atlas := AtlasTexture.new()
-		atlas.atlas = MAP_ATLAS
-		atlas.region = Rect2((i % 2) * 836.0, (i / 2) * 470.0, 836.0, 470.0)
-		thumb.texture = atlas
+		if i < 4:
+			var atlas := AtlasTexture.new()
+			atlas.atlas = MAP_ATLAS
+			atlas.region = Rect2((i % 2) * 836.0, (i / 2) * 470.0, 836.0, 470.0)
+			thumb.texture = atlas
+		else:
+			thumb.texture = RELAY_PREVIEW
 		thumb.custom_minimum_size = Vector2(140, 0)
 		thumb.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		thumb.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED

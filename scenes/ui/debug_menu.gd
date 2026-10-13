@@ -61,6 +61,8 @@ func _build() -> void:
 	_add_tab("Câmera", player.camera_config)
 	_add_tab("Visual", player.feedback_config)
 	_add_tab("Combate", player.combat_config)
+	if player.get_parent() is TouchdownArena:
+		_add_tab("Touch Down", (player.get_parent() as TouchdownArena).config)
 	for weapon in player.weapons:
 		_add_tab(weapon.display_name, weapon)
 	_add_tab("Alvos", load("res://config/dummy_config.tres") as Resource)

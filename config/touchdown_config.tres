@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TouchdownConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/touchdown_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+duration = 180.0
+score_limit = 3
+fall_reset_height = -8.0
+pickup_radius = 1.45
+ball_reset_delay = 1.2
+goal_width = 4.0
+goal_height = 3.2
+goal_depth = 8.8

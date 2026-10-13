@@ -334,3 +334,13 @@ e clicar em `ENTRAR NA PARTIDA` abre sua cena. A guia `TREINO` seleciona o Percu
 O modal `PERSONAGEM` edita modelo e cores com prévia ao vivo. As escolhas continuam em
 `user://personagem.tres` e `user://loadout.tres`; F3 volta à seleção de mapas. A arte de fundo
 e as miniaturas foram criadas para este menu; não há loja, perfil online ou salas fictícias.
+
+## Revisão: arena Revezamento e modo Touch Down
+
+Uma quinta opção na tela inicial abre a arena Revezamento, criada no Blender com identidade
+visual própria. Duas bases opostas são ligadas por um corredor central e dois desvios laterais;
+o núcleo fica no centro. O jogador parte da base azul, coleta o núcleo e o entrega no gol
+vermelho. Dois guardas de treino defendem a aproximação. O HUD mostra tempo, entregas e
+objetivo; cair com o núcleo faz ele voltar ao centro. A partida termina por limite de entregas
+ou tempo, e R reinicia. É um protótipo solo do modo, sem equipes em rede. Duração, limite de
+pontos, coleta e tamanho do gol ficam em `config/touchdown_config.tres` e no F2.

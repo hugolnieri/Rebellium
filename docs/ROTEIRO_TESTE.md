@@ -384,3 +384,11 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 3. Clique em cada cartão de arma: a marca `ARMA INICIAL` muda. Entre no mapa e confirme que o HUD inicia na arma escolhida; 1/2 ainda trocam de arma.
 4. Abra `PERSONAGEM` ou a guia `LOADOUT`, altere modelo e cores, observe a prévia 3D e use `SALVAR E VOLTAR A JOGAR`. Reinicie o jogo e confirme a persistência.
 5. Dentro do mapa, F3 deve voltar à tela inicial. Confira o layout também em janela menor e em proporção 4:3.
+
+## Revisão: Revezamento / Touch Down
+
+1. Abra o jogo com F5, selecione `REVEZAMENTO` no menu e entre. Confira as bases azul e vermelha, o núcleo no centro e as três rotas entre as bases.
+2. Atravesse o núcleo: o HUD deve indicar que está carregando. Leve-o até o gol vermelho e confirme uma entrega, o retorno do jogador à base azul e o reaparecimento do núcleo no centro.
+3. Recolha o núcleo e caia da arena: ele deve voltar ao centro e o jogador à base azul, sem somar ponto. Tente entrar no gol sem núcleo: nada deve ser pontuado.
+4. Faça três entregas ou aguarde o cronômetro: o HUD deve mostrar o fim da partida. Pressione R para reiniciar; F3 volta ao menu.
+5. Abra F2 e confira a guia Touch Down. Ajuste raio de coleta, dimensões do gol e limite de entregas; confirme o efeito na partida. Clique em SALVAR e reabra a cena para conferir a persistência.
