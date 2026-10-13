@@ -10,6 +10,10 @@ var _events: Array[String] = []
 var _last_event: String = "-"
 var _last_technique: String = "-"
 var _technique_counts: Dictionary = {}
+## Pior quadro da janela atual (ms): engasgos aparecem como atraso nos comandos.
+var _worst_frame_ms: float = 0.0
+var _shown_worst_ms: float = 0.0
+var _worst_window: float = 0.0
 
 
 func _ready() -> void:
@@ -61,7 +65,13 @@ func _push_event(text: String) -> void:
 		_events.resize(EVENT_LOG_SIZE)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_worst_frame_ms = maxf(_worst_frame_ms, delta * 1000.0)
+	_worst_window += delta
+	if _worst_window >= 1.0:
+		_shown_worst_ms = _worst_frame_ms
+		_worst_frame_ms = 0.0
+		_worst_window = 0.0
 	if not visible:
 		return
 	if player == null or not is_instance_valid(player):
@@ -71,6 +81,7 @@ func _process(_delta: float) -> void:
 	var p := player
 	var lines: PackedStringArray = []
 	lines.append("REBELLIUM debug  [F1 esconde | F2 menu]   FPS %d" % Engine.get_frames_per_second())
+	lines.append("pior quadro   %5.1f ms (1 s)%s" % [_shown_worst_ms, "   ENGASGO" if _shown_worst_ms > 33.0 else ""])
 	lines.append("estado        %s  (%d ticks)" % [p.get_state_name(), p.state_machine.ticks_in_state()])
 	lines.append("vel horiz     %6.2f m/s" % p.get_horizontal_speed())
 	lines.append("vel vertical  %6.2f m/s" % p.velocity.y)

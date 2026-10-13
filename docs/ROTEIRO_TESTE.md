@@ -330,3 +330,8 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 4. Repita com A, S e D: A anda para a esquerda da câmera, S para trás (vindo na sua direção) e D para a direita, sempre em linha
    reta na tela e com o personagem de frente para onde anda (nunca de lado). Vale logo ao nascer, depois de R e depois de cair da borda.
 5. Com W segurado e o mouse parado, o personagem se afasta da câmera em linha reta: você o vê de costas, no mesmo ponto da tela.
+
+
+## Atraso de comandos (investigação)
+- F1 mostra FPS e o **pior quadro do último segundo** (ENGASGO acima de 33 ms). Se o atraso coincidir com picos ali, a causa é desempenho/engasgo de render (primeiro uso de efeitos, MSAA 4x, sombra da lua, vsync), não o input.
+- Esperas embutidas nos controles: golpe leve só dispara ao SOLTAR o clique (para distinguir do pesado, que exige segurar 16 ticks); sprint exige toque duplo em W; o encadeamento do combo só abre em `chain_after`. O input é lido a 60 Hz e a imagem mostra o estado interpolado (um tick atrás).
