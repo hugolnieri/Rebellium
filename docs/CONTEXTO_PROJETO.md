@@ -1,7 +1,8 @@
 # REBELLIUM — Contexto completo do projeto
 
 Documento de passagem de bastão. Descreve **o jogo como está hoje** (branch
-`claude/lucid-ramanujan-wy8xe5`; última revisão: personagem anda reto e caçador que voa), como o código se organiza, como se trabalha com o dono e o que está em aberto.
+`claude/lucid-ramanujan-wy8xe5`, commit `9353741`; última revisão: mergulho no pulo, dash que segue a câmera, fim do reverse e
+personagem do VRoid no F4), como o código se organiza, como se trabalha com o dono e o que está em aberto.
 Em caso de divergência, **o código e os `.tres` mandam**: `docs/ESCOPO.md` e `docs/ROTEIRO_TESTE.md` são diários
 de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes: `AGENTS.md` (e `CLAUDE.md`).
 
@@ -17,8 +18,8 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
   ("caçador") no centro: não ataca, mas reage com as animações do personagem e é **arremessado pelo golpe pesado**.
   **F3** alterna: SkyArena → CombatArena → TrainingCourse → Arena.
 - **Qualidade hoje**: 237 testes passando (20 arquivos: 7 unitários + 13 de integração) e
-  `godot --headless --quit-after 120` sem erros. ~8,4 mil linhas de GDScript (com testes) e ~2,5 mil de Python (tools).
-- **Repositório**: `github.com/hugolnieri/Rebellium`, 42 commits. **Só existe uma branch no GitHub e ela é a padrão:
+  `godot --headless --quit-after 120` sem erros. ~10 mil linhas de GDScript (com testes) e ~2,8 mil de Python (tools).
+- **Repositório**: `github.com/hugolnieri/Rebellium`, 55 commits (alguns do dono via Codex, como `614b4e2`). **Só existe uma branch no GitHub e ela é a padrão:
   `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
 - **Dono do projeto**: GitHub `hugolnieri`; fala português; testa no Windows (`C:\Dev\Rebellium`).
 
@@ -60,6 +61,7 @@ python3 tools/blender/build_hero.py          # recria hero.blend + hero.glb (APA
 python3 tools/blender/export_hero.py         # só exporta o hero.blend editado → hero.glb
 python3 tools/blender/build_sky_arena.py     # recria a arena (art/arena/sky_arena.blend + assets/arena/sky_arena.glb)
 python3 tools/blender/build_sword.py         # converte art/weapons/arc_blade_source.usdz → assets/weapons/arc_blade.glb
+python3 tools/import_vroid.py arquivo.vrm nome   # personagem do VRoid Studio → assets/character/models/nome.glb (Pillow)
 ```
 
 - Scripts do Blender: `pip install bpy==4.2.0 numpy` (a roda do bpy 4.2 exige **Python 3.11**; ~300 MB). Sem isso, tudo
@@ -76,7 +78,7 @@ python3 tools/blender/build_sword.py         # converte art/weapons/arc_blade_so
 | Space | pular / wall jump |
 | W, W (toque duplo) e segurar | sprint; no ar vira corrida no ar |
 | Space + A/D | dash lateral (Space de novo no dash = cancela e pula; no ar planando, cancela o dash) |
-| Botão esquerdo (ou J) | toque = golpe leve (cliques seguidos = combo); **segurar = golpe pesado** |
+| Botão esquerdo (ou J) | toque = golpe leve (sai ao **soltar**; cliques seguidos = combo); **segurar = golpe pesado**; no ar = **mergulho** |
 | Botão direito (ou K) | golpe pesado direto |
 | 1 / 2 / Q | Lâmina de Arco / Presa de Fase / alterna (junto do Space do wall jump = **cancel**) |
 | V | troca o ombro da câmera |
@@ -87,7 +89,7 @@ O mapa de input está em `project.godot`; **só `scenes/player/input_reader.gd` 
 
 ## 5. Arquitetura do código
 
-**Autoloads**: `GameEvents` (sinais), `SceneCycler` (F3), `SoundManager`.
+**Autoloads**: `GameEvents` (sinais), `SceneCycler` (F3), `SoundManager`, `CharacterMenu` (F4, `scenes/ui/character_menu.gd`).
 
 **Player** (`scenes/player/player.gd`, `CharacterBody3D`; origem do corpo nos pés; cápsula r 0,4 × h 1,8). Fluxo por tick:
 `input → SP.update → estado.physics_update → move_and_slide → wall_sensor.update → estado.post_move → _update_visual`.
@@ -116,6 +118,7 @@ e `@export_range`) e aparece sozinho no F2:
 | `weapons/<arma>/weapon.tres` + um `.tres` por golpe | `WeaponConfig`, `AttackData` | tempos, dano, alcance, arco, hitstop |
 | `dummy_config.tres` | `DummyConfig` | postes/caçador: vida, regeneração, patrulha, ataque do agressivo e o **arremesso do caçador** (aba Alvos do F2) |
 | `audio_config.tres` | `AudioConfig` | volumes |
+| `character_look.tres` | `CharacterLook` | aparência padrão (modelo e cores; **não é gameplay**, o jogador salva a dele em `user://personagem.tres`) |
 
 **Salvar config sempre com `ConfigIO.save_full`** (grava todos os valores; o `ResourceSaver` padrão omite os iguais ao padrão).
 
@@ -404,11 +407,13 @@ Sem música.
    (`25443c4`); golpes com o corpo todo e impulsos que decaem (`995c8af`); golpes leves/pesados feitos à mão (`bb2cecd`).
 7. **Arena flutuante** (`ebc2efc`, `425f949`, `b9e729e`, `677621f`, `e798e12`): plataforma sobre as nuvens vira a cena inicial; sem
    arquibancada/telas/globo; espada nova; colisão convexa; **desenho atual com travessas, muros azuis, roxo com passagens, degradê e caçador**.
-8. **Caçador que voa**: corpo do Player sem rotação (conserta o andar torto), `HunterBot` com os clipes do personagem, golpe
-   pesado arremessa, clipes `launched`/`knockdown`/`getup` no Blender, aba Alvos no F2.
-9. **Câmera alinhada** (andar em diagonal, de verdade): o centro da câmera herdava os 22,5° do Player instanciado girado na
-   SkyArena; `PlayerCamera._follow` agora o zera, a cena instancia o Player sem rotação e há testes da câmera.
-10. **Mergulho, dash e customização**: wall jump só com o pulo normal (dash no ar bloqueia), back-coming nunca passa por cima da
+8. **Caçador que voa** (`a407c2b`, merge `65fb0d1` com os commits do dono via Codex `9410095`…`4c416bd`): corpo do Player sem
+   rotação, `HunterBot` com os clipes do personagem, golpe pesado arremessa, clipes `launched`/`knockdown`/`getup`, aba Alvos no F2.
+9. **Câmera alinhada** (`5b67869`, o andar em diagonal de verdade): o centro da câmera herdava os 22,5° do Player instanciado girado
+   na SkyArena; `PlayerCamera._follow` agora o zera, a cena instancia o Player sem rotação e há testes da câmera.
+10. **Atraso de comandos** (`77f7d1a`, `0076490`): F1 mostra o pior quadro; parar ao soltar W ficou rápido (`ground_deceleration`
+   45 → 120, `run_stop_rate`).
+11. **Mergulho, dash e customização** (`9353741`): wall jump só com o pulo normal (dash no ar bloqueia), back-coming nunca passa por cima da
    parede (fim do reverse; trechos 3 e 4 do percurso ganharam pilares), dash segue a câmera, golpe no pulo vira mergulho (clipe
    `plunge_land`), golpe no dash aéreo = combo leve, menu de personagem F4 com modelos do VRoid (`tools/import_vroid.py`).
 
@@ -419,6 +424,9 @@ Sem música.
   Godot: neon, escala do bot, sensação do degradê e das passagens, **força do arremesso** (`launch_velocity_scale`) e as poses de
   voo, queda e levantar. Também falta a sensação do **mergulho** (tempo no ar, velocidade, tempo preso no chão), do **dash que segue
   a câmera** e do menu **F4** com um personagem exportado pelo próprio dono no VRoid Studio.
+- **Atraso de comandos (pergunta sem resposta)**: o golpe leve só sai ao **soltar** o clique (para distinguir do pesado). Foi
+  oferecido: leve ao apertar + pesado só no botão direito/segurando com aviso; ou pré-carregar os efeitos (faíscas, poeira, rastro
+  criam materiais no primeiro uso e podem engasgar) e deixar MSAA/sombra configuráveis. O dono ainda não escolheu.
 - **Modo caçador**: o bot vermelho agora reage e voa, mas continua **sem agir**. O dono ainda não definiu o que o caçador faz
   (ataques, perseguição, regras). Hoje ele volta ao spawn teleportando (simples e previsível); andar de volta fica como evolução.
 - **Espada**: clarear o material (oferecido) e registrar origem/licença no `CREDITS.md`.
