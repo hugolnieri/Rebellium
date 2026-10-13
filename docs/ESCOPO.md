@@ -323,3 +323,14 @@ O ajuste pedido era de espessura. O muro roxo foi afinado de 0,75 m para 0,6 m, 
 azuis e as quatro travessas vermelhas junto da borda agora têm a mesma grossura de 0,6 m.
 Apenas a borda circular mantém sua grossura original de 1,5 m. As alturas voltaram aos
 valores anteriores: roxo 4,5 m; azuis, travessas e borda 2,25 m.
+
+## Revisão: nova tela inicial do Rebellium
+
+A preparação em duas telas foi substituída por uma tela única de partida, inspirada no conceito
+visual aprovado pelo dono. À esquerda, o modelo escolhido aparece em 3D sobre uma arte original
+da Arena Celeste, com cartões clicáveis para escolher a arma inicial e abrir a personalização.
+À direita, quatro cartões com prévias mostram os mapas reais do protótipo; selecionar um mapa
+e clicar em `ENTRAR NA PARTIDA` abre sua cena. A guia `TREINO` seleciona o Percurso.
+O modal `PERSONAGEM` edita modelo e cores com prévia ao vivo. As escolhas continuam em
+`user://personagem.tres` e `user://loadout.tres`; F3 volta à seleção de mapas. A arte de fundo
+e as miniaturas foram criadas para este menu; não há loja, perfil online ou salas fictícias.

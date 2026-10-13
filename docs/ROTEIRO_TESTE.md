@@ -376,3 +376,11 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 2. Confira o mapa escolhido e a arma inicialmente destacada no HUD. Troque com 1/2; volte pelo F3 e entre em outro mapa. Feche e reabra o jogo: aparência e arma inicial devem persistir.
 3. Na SkyArena, compare os quatro muros radiais junto da borda, os azuis e o roxo: todos devem ter 0,6 m de grossura. Apenas a borda circular conserva 1,5 m. Confirme as alturas restauradas: roxo 4,5 m; os demais muros e a borda 2,25 m.
 4. Entre duas paredes próximas e encadeie wall jumps enquanto sobe: os saltos devem continuar. Ao começar a cair, tente outro salto na parede oposta: deve falhar e o F1 mostrar `já está caindo`. Depois de pousar, um novo pulo e wall jump voltam a funcionar.
+
+## Revisão: nova tela inicial
+
+1. Rode o projeto com F5. Confira arte de fundo, personagem 3D, duas armas e os quatro mapas em uma só tela; a Arena Celeste começa selecionada.
+2. Clique nas quatro prévias: somente uma deve ficar destacada. Clique em `TREINO`: o Percurso deve ser selecionado. `ENTRAR NA PARTIDA` deve abrir exatamente o mapa escolhido.
+3. Clique em cada cartão de arma: a marca `ARMA INICIAL` muda. Entre no mapa e confirme que o HUD inicia na arma escolhida; 1/2 ainda trocam de arma.
+4. Abra `PERSONAGEM` ou a guia `LOADOUT`, altere modelo e cores, observe a prévia 3D e use `SALVAR E VOLTAR A JOGAR`. Reinicie o jogo e confirme a persistência.
+5. Dentro do mapa, F3 deve voltar à tela inicial. Confira o layout também em janela menor e em proporção 4:3.

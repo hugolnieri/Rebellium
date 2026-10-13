@@ -484,3 +484,12 @@ usa a reflexão; a classificação distingue somente wall jump normal e side jum
 entrada. A trava contra repetir a mesma parede permanece. O percurso usa wall jumps em pilares
 para subir a borda e a parede lisa. F1, F2, HUD de treino e VFX não exibem mais as técnicas removidas.
 As menções históricas anteriores neste documento descrevem versões antigas.
+
+## Revisão: tela inicial integrada
+
+`scenes/ui/Loadout.tscn` agora mostra em uma tela o personagem 3D, os dois cartões de arma
+inicial, os quatro mapas e o botão de entrada. A personalização de modelo e cores abre como
+modal sobre a tela e é salva via `CharacterLook`; a arma inicial usa `LoadoutConfig`.
+Os cartões de mapas usam miniaturas em `assets/ui/map_previews.png`, e o fundo é
+`assets/ui/main_menu_arena.png`. São ilustrações de interface originais, não cenas adicionais
+nem mapas novos. A guia Treino seleciona `TrainingCourse`; não há recursos de rede ou loja.
