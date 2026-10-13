@@ -262,15 +262,16 @@ círculo; roxo = muro central; verde = passagens no roxo (com teto); amarelo = c
 | Elemento | Posição (m, a partir do centro) | Grossura | Altura acima do chão local |
 |---|---|---|---|
 | Borda vermelha (mureta) | r 24,5–26 | 1,5 | 2,25 (topo absoluto 3,45) |
-| 4 travessas vermelhas | radiais de r = 20 até a borda, nos eixos ±X e ±Z do Godot | 1,5 | 3,8 |
-| 4 muros azuis | r = 20 (19,6–20,4), 7 m de comprimento (±10°), nas diagonais | 0,75 | 3,8 |
-| Muro roxo central | r 13,8–14,6 (centro 14,2) | 0,75 | 3,8 (topo absoluto ≈ 4,5) |
-| 4 passagens verdes | no roxo, nas diagonais, 7 m de largura (±14,1°); teto 0,75 de espessura na altura do roxo | — | vão livre ≈ 3,05 |
+| 4 travessas vermelhas | radiais de r = 20 até a borda, nos eixos ±X e ±Z do Godot | 0,6 | 2,25 |
+| 4 muros azuis | r = 20 (19,7–20,3), 7 m de comprimento (±10°), nas diagonais | 0,6 | 2,25 |
+| Muro roxo central | r 13,9–14,5 (centro 14,2) | 0,6 | 4,5 (topo absoluto ≈ 5,1) |
+| 4 passagens verdes | no roxo, nas diagonais, 7 m de largura (±14,1°); teto 0,6 de espessura na altura do roxo | — | vão livre ≈ 3,9 |
 | Chão em degradê | `h(r) = 1,2·(r−3,9)/20,6` para 3,9 ≤ r ≤ 24,5 (sobe do centro para a borda) | — | — |
 | Base preta (centro) | r < 3,9, altura 0 (ponto mais baixo do jogo) | — | — |
 
-- As travessas vermelhas, os azuis e o roxo têm 3,8 m; só a borda circular continua com 2,25 m.
-  O pulo normal (2,35 m) passa por cima da borda, mas os muros interiores exigem wall jump ou passagem.
+- O roxo tem 4,5 m de altura; travessas e azuis têm 2,25 m. Todos os muros internos têm 0,6 m de grossura.
+  Só a borda circular mantém 1,5 m de grossura e 2,25 m de altura. O pulo normal (2,35 m)
+  passa por cima das travessas, dos azuis e da borda; o roxo pede wall jump ou passagem.
   Historicamente, o roxo baixou de 5,0 para 4,5 m e foi para dentro (antes r 15,5–17); a borda subiu de 1,4 para 2,25 m. Se o dono quiser outra leitura,
   basta ajustar `H_PURPLE`, `H_RED`, `RIM_TOP` no script.
 - **Eixos**: Blender (x, y, z) → Godot (x, z, −y). Travessas e portas: Blender 0/90/180/270° = Godot +X/−Z/−X/+Z; muros azuis e passagens:
@@ -447,11 +448,19 @@ inicial, com prévia 3D; depois um dos quatro mapas (`SceneCycler.SCENES`). Apar
 `user://personagem.tres` e arma inicial em `user://loadout.tres` via `ConfigIO.save_full`.
 F3 durante uma partida abre a seleção de mapas; F4 ainda edita o personagem em jogo.
 
-Na SkyArena, o roxo, os quatro azuis e os quatro muros radiais vermelhos têm 3,8 m medidos
-do piso local; só o anel de borda continua com 2,25 m. O gerador Blender produz visual e
+Na SkyArena, a revisão seguinte corrigiu a interpretação de "tamanho": trata-se da grossura,
+não da altura. As alturas voltaram aos valores anteriores e a espessura dos muros internos
+passou a 0,6 m; a borda circular conserva 1,5 m. O gerador Blender produz visual e
 colisão juntos. Em sequências de wall jump, `MovementRules.can_chain_wall_jump` exige
 velocidade vertical positiva depois do primeiro salto; o primeiro mantém a janela pós-pulo.
 As descrições antigas de alturas e do F3 acima são históricas.
+
+## Revisão: correção da grossura dos muros
+
+O muro roxo, os quatro azuis e as quatro travessas vermelhas medem 0,6 m de grossura.
+O roxo era 0,75 m e foi reduzido um pouco; as travessas eram 1,5 m e agora acompanham
+os outros muros internos. A borda externa mantém 1,5 m de grossura. As alturas originais
+foram restauradas: roxo 4,5 m; azuis, travessas e borda 2,25 m.
 
 
 ## Revisão: alinhamento do modelo ao heading

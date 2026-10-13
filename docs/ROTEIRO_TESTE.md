@@ -374,5 +374,5 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 
 1. Rode o projeto com F5: confirme que abre no loadout, com modelo 3D, seletor de modelo, seis cores e arma inicial. Mude as opções, avance e escolha um mapa.
 2. Confira o mapa escolhido e a arma inicialmente destacada no HUD. Troque com 1/2; volte pelo F3 e entre em outro mapa. Feche e reabra o jogo: aparência e arma inicial devem persistir.
-3. Na SkyArena, compare os quatro muros radiais junto da borda, os azuis e o roxo: todos devem ter 3,8 m sobre o piso local. Apenas a borda circular permanece com 2,25 m.
+3. Na SkyArena, compare os quatro muros radiais junto da borda, os azuis e o roxo: todos devem ter 0,6 m de grossura. Apenas a borda circular conserva 1,5 m. Confirme as alturas restauradas: roxo 4,5 m; os demais muros e a borda 2,25 m.
 4. Entre duas paredes próximas e encadeie wall jumps enquanto sobe: os saltos devem continuar. Ao começar a cair, tente outro salto na parede oposta: deve falhar e o F1 mostrar `já está caindo`. Depois de pousar, um novo pulo e wall jump voltam a funcionar.

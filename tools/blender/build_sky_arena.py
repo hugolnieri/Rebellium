@@ -12,9 +12,9 @@ Os nós "Drone_*", "Beacon_*" e "Flame_*" são animados por scenes/arenas/sky_ar
 
 Medidas (metros; o centro preto é o ponto mais baixo, z = 0, e o chão sobe 1,2 m até a borda):
   borda vermelha  r 24,5–26   mureta de 2,25 m, 1,5 m de grossura
-  travessas       4 muros vermelhos radiais (N, S, L, O) de r 20 até a borda, altura 3,8 m
-  círculo azul    4 muros azuis de 7 m nas diagonais (r 20), altura 3,8 m
-  muro roxo       r 13,8–14,6, altura 3,8 m; nas diagonais, 4 passagens
+  travessas       4 muros vermelhos radiais (N, S, L, O) de r 20 até a borda, altura 2,25 m
+  círculo azul    4 muros azuis de 7 m nas diagonais (r 20), altura 2,25 m
+  muro roxo       r 13,9–14,5, altura 4,5 m; nas diagonais, 4 passagens
                   de 7 m com teto (verde) na altura do roxo
   centro preto    r < 3,9, altura 0: spawn do caçador (bot vermelho por enquanto)
 
@@ -38,18 +38,17 @@ SEG = 96  # segmentos de um círculo completo
 
 # Borda do mapa (vermelha, já existia) e medidas derivadas.
 R_RIM_OUT, R_RIM_IN = 26.0, 24.5
-T_RED = R_RIM_OUT - R_RIM_IN  # grossura do muro vermelho
-T_THIN = T_RED / 2  # azul, roxo e teto das passagens: metade do vermelho
+T_RED = R_RIM_OUT - R_RIM_IN  # grossura só da borda externa: 1,5 m
+T_THIN = 0.6  # grossura uniforme dos muros internos; roxo era 0,75 m
 R_RING = 20.0  # círculo das travessas vermelhas e dos muros azuis
 R_PURPLE = 14.2  # muro roxo central
-H_PURPLE = 3.8  # altura comum dos muros interiores, um pouco abaixo da anterior
-H_RED = H_PURPLE  # travessas e muros azuis na mesma altura do roxo
-H_RIM = 2.25  # só a borda externa continua baixa
+H_PURPLE = 4.5  # altura original do muro interno
+H_RED = H_PURPLE / 2  # alturas originais de travessas, azuis e borda
 BLUE_LEN = 7.0  # comprimento de cada muro azul = largura de cada passagem
 R_BASE = 3.9  # centro preto (ponto mais baixo)
 FLOOR_RISE = 1.2  # o chão sobe linearmente do centro até a borda
 BASE_BOTTOM = -1.2  # fundo do casco
-RIM_TOP = FLOOR_RISE + H_RIM  # topo da borda vermelha
+RIM_TOP = FLOOR_RISE + H_RED  # topo da borda vermelha
 DIAGONALS = [TAU / 8, 3 * TAU / 8, 5 * TAU / 8, 7 * TAU / 8]  # passagens (roxo) e muros azuis
 SPOKES = [0.0, TAU / 4, TAU / 2, 3 * TAU / 4]  # travessas vermelhas (N, S, L, O)
 BLUE_HALF = BLUE_LEN / 2 / R_RING  # meio-ângulo de cada muro azul
@@ -439,7 +438,7 @@ def build_platform(m, root):
     b.disc(R_BASE, 0.0, m["trim"], tile=2.0)
     b.finish("Base", root)
     convex_disc("BaseCol", R_BASE, BASE_BOTTOM, 0.0, root)
-    # Borda do mapa (vermelha), com a mesma altura das travessas.
+    # Borda do mapa (vermelha): a espessura original de 1,5 m permanece.
     b = Builder()
     b.ring(R_RIM_IN, R_RIM_OUT, BASE_BOTTOM, RIM_TOP, m["wall"], side_mat=m["hull"], tile=3.0)
     b.finish("Rim", root)
@@ -447,7 +446,7 @@ def build_platform(m, root):
     # Travessas vermelhas (N, S, L, O) e muros azuis (diagonais), todos no mesmo círculo.
     b = Builder()
     for k, a in enumerate(SPOKES):
-        radial_wall(b, "SpokeCol%d" % k, a, R_RING, R_RIM_IN + 0.05, T_RED, H_RED, m["wall"], root)
+        radial_wall(b, "SpokeCol%d" % k, a, R_RING, R_RIM_IN + 0.05, T_THIN, H_RED, m["wall"], root)
     blue_top = floor_h(R_RING) + H_RED
     for a in DIAGONALS:
         a0, a1 = a - BLUE_HALF, a + BLUE_HALF

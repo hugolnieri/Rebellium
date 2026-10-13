@@ -304,9 +304,8 @@ Seções históricas acima descrevem versões anteriores e foram substituídas p
 
 ## Revisão: muros, sequência de wall jump e preparação da partida
 
-Na SkyArena, o muro roxo baixou de 4,5 m para 3,8 m. Os quatro muros vermelhos radiais
-encostados na borda e os quatro azuis têm a mesma altura de 3,8 m. Apenas a mureta circular
-externa mantém 2,25 m. A geometria visual e a colisão foram regeneradas juntas.
+Na SkyArena, esta revisão interpretou "tamanho" como altura. A revisão seguinte corrige
+para grossura. A geometria visual e a colisão são regeneradas juntas.
 
 O jogo abre agora na preparação da partida: seleção do modelo, seis cores e arma inicial,
 seguida pela escolha entre SkyArena, CombatArena, TrainingCourse e Arena. O personagem é
@@ -317,3 +316,10 @@ seleção de mapas; F4 continua editando a aparência dentro da partida.
 Depois do primeiro wall jump, outro só é permitido com velocidade vertical positiva. O
 primeiro salto ainda respeita a janela do pulo normal, inclusive na descida, e a aterrissagem
 reinicia a sequência.
+
+## Revisão: correção da grossura dos muros da SkyArena
+
+O ajuste pedido era de espessura. O muro roxo foi afinado de 0,75 m para 0,6 m, e os quatro
+azuis e as quatro travessas vermelhas junto da borda agora têm a mesma grossura de 0,6 m.
+Apenas a borda circular mantém sua grossura original de 1,5 m. As alturas voltaram aos
+valores anteriores: roxo 4,5 m; azuis, travessas e borda 2,25 m.
