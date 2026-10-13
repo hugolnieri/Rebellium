@@ -27,7 +27,8 @@ func _ready() -> void:
 		# A câmera e o movimento começam alinhados ao heading definido pelo spawn.
 		look_yaw = player.global_rotation.y
 	look_pitch = deg_to_rad(camera_config.initial_pitch_deg)
-	capture_mouse(true)
+	if player == null or not player.external_control:
+		capture_mouse(true)
 
 
 func capture_mouse(capture: bool) -> void:

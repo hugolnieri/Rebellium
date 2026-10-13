@@ -207,6 +207,27 @@ func test_chained_wall_jumps_between_parallel_walls_climb() -> void:
 	assert_gt(heights[3] - heights[0], 3.0, "subiu encadeando wall jumps: %s" % [heights])
 
 
+func test_chained_wall_jump_stops_when_descending() -> void:
+	_world(Vector3(0, 0, 1.0))
+	var wall_a := d.add_block(Vector3(0, 10, -2.0), Vector3(20, 20, 1))
+	var wall_b := d.add_block(Vector3(0, 10, 2.0), Vector3(20, 20, 1))
+	await d.ready_physics(self)
+	d.step(10)
+	d.step(5, FWD)
+	d.press_jump()
+	d.step(1, FWD)
+	assert_gt(d.step_until_wall(wall_a, 90), 0)
+	d.press_jump()
+	d.step(1)
+	assert_eq(d.wall_jumps.size(), 1)
+	assert_gt(d.step_until_wall(wall_b, 90), 0)
+	d.player.velocity.y = -1.0
+	assert_eq(d.player.get_wall_jump_block_reason(), "já está caindo")
+	d.press_jump()
+	d.step(1)
+	assert_eq(d.wall_jumps.size(), 1)
+
+
 func test_frontal_entry_is_normal_wall_jump() -> void:
 	_world(Vector3(0, 0, 0.3))
 	var ledge := d.add_block(Vector3(0, 1.8, -6.0), Vector3(20, 3.6, 6))

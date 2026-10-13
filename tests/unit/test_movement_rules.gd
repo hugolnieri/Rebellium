@@ -25,6 +25,13 @@ func test_wall_jump_never_allowed_after_falling_off_ledge() -> void:
 	assert_false(MovementRules.can_wall_jump(NONE, false, 0, 36))
 
 
+func test_wall_jump_chain_requires_upward_speed() -> void:
+	assert_true(MovementRules.can_chain_wall_jump(false, -2.0), "primeiro salto ainda usa a janela original")
+	assert_true(MovementRules.can_chain_wall_jump(true, 0.01))
+	assert_false(MovementRules.can_chain_wall_jump(true, 0.0))
+	assert_false(MovementRules.can_chain_wall_jump(true, -0.01))
+
+
 func test_technique_window_is_symmetric() -> void:
 	assert_true(MovementRules.is_within_window(46, 50, 4))
 	assert_true(MovementRules.is_within_window(54, 50, 4))

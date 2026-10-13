@@ -301,3 +301,19 @@ a reflexão normal; um segundo salto na mesma parede continua bloqueado. O side 
 em diagonal, o cancel e os wall jumps alternados entre paredes permanecem.
 Os pilares existentes no percurso continuam permitindo subir a borda e a parede lisa.
 Seções históricas acima descrevem versões anteriores e foram substituídas por esta revisão.
+
+## Revisão: muros, sequência de wall jump e preparação da partida
+
+Na SkyArena, o muro roxo baixou de 4,5 m para 3,8 m. Os quatro muros vermelhos radiais
+encostados na borda e os quatro azuis têm a mesma altura de 3,8 m. Apenas a mureta circular
+externa mantém 2,25 m. A geometria visual e a colisão foram regeneradas juntas.
+
+O jogo abre agora na preparação da partida: seleção do modelo, seis cores e arma inicial,
+seguida pela escolha entre SkyArena, CombatArena, TrainingCourse e Arena. O personagem é
+pré-visualizado em 3D. Aparência e arma inicial ficam em `user://personagem.tres` e
+`user://loadout.tres`. As duas armas permanecem acessíveis durante a partida. F3 volta à
+seleção de mapas; F4 continua editando a aparência dentro da partida.
+
+Depois do primeiro wall jump, outro só é permitido com velocidade vertical positiva. O
+primeiro salto ainda respeita a janela do pulo normal, inclusive na descida, e a aterrissagem
+reinicia a sequência.

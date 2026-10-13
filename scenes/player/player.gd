@@ -83,6 +83,8 @@ var _consumed_weapon_press_tick: int = PlayerInput.NEVER
 func _ready() -> void:
 	add_to_group(&"local_player")
 	add_to_group(&"hittable")
+	if not external_control and not weapons.is_empty():
+		weapon_slot = clampi(LoadoutConfig.load_user().starting_weapon_slot, 0, weapons.size() - 1)
 	if combat_config == null:
 		combat_config = CombatConfig.new()
 	if config == null:
@@ -176,6 +178,8 @@ func get_wall_jump_block_reason() -> String:
 		return "janela pós-pulo expirou"
 	if config.wall_jump_same_wall_lockout and wall_sensor.collider_id == last_wall_jump_collider:
 		return "mesma parede"
+	if not MovementRules.can_chain_wall_jump(last_wall_jump_collider != 0, velocity.y):
+		return "já está caindo"
 	if not sp.can_spend(config.wall_jump_sp_cost):
 		return "SP insuficiente" if not sp.exhausted else "SP exausto"
 	return ""

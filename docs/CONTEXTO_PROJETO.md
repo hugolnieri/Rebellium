@@ -16,7 +16,7 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
   Blender (módulo `bpy` 4.2.0, Python 3.11) gera por código o personagem, as animações, a arena e a espada.
 - **Cena principal**: arena flutuante sobre as nuvens (`scenes/arenas/SkyArena.tscn`), com um bot vermelho
   ("caçador") no centro: não ataca, mas reage com as animações do personagem e é **arremessado pelo golpe pesado**.
-  **F3** alterna: SkyArena → CombatArena → TrainingCourse → Arena.
+  **F3** abre a seleção de mapas: SkyArena, CombatArena, TrainingCourse ou Arena.
 - **Qualidade hoje**: 228 testes passando (20 arquivos: 7 unitários + 13 de integração) e
   `godot --headless --quit-after 120` sem erros. ~10 mil linhas de GDScript (com testes) e ~2,8 mil de Python (tools).
 - **Repositório**: `github.com/hugolnieri/Rebellium`, 55 commits (alguns do dono via Codex, como `614b4e2`). **Só existe uma branch no GitHub e ela é a padrão:
@@ -82,7 +82,7 @@ python3 tools/import_vroid.py arquivo.vrm nome   # personagem do VRoid Studio �
 | Botão direito (ou K) | golpe pesado direto |
 | 1 / 2 / Q | Lâmina de Arco / Presa de Fase / alterna (junto do Space do wall jump = **cancel**) |
 | V | troca o ombro da câmera |
-| F1 / F2 / F3 / F4 | HUD de debug / menu de ajustes ao vivo / troca de cena / **menu de personagem** (modelo e cores) |
+| F1 / F2 / F3 / F4 | HUD de debug / menu de ajustes ao vivo / seleção de mapas / **menu de personagem** (modelo e cores) |
 | R | reinicia (volta ao início; zera cronômetro no percurso e o bot/postes nas arenas) |
 
 O mapa de input está em `project.godot`; **só `scenes/player/input_reader.gd` toca em `Input`**.
@@ -157,7 +157,7 @@ Regras de design registradas (de `ESCOPO.md`, ainda válidas):
 | SP | 100; regenera 25/s após 0,6 s; exaustão até voltar a 20; dash 20, wall jump 18, sprint 12/s |
 | Dash (dodge) | só lateral (limiar 0,75), 30 m/s no início que decai (curva 2,2), 0,65 s, invulnerável 0,15 s, recuperação 0,25 s, sai a 7 m/s com deslize final 14 m/s²; dash jump mantém 70%; **a direção segue a câmera** durante o dash e o deslize (`dodge_follows_camera`: dash para a esquerda continua à esquerda da câmera enquanto ela gira) |
 | Dash no ar | 1 por pulo (recarrega no wall jump); planeia na 1ª metade (55% do tempo, gravidade ×0,12); sai a 9 m/s; Space cancela |
-| Wall jump | custo 18 SP, altura 2,6 m, cola na parede 6 ticks (mortal para trás depois), sem controle 0,3 s, golpe bloqueado 0,45 s, pode encadear a partir de 0,08 s |
+| Wall jump | custo 18 SP, altura 2,6 m, cola na parede 6 ticks (mortal para trás depois), sem controle 0,3 s, golpe bloqueado 0,45 s, pode encadear a partir de 0,08 s somente enquanto sobe |
 | Detector de parede | alcance 0,2 m, normal máx. y 0,35, tolerância de 4 ticks |
 | Pouso | queda ≥ 7 m/s → cambalhota **no lugar** (0,7 s); segurando direção ela rola para lá a 6 m/s; dash/golpe no ar cancelam o pouso |
 | Corpo | cápsula r 0,4 × h 1,8; chão até 46°; `floor_snap_length` 0,3; **`floor_block_on_wall = false`** (ver seção 17) |
@@ -262,16 +262,16 @@ círculo; roxo = muro central; verde = passagens no roxo (com teto); amarelo = c
 | Elemento | Posição (m, a partir do centro) | Grossura | Altura acima do chão local |
 |---|---|---|---|
 | Borda vermelha (mureta) | r 24,5–26 | 1,5 | 2,25 (topo absoluto 3,45) |
-| 4 travessas vermelhas | radiais de r = 20 até a borda, nos eixos ±X e ±Z do Godot | 1,5 | 2,25 |
-| 4 muros azuis | r = 20 (19,6–20,4), 7 m de comprimento (±10°), nas diagonais | 0,75 | 2,25 |
-| Muro roxo central | r 13,8–14,6 (centro 14,2) | 0,75 | 4,5 (topo absoluto ≈ 5,1) |
-| 4 passagens verdes | no roxo, nas diagonais, 7 m de largura (±14,1°); teto 0,75 de espessura na altura do roxo | — | vão livre ≈ 3,75 |
+| 4 travessas vermelhas | radiais de r = 20 até a borda, nos eixos ±X e ±Z do Godot | 1,5 | 3,8 |
+| 4 muros azuis | r = 20 (19,6–20,4), 7 m de comprimento (±10°), nas diagonais | 0,75 | 3,8 |
+| Muro roxo central | r 13,8–14,6 (centro 14,2) | 0,75 | 3,8 (topo absoluto ≈ 4,5) |
+| 4 passagens verdes | no roxo, nas diagonais, 7 m de largura (±14,1°); teto 0,75 de espessura na altura do roxo | — | vão livre ≈ 3,05 |
 | Chão em degradê | `h(r) = 1,2·(r−3,9)/20,6` para 3,9 ≤ r ≤ 24,5 (sobe do centro para a borda) | — | — |
 | Base preta (centro) | r < 3,9, altura 0 (ponto mais baixo do jogo) | — | — |
 
-- Vermelho = metade do roxo (2,25 = 4,5/2). O pulo normal (2,35 m) **passa por cima** das travessas, dos azuis e da borda; o roxo
-  só se vence com wall jump, e as passagens verdes permitem entrar andando. O roxo baixou de 5,0 para 4,5 m e foi para dentro
-  (antes r 15,5–17); a borda subiu de 1,4 para 2,25 m (leitura de "vermelho = metade do roxo"). Se o dono quiser outra leitura,
+- As travessas vermelhas, os azuis e o roxo têm 3,8 m; só a borda circular continua com 2,25 m.
+  O pulo normal (2,35 m) passa por cima da borda, mas os muros interiores exigem wall jump ou passagem.
+  Historicamente, o roxo baixou de 5,0 para 4,5 m e foi para dentro (antes r 15,5–17); a borda subiu de 1,4 para 2,25 m. Se o dono quiser outra leitura,
   basta ajustar `H_PURPLE`, `H_RED`, `RIM_TOP` no script.
 - **Eixos**: Blender (x, y, z) → Godot (x, z, −y). Travessas e portas: Blender 0/90/180/270° = Godot +X/−Z/−X/+Z; muros azuis e passagens:
   45/135/225/315° = diagonais (+X,−Z), (−X,−Z), (−X,+Z), (+X,+Z).
@@ -439,6 +439,19 @@ wall jump; **swap cancel** = trocar de arma na recuperação; **dodge cancel** =
 instante do golpe; **estrela** = dash em cambalhota lateral; **cambalhota** = rolamento do pouso forte; **mortal** = giro do pulo/wall jump;
 **passarela/mureta/borda** = anel externo e seu muro baixo; **muro roxo/vermelho/azul/verde**, **travessa** (muro radial), **passagem** (porta com teto),
 **degradê** (chão inclinado), **base preta** (centro): vocabulário do desenho da arena (seção 10).
+
+## Revisão: preparação da partida e alturas dos muros
+
+O projeto inicia em `scenes/ui/Loadout.tscn`. Primeiro se escolhem modelo, cores e arma
+inicial, com prévia 3D; depois um dos quatro mapas (`SceneCycler.SCENES`). Aparência salva em
+`user://personagem.tres` e arma inicial em `user://loadout.tres` via `ConfigIO.save_full`.
+F3 durante uma partida abre a seleção de mapas; F4 ainda edita o personagem em jogo.
+
+Na SkyArena, o roxo, os quatro azuis e os quatro muros radiais vermelhos têm 3,8 m medidos
+do piso local; só o anel de borda continua com 2,25 m. O gerador Blender produz visual e
+colisão juntos. Em sequências de wall jump, `MovementRules.can_chain_wall_jump` exige
+velocidade vertical positiva depois do primeiro salto; o primeiro mantém a janela pós-pulo.
+As descrições antigas de alturas e do F3 acima são históricas.
 
 
 ## Revisão: alinhamento do modelo ao heading

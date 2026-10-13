@@ -11,10 +11,10 @@ Isso evita as emendas de uma colisão por triângulos (personagem enganchando, n
 Os nós "Drone_*", "Beacon_*" e "Flame_*" são animados por scenes/arenas/sky_arena.gd.
 
 Medidas (metros; o centro preto é o ponto mais baixo, z = 0, e o chão sobe 1,2 m até a borda):
-  borda vermelha  r 24,5–26   mureta de 2,25 m (metade do muro roxo), 1,5 m de grossura
-  travessas       4 muros vermelhos radiais (N, S, L, O) de r 20 até a borda
-  círculo azul    4 muros azuis de 7 m nas diagonais (r 20), mesma altura do vermelho
-  muro roxo       r 13,8–14,6, 4,5 m de altura (bom para wall jump); nas diagonais, 4 passagens
+  borda vermelha  r 24,5–26   mureta de 2,25 m, 1,5 m de grossura
+  travessas       4 muros vermelhos radiais (N, S, L, O) de r 20 até a borda, altura 3,8 m
+  círculo azul    4 muros azuis de 7 m nas diagonais (r 20), altura 3,8 m
+  muro roxo       r 13,8–14,6, altura 3,8 m; nas diagonais, 4 passagens
                   de 7 m com teto (verde) na altura do roxo
   centro preto    r < 3,9, altura 0: spawn do caçador (bot vermelho por enquanto)
 
@@ -42,13 +42,14 @@ T_RED = R_RIM_OUT - R_RIM_IN  # grossura do muro vermelho
 T_THIN = T_RED / 2  # azul, roxo e teto das passagens: metade do vermelho
 R_RING = 20.0  # círculo das travessas vermelhas e dos muros azuis
 R_PURPLE = 14.2  # muro roxo central
-H_PURPLE = 4.5  # um pouco menor que os 5 m de antes
-H_RED = H_PURPLE / 2  # vermelho e azul: metade do roxo
+H_PURPLE = 3.8  # altura comum dos muros interiores, um pouco abaixo da anterior
+H_RED = H_PURPLE  # travessas e muros azuis na mesma altura do roxo
+H_RIM = 2.25  # só a borda externa continua baixa
 BLUE_LEN = 7.0  # comprimento de cada muro azul = largura de cada passagem
 R_BASE = 3.9  # centro preto (ponto mais baixo)
 FLOOR_RISE = 1.2  # o chão sobe linearmente do centro até a borda
 BASE_BOTTOM = -1.2  # fundo do casco
-RIM_TOP = FLOOR_RISE + H_RED  # topo da borda vermelha
+RIM_TOP = FLOOR_RISE + H_RIM  # topo da borda vermelha
 DIAGONALS = [TAU / 8, 3 * TAU / 8, 5 * TAU / 8, 7 * TAU / 8]  # passagens (roxo) e muros azuis
 SPOKES = [0.0, TAU / 4, TAU / 2, 3 * TAU / 4]  # travessas vermelhas (N, S, L, O)
 BLUE_HALF = BLUE_LEN / 2 / R_RING  # meio-ângulo de cada muro azul

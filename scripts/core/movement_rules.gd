@@ -27,6 +27,11 @@ static func can_wall_jump(air_origin: AirOrigin, in_jump_state: bool, ticks_sinc
 	return in_jump_state or ticks_since_jump <= window_ticks
 
 
+## Após o primeiro wall jump, a sequência só continua enquanto há ganho de altura.
+static func can_chain_wall_jump(has_previous_wall_jump: bool, vertical_speed: float) -> bool:
+	return not has_previous_wall_jump or vertical_speed > 0.0
+
+
 ## Toque duplo: o segundo toque veio até `window` ticks depois do primeiro.
 static func is_double_tap(press_tick: int, previous_press_tick: int, window_ticks: int) -> bool:
 	if previous_press_tick <= PlayerInput.NEVER:
