@@ -1,8 +1,12 @@
 extends GutTest
-## Fluxo real do modo: chão, núcleo, entrega, queda e fim da partida.
+## Fluxo real do modo na estação em oito: pisos, rotas, núcleo, entrega, queda e fim da partida.
+## Coordenadas em Godot (o Blender usa (x, y, z) -> Godot (x, z, -y)).
 
 const ARENA: PackedScene = preload("res://scenes/arenas/TouchdownArena.tscn")
 const Driver = preload("res://tests/helpers/player_driver.gd")
+const SPAWN := Vector3(40, 8.12, -3)
+const CORE := Vector3(0, 8.12, 0)
+const RED_GOAL := Vector3(-32.4, 8.12, -9.9)
 
 var arena: TouchdownArena
 var player: Player
@@ -17,129 +21,156 @@ func before_each() -> void:
 	await wait_physics_frames(3)
 
 
+func _floor_at(x: float, z: float, from_y: float) -> Dictionary:
+	var ray := PhysicsRayQueryParameters3D.create(Vector3(x, from_y, z), Vector3(x, -6, z))
+	ray.exclude = [player.get_rid()]
+	return arena.get_world_3d().direct_space_state.intersect_ray(ray)
+
+
+## yaw da câmera que faz o "frente" do PlayerInput andar na direção `dir` do mundo.
+func _yaw_towards(dir: Vector3) -> float:
+	return atan2(-dir.x, -dir.z)
+
+
+func _clear_guards() -> void:
+	for child: Node in arena.dummies.get_children():
+		child.queue_free()
+	await wait_physics_frames(1)
+
+
 func test_spawn_and_blender_collisions() -> void:
-	assert_almost_eq(player.global_position.x, -36.0, 0.2)
+	assert_almost_eq(player.global_position.x, SPAWN.x, 0.2)
 	var shapes := arena.get_node("Platform").find_children("*", "CollisionShape3D", true, false)
 	assert_gt(shapes.size(), 10, "o modelo importa pisos e obstáculos como colisores")
 	for shape: CollisionShape3D in shapes:
 		assert_true(shape.shape is ConvexPolygonShape3D, "colisões da arena são convexas")
-	var space := arena.get_world_3d().direct_space_state
-	for point: Vector2 in [Vector2(-36, 0), Vector2(-20, 4.5),
-			Vector2(0, 0), Vector2(20, 0), Vector2(36, 0),
-			Vector2(-39, 14), Vector2(39, -14),
-			Vector2(-18, 22), Vector2(18, -22)]:
-		var from := Vector3(point.x, 11.5, point.y)
-		var ray := PhysicsRayQueryParameters3D.create(from, Vector3(point.x, -3, point.y))
-		ray.exclude = [player.get_rid()]
-		var hit := space.intersect_ray(ray)
-		assert_false(hit.is_empty(), "há piso em %s" % point)
-	for sample: Vector3 in [Vector3(-36, 8, 0),
-			Vector3(0, 0, 0),
-			Vector3(36, 8, 0), Vector3(39, 9.4, -14),
-			Vector3(0, 8, 0)]:
-		var ray := PhysicsRayQueryParameters3D.create(
-			Vector3(sample.x, sample.y + 1.5, sample.z),
-			Vector3(sample.x, -3, sample.z))
-		ray.exclude = [player.get_rid()]
-		var hit := space.intersect_ray(ray)
-		assert_almost_eq((hit.position as Vector3).y, sample.y, 0.25,
-			"spawn alto, escada descendente, estação baixa e gol elevado em %s" % sample)
-	for x: int in [-20, 20]:
-		var ray := PhysicsRayQueryParameters3D.create(
-			Vector3(x, 7, -signf(float(x)) * 4.5),
-			Vector3(x, -3, -signf(float(x)) * 4.5))
-		ray.exclude = [player.get_rid()]
-		var hit := space.intersect_ray(ray)
-		assert_gt((hit.position as Vector3).y, 3.0, "meio da escada fica acima da estação")
-		assert_lt((hit.position as Vector3).y, 6.0, "meio da escada fica abaixo do spawn")
+	for sample: Vector3 in [
+			Vector3(40, 8, -3), Vector3(-40, 8, 3),      # blocos de spawn
+			Vector3(15, 8, 0), Vector3(0, 8, 0),         # ponte e largo do núcleo
+			Vector3(-26, 8, 8), Vector3(26, 8, -8),      # passarelas laterais
+			Vector3(-3.5, 0, 8), Vector3(3.5, 0, -8),    # plataforma baixa ao lado do trem
+			Vector3(0, 3.9, 8),                          # teto do trem
+			Vector3(-13, 4, 25), Vector3(13, 4, -25),    # meio das voltas em U
+			Vector3(-14, 4, -9), Vector3(14, 4, 9),      # meio das escadas rolantes
+			Vector3(-32.1, 8, -10.2), Vector3(32.1, 8, 10.2)]:        # pátios dos gols
+		var hit := _floor_at(sample.x, sample.z, sample.y + 1.5)
+		assert_false(hit.is_empty(), "há piso em %s" % sample)
+		if not hit.is_empty():
+			assert_almost_eq((hit.position as Vector3).y, sample.y, 0.3, "altura do piso em %s" % sample)
+	assert_true(_floor_at(-13, 14, 10).is_empty(), "o miolo das voltas é vazio")
 
 
-func test_high_spawn_station_and_enemy_goal_are_walkable() -> void:
+func test_spawn_bridge_core_and_red_goal_route() -> void:
+	await _clear_guards()
 	var d: Driver = Driver.new()
 	d.attach(player, arena)
-	player.respawn(Transform3D(Basis(), Vector3(-27, 8.12, 6)))
+	player.respawn(Transform3D(Basis(), Vector3(40, 8.12, -1)))
 	await wait_physics_frames(2)
-	d.look_yaw = -1.36
-	var reached_station: int = d.step_until(
-		func() -> bool: return player.global_position.x > -10.0,
-		500, Vector2(0, 1))
-	assert_gt(reached_station, 0, "desce do saguão azul à estação")
-	assert_lt(player.global_position.y, 0.6)
-	player.respawn(Transform3D(Basis(), Vector3(-24, 8.12, 0)))
-	await wait_physics_frames(2)
-	d.look_yaw = -PI / 2.0
-	var crossed_bridge: int = d.step_until(
-		func() -> bool: return player.global_position.x > 24.0,
-		650, Vector2(0, 1))
-	assert_gt(crossed_bridge, 0, "a ponte alta liga os dois terminais")
-	assert_gt(player.global_position.y, 7.5)
-	player.respawn(Transform3D(Basis(), Vector3(13, 0.12, -3)))
-	await wait_physics_frames(2)
-	d.look_yaw = -1.36
-	var reached_enemy_spawn: int = d.step_until(
-		func() -> bool: return player.global_position.x > 27.5,
-		500, Vector2(0, 1))
-	assert_gt(reached_enemy_spawn, 0, "atravessa a estação e sobe ao saguão inimigo")
-	assert_gt(player.global_position.y, 7.5)
-	player.respawn(Transform3D(Basis(), Vector3(39, 8.12, -6)))
-	await wait_physics_frames(2)
-	d.look_yaw = 0.0
-	var reached_goal: int = d.step_until(
-		func() -> bool: return player.global_position.z < -13.0,
-		350, Vector2(0, 1))
-	assert_gt(reached_goal, 0, "da base vermelha pela escada lateral até o gol; posição %s" % player.global_position)
-	assert_gt(player.global_position.y, 9.0)
+	d.look_yaw = _yaw_towards(Vector3(-1, 0, 0))
+	var at_core: int = d.step_until(
+		func() -> bool: return player.global_position.x < 0.5, 700, Vector2(0, 1))
+	assert_gt(at_core, 0, "do spawn azul pela ponte até o núcleo; posição %s" % player.global_position)
+	await wait_physics_frames(3)  # as Area3D só notam o corpo no passo da física
+	assert_true(arena.carrying, "pegou o núcleo no largo da ponte")
+	var reached_court: int = d.step_until(
+		func() -> bool: return player.global_position.x < -24.0, 500, Vector2(0, 1))
+	assert_gt(reached_court, 0, "a ponte chega ao pátio vermelho")
+	d.look_yaw = _yaw_towards(Vector3(0, 0, -1))
+	var north: int = d.step_until(
+		func() -> bool: return player.global_position.z < -12.0, 300, Vector2(0, 1))
+	assert_gt(north, 0, "contorna o balcão pelo lado da ponte")
+	d.look_yaw = _yaw_towards(RED_GOAL - player.global_position)
+	var in_goal: int = d.step_until(
+		func() -> bool: return Vector2(player.global_position.x - RED_GOAL.x,
+			player.global_position.z - RED_GOAL.z).length() < 1.5, 300, Vector2(0, 1))
+	assert_gt(in_goal, 0, "chega ao gol vermelho; posição %s" % player.global_position)
+	await wait_physics_frames(3)
+	assert_eq(arena.score, 1, "entrega no gol vermelho")
 
 
-func test_jump_from_spawn_skips_part_of_grand_stairs() -> void:
+func test_outer_loop_descends_to_train_platform() -> void:
 	var d: Driver = Driver.new()
 	d.attach(player, arena)
-	player.respawn(Transform3D(Basis(), Vector3(-28.5, 8.12, 6)))
+	player.respawn(Transform3D(Basis(), Vector3(-26, 8.12, 6)))
 	await wait_physics_frames(2)
-	d.look_yaw = -1.36
-	d.press_jump()
-	d.step(20, Vector2(0, 1), true)
-	assert_gt(player.global_position.x, -27.0, "avança para além da borda do spawn")
-	assert_gt(player.global_position.y, 8.0, "passa pelo ar acima da escadaria")
-	var reached_station: int = d.step_until(
-		func() -> bool: return player.global_position.x > -12.5,
-		450, Vector2(0, 1), true)
-	assert_gt(reached_station, 0, "o salto aterrissa e permite chegar ao núcleo")
+	var center := Vector2(-13, -14)  # centro da volta vermelha no plano do Blender
+	var arrived := false
+	for i: int in 900:
+		var b := Vector2(player.global_position.x, -player.global_position.z)
+		if b.x > -2.0 and b.y > -13.0:
+			arrived = true
+			break
+		var rel := b - center
+		var angle := atan2(rel.y, rel.x)
+		var radial := Vector2(cos(angle), sin(angle))
+		var tangent := Vector2(-sin(angle), cos(angle))
+		var dir := tangent - radial * (rel.length() - 13.0) * 0.3
+		if b.y > -14.0 and b.x < -20.0:
+			dir = Vector2(0, -1)  # ainda na passarela: desce reto até a curva
+		d.look_yaw = _yaw_towards(Vector3(dir.x, 0, -dir.y))
+		d.step(1, Vector2(0, 1))
+	assert_true(arrived, "a volta em U leva da passarela à plataforma; posição %s" % player.global_position)
+	assert_lt(player.global_position.y, 0.6, "chega ao nível baixo")
+
+
+func test_escalator_climbs_from_platform_to_red_court() -> void:
+	var d: Driver = Driver.new()
+	d.attach(player, arena)
+	player.respawn(Transform3D(Basis(), Vector3(-3.5, 0.12, -9)))
+	await wait_physics_frames(2)
+	d.look_yaw = _yaw_towards(Vector3(-1, 0, 0))
+	var climbed: int = d.step_until(
+		func() -> bool: return player.global_position.x < -23.5, 500, Vector2(0, 1))
+	assert_gt(climbed, 0, "sobe a escada rolante; posição %s" % player.global_position)
+	assert_gt(player.global_position.y, 7.5)
+
+
+func test_drop_from_core_plaza_lands_on_train_roof() -> void:
+	var d: Driver = Driver.new()
+	d.attach(player, arena)
+	player.respawn(Transform3D(Basis(), Vector3(0, 8.12, -3.6)))
+	await wait_physics_frames(2)
+	d.look_yaw = _yaw_towards(Vector3(0, 0, -1))
+	d.step(30, Vector2(0, 1))
+	var landed: int = d.step_until(
+		func() -> bool: return player.is_on_floor() and player.global_position.y < 6.0, 200)
+	assert_gt(landed, 0, "cai pela abertura do largo")
+	assert_almost_eq(player.global_position.y, 3.9, 0.3, "pousa no teto do trem")
 
 
 func test_goal_requires_ball_from_center() -> void:
-	player.respawn(Transform3D(Basis(), Vector3(39, 9.52, -14)))
+	player.respawn(Transform3D(Basis(), RED_GOAL))
 	await wait_physics_frames(3)
 	assert_eq(arena.score, 0, "a base sozinha não pontua")
-	player.respawn(Transform3D(Basis(), Vector3(0, 0.12, 0)))
+	player.respawn(Transform3D(Basis(), CORE))
 	await wait_physics_frames(3)
-	assert_true(arena.carrying, "pegou o núcleo ao tocar o centro")
+	assert_true(arena.carrying, "pegou o núcleo no meio da ponte")
 	assert_false(arena.ball.visible)
-	player.respawn(Transform3D(Basis(), Vector3(39, 9.52, -14)))
+	player.respawn(Transform3D(Basis(), RED_GOAL))
 	await wait_physics_frames(3)
 	assert_eq(arena.score, 1, "entregou na base vermelha")
 	assert_false(arena.carrying)
-	assert_almost_eq(player.global_position.x, -36.0, 0.2, "nova rodada começa no saguão azul")
+	assert_almost_eq(player.global_position.x, SPAWN.x, 0.2, "nova rodada começa no spawn azul")
 
 
 func test_fall_drops_ball_and_returns_player() -> void:
 	arena.config.ball_reset_delay = 0.05
-	player.respawn(Transform3D(Basis(), Vector3(0, 0.12, 0)))
+	player.respawn(Transform3D(Basis(), CORE))
 	await wait_physics_frames(3)
 	assert_true(arena.carrying)
 	player.global_position = Vector3(0, -20, 0)
 	await wait_physics_frames(3)
 	assert_false(arena.carrying)
-	assert_almost_eq(player.global_position.x, -36.0, 0.2)
+	assert_almost_eq(player.global_position.x, SPAWN.x, 0.2)
 	await wait_physics_frames(6)
 	assert_true(arena.ball_available, "núcleo reaparece no meio após a queda")
 
 
 func test_score_limit_ends_and_reset_starts_new_match() -> void:
 	arena.config.score_limit = 1
-	player.respawn(Transform3D(Basis(), Vector3(0, 0.12, 0)))
+	player.respawn(Transform3D(Basis(), CORE))
 	await wait_physics_frames(3)
-	player.respawn(Transform3D(Basis(), Vector3(39, 9.52, -14)))
+	player.respawn(Transform3D(Basis(), RED_GOAL))
 	await wait_physics_frames(3)
 	assert_eq(arena.score, 1)
 	assert_true(arena.finished)

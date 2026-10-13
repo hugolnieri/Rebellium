@@ -405,3 +405,11 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 2. Saia pelo lado da escadaria azul e desça até o núcleo. Repita pulando da borda sobre alguns degraus; o salto deve encurtar a descida sem encontrar colisão invisível.
 3. Percorra a rota externa azul em U até a estação. No lado oposto, suba a escadaria vermelha e também experimente a rota em U vermelha. Confira piso contínuo e barreiras externas nas curvas.
 4. Com o núcleo, suba ao terminal vermelho e use a escada lateral curta até o gol. Entre no gol para pontuar. Confira a miniatura no menu e as diferenças de altura vistas de cima e de lado.
+
+## Revisão: estação em oito do Revezamento
+
+1. Entre em REVEZAMENTO. Você nasce no bloco da base azul (sudeste). Confira de cima a planta em oito: duas voltas em U, o trem no meio e a ponte cruzando por cima.
+2. Corra pela ponte até o núcleo no largo central e pegue-o. Siga até o pátio vermelho, contorne o balcão curvo e entre na plataforma luminosa do gol para pontuar.
+3. Do largo da ponte, caia pela abertura sobre o teto do trem. Desça à plataforma e suba a escada rolante vermelha até o pátio vermelho.
+4. Desça a passarela azul pela volta em U até o trem. Teste wall jumps na tela alta da curva, no painel luminoso e na fachada da base (o teto da galeria é alcançável).
+5. Caia no vazio com o núcleo: ele volta ao centro e você renasce no spawn azul. Confira a miniatura nova no menu.

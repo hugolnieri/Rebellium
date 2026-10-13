@@ -14,12 +14,15 @@ OUT = os.path.join(ROOT, "assets", "ui", "relay_arena_preview.png")
 
 bpy.ops.wm.open_mainfile(filepath=BLEND)
 scene = bpy.context.scene
+for obj in scene.objects:
+    if obj.name.endswith("-convcolonly"):
+        obj.hide_render = True  # colisores duplicam as superfícies visíveis
 camera_data = bpy.data.cameras.new("Menu preview camera")
 camera_data.type = "ORTHO"
-camera_data.ortho_scale = 116.0
+camera_data.ortho_scale = 112.0
 camera = bpy.data.objects.new("Menu preview camera", camera_data)
 scene.collection.objects.link(camera)
-camera.location = (52.0, -66.0, 62.0)
+camera.location = (14.0, -78.0, 66.0)
 direction = Vector((0.0, 0.0, 0.0)) - camera.location
 camera.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
 scene.camera = camera
@@ -39,11 +42,24 @@ for name, location, color, energy in (
     light.location = location
     light.rotation_euler = (Vector((0, 0, 0)) - light.location).to_track_quat("-Z", "Y").to_euler()
 
+sun_data = bpy.data.lights.new("Key sun", "SUN")
+sun_data.energy = 3.2
+sun_data.angle = math.radians(8)
+sun_data.color = (0.86, 0.92, 1.0)
+sun = bpy.data.objects.new("Key sun", sun_data)
+scene.collection.objects.link(sun)
+sun.rotation_euler = (math.radians(42), math.radians(-18), math.radians(28))
+
 world = bpy.data.worlds.new("Deep cobalt")
 world.use_nodes = True
 world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.015, 0.035, 0.075, 1.0)
-world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.8
+world.node_tree.nodes["Background"].inputs["Strength"].default_value = 1.6
 scene.world = world
+# Cycles na CPU: renderiza mesmo sem GPU/OpenGL (o bpy do pip em servidor não abre o EEVEE).
+scene.render.engine = "CYCLES"
+scene.cycles.device = "CPU"
+scene.cycles.samples = 64
+scene.cycles.use_denoising = True
 scene.render.resolution_x = 1200
 scene.render.resolution_y = 675
 scene.render.resolution_percentage = 100

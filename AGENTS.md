@@ -43,6 +43,7 @@ python3 tools/gen_sfx.py                        # regera os sons (numpy)
 python3 tools/blender/build_hero.py             # recria hero.blend + hero.glb (APAGA edições manuais do .blend)
 python3 tools/blender/export_hero.py            # só exporta o hero.blend editado
 python3 tools/blender/build_sky_arena.py        # recria a arena (art/arena/sky_arena.blend + assets/arena/sky_arena.glb)
+python3 tools/blender/build_relay_arena.py      # recria o Revezamento/Touch Down (art/arena/relay_arena.blend + assets/arena/relay_arena.glb)
 python3 tools/blender/build_sword.py            # art/weapons/arc_blade_source.usdz -> assets/weapons/arc_blade.glb
 python3 tools/import_vroid.py arquivo.vrm nome  # personagem do VRoid Studio -> assets/character/models/nome.glb (Pillow)
 ```

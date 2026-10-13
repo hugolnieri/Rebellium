@@ -364,3 +364,15 @@ da borda e cortar parte da descida. Duas rotas curvas em U contornam o vazio, li
 os terminais ao piso central. Os gols ficam um pouco acima dos terminais, após escadas
 laterais curtas. O lado vermelho é a rotação de 180° do azul. A fonte Blender, o GLB
 com colisão convexa e a miniatura do menu foram reconstruídos juntos.
+
+## Revisão: estação em oito do Revezamento
+
+O Revezamento foi refeito seguindo as vistas do modelo enviadas pelo dono. A planta é um oito:
+as bases vermelha e azul ficam nas pontas opostas, cada uma um prédio em quarto de círculo com
+galeria coberta, pátio do gol e bloco de spawn. De cada base sai uma passarela alta que vira
+uma volta em U (escadaria por fora, rampa por dentro) e desce à plataforma central, onde o trem
+fica parado. A ponte alta cruza o mapa por cima do trem e leva o núcleo no meio; do largo da
+ponte dá para cair no teto do trem. Escadas rolantes ligam cada base à plataforma, como atalho.
+Telas altas nas curvas, o painel luminoso, a galeria e os pilares servem de paredes para wall
+jump. O lado azul é a rotação de 180° do vermelho. A lógica do Touch Down não mudou; o gol
+passou a 6 × 6 m para casar com a plataforma luminosa.

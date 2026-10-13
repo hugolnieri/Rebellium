@@ -15,9 +15,9 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
   Blender (módulo `bpy` 4.2.0, Python 3.11) gera por código o personagem, as animações, a arena e a espada.
 - **Cena principal**: tela de preparação (`scenes/ui/Loadout.tscn`), com cinco mapas. A SkyArena
   conserva o caçador que reage e é arremessado pelo golpe pesado. O Revezamento é a arena do
-  modo Touch Down, com estação central baixa, terminais altos, ponte, escadarias, rotas
-  externas em U e entrega na base adversária.
-- **Qualidade**: 236 testes GUT passando e abertura headless sem erros nesta revisão.
+  modo Touch Down: estação em oito (bases em quarto de círculo nas pontas, passarelas altas,
+  voltas em U descendo ao trem no nível baixo, ponte alta com o núcleo no meio, escadas rolantes).
+- **Qualidade**: 238 testes GUT passando e abertura headless sem erros nesta revisão.
 - **Repositório**: `github.com/hugolnieri/Rebellium` (alguns commits do dono via Codex, como `614b4e2`). **Só existe uma branch no GitHub e ela é a padrão:
   `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
 - **Dono do projeto**: GitHub `hugolnieri`; fala português; testa no Windows (`C:\Dev\Rebellium`).
@@ -527,3 +527,21 @@ com piso e colisores convexos segmentados, oferecem outro trajeto pelo exterior.
 fica a 9,4 m, ligado ao seu terminal por uma escada lateral curta. O lado vermelho gira a
 planta azul 180°; no Godot o gol vermelho fica em (39, 11, -14). O `.blend` continua sendo
 a fonte do GLB e da prévia do menu. Validar no jogo a leitura das distâncias e os saltos.
+
+## Revisão: estação em oito do Revezamento
+
+O mapa foi refeito a partir das vistas do Blender enviadas pelo dono (planta em oito).
+Planta (Blender; Godot = (x, z, -y)), simétrica por rotação de 180°:
+- Bases em quarto de círculo (raio 25) a 8 m: vermelha a noroeste, azul a sudeste, com galeria
+  coberta (teto a 13,6 m, alcançável por wall jump), balcão curvo de 1,3 m protegendo o gol e um
+  bloco retangular onde a ponte chega e o time nasce. Spawn azul no Godot: (40, 8, -3).
+  Gol vermelho: (-32,4, 9,6, -9,9), área 6 × 3,2 × 6.
+- Passarelas altas em x = ±26 viram voltas em U (raio 13; fora escadaria, dentro rampa; tela alta
+  externa para wall jump, mureta interna, painel luminoso na curva) e descem à plataforma central.
+- Plataforma central no nível 0 com o trem parado (teto a 3,9 m é piso).
+- Ponte a 8 m em z = 0; o núcleo fica no largo do meio, (0, 9, 0). O largo tem abertura nos dois
+  lados para cair no teto do trem.
+- Escadas rolantes ligam cada pátio (lado da ponte) à plataforma central.
+`build_relay_arena.py` gera tudo por código (sem edição manual no `.blend`); a prévia do menu usa
+Cycles na CPU (`render_relay_preview.py`) para funcionar sem GPU. Os testes do modo têm bots que
+fazem ponte → núcleo → gol, a volta em U, a escada rolante e a queda no teto do trem.

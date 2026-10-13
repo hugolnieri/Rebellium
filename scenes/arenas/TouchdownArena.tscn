@@ -63,7 +63,7 @@ size = Vector2(1600, 1600)
 radius = 1.45
 
 [sub_resource type="BoxShape3D" id="goal_area_shape"]
-size = Vector3(4, 3.2, 8.8)
+size = Vector3(6, 3.2, 6)
 
 [sub_resource type="SphereMesh" id="ball_mesh"]
 radius = 0.48
@@ -101,29 +101,29 @@ mesh = SubResource("cloudplane")
 surface_material_override/0 = SubResource("cloudmat")
 
 [node name="BlueLight" type="OmniLight3D" parent="."]
-position = Vector3(-36, 12, 0)
+position = Vector3(35, 14, 10)
 light_color = Color(0.12, 0.60, 1, 1)
 light_energy = 1.8
 omni_range = 17.0
 
 [node name="RedLight" type="OmniLight3D" parent="."]
-position = Vector3(36, 12, 0)
+position = Vector3(-35, 14, -10)
 light_color = Color(1, 0.16, 0.30, 1)
 light_energy = 1.8
 omni_range = 17.0
 
 [node name="CoreLight" type="OmniLight3D" parent="."]
-position = Vector3(0, 4, 0)
+position = Vector3(0, 12, 0)
 light_color = Color(0.72, 0.3, 1, 1)
 light_energy = 2.0
 omni_range = 14.0
 
 [node name="Spawn" type="Marker3D" parent="."]
-position = Vector3(-36, 8.12, 5)
-rotation = Vector3(0, -1.570796, 0)
+position = Vector3(40, 8.12, -3)
+rotation = Vector3(0, 1.570796, 0)
 
 [node name="Player" parent="." instance=ExtResource("player")]
-position = Vector3(-36, 8.12, 5)
+position = Vector3(40, 8.12, -3)
 
 [node name="CarriedBall" type="Node3D" parent="Player"]
 position = Vector3(0, 1.75, -0.65)
@@ -134,7 +134,7 @@ mesh = SubResource("ball_mesh")
 surface_material_override/0 = SubResource("ball_material")
 
 [node name="Ball" type="Area3D" parent="."]
-position = Vector3(0, 1.0, 0)
+position = Vector3(0, 9.0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ball"]
 shape = SubResource("ball_area_shape")
@@ -151,7 +151,7 @@ font_size = 64
 outline_size = 12
 
 [node name="EnemyGoal" type="Area3D" parent="."]
-position = Vector3(39, 11.0, -14)
+position = Vector3(-32.4, 9.6, -9.9)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="EnemyGoal"]
 shape = SubResource("goal_area_shape")
@@ -166,11 +166,11 @@ outline_size = 12
 [node name="Dummies" type="Node3D" parent="."]
 
 [node name="GuardA" parent="Dummies" instance=ExtResource("dummy")]
-position = Vector3(35, 8, -2.5)
+position = Vector3(-28.5, 8, -13.5)
 mode = 2
 
 [node name="GuardB" parent="Dummies" instance=ExtResource("dummy")]
-position = Vector3(40, 8, 2.5)
+position = Vector3(-37.9, 8, -7.2)
 mode = 2
 
 [node name="HUD" parent="." instance=ExtResource("hud")]

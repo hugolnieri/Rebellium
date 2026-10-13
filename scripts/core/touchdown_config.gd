@@ -12,6 +12,6 @@ extends Resource
 @export_range(0.0, 10.0, 0.1, "suffix:s") var ball_reset_delay: float = 1.2
 
 @export_group("Base adversária")
-@export_range(1.0, 12.0, 0.1, "suffix:m") var goal_width: float = 4.0
+@export_range(1.0, 12.0, 0.1, "suffix:m") var goal_width: float = 6.0
 @export_range(1.0, 8.0, 0.1, "suffix:m") var goal_height: float = 3.2
-@export_range(1.0, 14.0, 0.1, "suffix:m") var goal_depth: float = 8.8
+@export_range(1.0, 14.0, 0.1, "suffix:m") var goal_depth: float = 6.0
