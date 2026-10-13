@@ -7,7 +7,6 @@ extends Node3D
 const PROBE_DIRECTIONS: int = 8
 ## Alturas das sondas horizontais, como fração da altura do corpo.
 const PROBE_HEIGHT_RATIOS: Array[float] = [0.3, 0.7]
-const FEET_PROBE_LIFT: float = 0.05
 
 var player: Player
 var has_contact: bool = false
@@ -64,14 +63,6 @@ func clear() -> void:
 	reset_entry()
 	has_contact = false
 	collider_id = 0
-
-
-## Raio para baixo a partir dos pés: true se há chão perto (perto da base da parede).
-func is_near_base() -> bool:
-	var cfg := player.config
-	var from := player.global_position + Vector3.UP * FEET_PROBE_LIFT
-	var to := player.global_position + Vector3.DOWN * cfg.back_coming_max_feet_height
-	return not _ray(from, to).is_empty()
 
 
 func _probe_walls() -> Dictionary:

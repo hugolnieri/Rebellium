@@ -105,7 +105,7 @@ func test_wide_gap_cannot_be_crossed_with_sprint_jump() -> void:
 
 
 ## Entre o pilar e a face: pula na face, salta para o pilar e do pilar para cima da face (wall jumps
-## normais; o back-coming não leva mais por cima de parede nenhuma).
+## normais em paredes opostas).
 func _pillar_climb(start: Vector3) -> int:
 	await _teleport(start)
 	follow_camera = true
@@ -127,23 +127,6 @@ func test_smooth_wall_is_climbed_with_wall_jumps_on_the_pillar() -> void:
 	var jumps := await _pillar_climb(Vector3(-1.0, 3.6, -67.6))
 	assert_eq(jumps, 2, "wall jumps: %d" % jumps)
 	assert_almost_eq(d.player.global_position.y, 8.0, 0.05, "em cima da parede lisa")
-
-
-func test_double_back_coming_no_longer_climbs_the_ledge() -> void:
-	# Sem reverse wall jump: o back-coming sobe colado, mas no topo é empurrado para fora e cai de volta.
-	await _teleport(Vector3(1.0, 0, -56))
-	d.step_until(func() -> bool: return d.player.wall_sensor.has_contact, 120, FWD)
-	d.step(5, FWD)
-	d.press_jump()
-	d.step(3, FWD)
-	d.press_jump()
-	d.step(1, FWD)
-	assert_has(d.techniques, MovementRules.TECH_BACK_COMING)
-	d.step_until(func() -> bool: return d.player.velocity.y > 1.0, 20, FWD)
-	d.step_until(func() -> bool: return d.player.velocity.y < 1.0, 40, FWD)
-	d.press_jump()
-	d.step(90, FWD)
-	assert_lt(d.player.global_position.y, 1.0, "não sobe na borda pelo back-coming")
 
 
 func test_smooth_wall_cannot_be_climbed_with_single_jump_wall_jump() -> void:
@@ -207,8 +190,8 @@ func test_reset_returns_to_start_and_clears_counters() -> void:
 
 func test_course_counts_techniques_during_run() -> void:
 	course.running = true
-	GameEvents.technique_executed.emit(d.player, &"bunny_hop", {})
-	GameEvents.technique_executed.emit(d.player, &"bunny_hop", {})
+	GameEvents.technique_executed.emit(d.player, &"side_jump", {})
+	GameEvents.technique_executed.emit(d.player, &"side_jump", {})
 	GameEvents.technique_executed.emit(d.player, &"cancel", {})
-	assert_eq(course.technique_counts[&"bunny_hop"], 2)
+	assert_eq(course.technique_counts[&"side_jump"], 2)
 	assert_eq(course.get_total_techniques(), 3)

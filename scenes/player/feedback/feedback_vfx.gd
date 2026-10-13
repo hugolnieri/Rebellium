@@ -47,7 +47,7 @@ func _on_technique(who: Node, technique: StringName, data: Dictionary) -> void:
 		return
 	var color := _fb().get_technique_color(technique)
 	_flash(color)
-	if technique == MovementRules.TECH_BUNNY_HOP or technique == MovementRules.TECH_CANCEL:
+	if technique == MovementRules.TECH_CANCEL:
 		_spawn_spark(data.get("position", player.global_position), Vector3.UP, color)
 
 

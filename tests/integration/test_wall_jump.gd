@@ -1,6 +1,6 @@
 extends GutTest
 ## Wall jump com física real: regra "só após pulo", reflexão, encadeamento, bloqueio de
-## mesma parede e técnicas (back-coming, cancel).
+## mesma parede e técnicas (side jump, cancel).
 
 const Driver = preload("res://tests/helpers/player_driver.gd")
 const FWD := Vector2(0, 1)
@@ -207,7 +207,7 @@ func test_chained_wall_jumps_between_parallel_walls_climb() -> void:
 	assert_gt(heights[3] - heights[0], 3.0, "subiu encadeando wall jumps: %s" % [heights])
 
 
-func test_late_press_is_normal_wall_jump() -> void:
+func test_frontal_entry_is_normal_wall_jump() -> void:
 	_world(Vector3(0, 0, 0.3))
 	var ledge := d.add_block(Vector3(0, 1.8, -6.0), Vector3(20, 3.6, 6))
 	await d.ready_physics(self)
@@ -216,15 +216,15 @@ func test_late_press_is_normal_wall_jump() -> void:
 	d.press_jump()
 	d.step(1, FWD)
 	assert_gt(d.step_until_wall(ledge, 90, FWD), 0)
-	d.step(d.player.config.technique_window_ticks + 2, FWD)
+	d.step(8, FWD)
 	d.press_jump()
 	d.step(1)
 	assert_eq(d.wall_jumps.size(), 1)
-	assert_eq(d.wall_jumps[0].technique, MovementRules.TECH_NORMAL, "fora da janela justa")
+	assert_eq(d.wall_jumps[0].technique, MovementRules.TECH_NORMAL, "entrada frontal")
 	assert_gt(d.player.velocity.z, 0.0, "refletiu para trás")
 
 
-func test_back_coming_allows_second_wall_jump_on_same_wall() -> void:
+func test_wall_jump_near_floor_reflects_without_extra_technique() -> void:
 	_world(Vector3(0, 0, -2.45))
 	var wall := _tall_wall(-3.0)
 	await d.ready_physics(self)
@@ -233,20 +233,12 @@ func test_back_coming_allows_second_wall_jump_on_same_wall() -> void:
 	d.step(2, FWD)
 	d.press_jump()
 	d.step(1, FWD)
-	assert_eq(d.wall_jumps.size(), 1)
-	assert_eq(d.wall_jumps[0].technique, MovementRules.TECH_BACK_COMING)
-	assert_has(d.techniques, MovementRules.TECH_BACK_COMING)
-	var start_y := d.player.global_position.y
-	d.step(12)  # sobe colado na parede, sem input
-	assert_true(d.player.wall_sensor.has_contact, "continua encostado na parede")
-	assert_gt(d.player.global_position.y, start_y + 1.0)
-	d.press_jump()
-	d.step(1)
-	assert_eq(d.wall_jumps.size(), 2, "segundo wall jump na MESMA parede liberado pelo back-coming")
 	assert_eq(d.state(), &"WallJump")
-	assert_eq(d.wall_jumps[1].normal, d.wall_jumps[0].normal)
-	assert_eq(d.wall_jumps[1].technique, MovementRules.TECH_NORMAL, "sem segurar para a parede: se afasta")
-	assert_gt(d.player.velocity.z, 0.0, "segundo salto se afasta da parede")
+	assert_eq(d.wall_jumps.size(), 1)
+	assert_eq(d.wall_jumps[0].technique, MovementRules.TECH_NORMAL)
+	assert_true(d.techniques.is_empty(), "sem técnica de subida colada")
+	d.step(d.player.config.wall_jump_stick_ticks + 2)
+	assert_gt(d.player.velocity.z, 0.0, "impulso afasta da parede")
 
 
 func test_cancel_on_wall_jump_preserves_part_of_speed() -> void:
@@ -284,59 +276,6 @@ func test_cancel_shortly_after_wall_jump_and_not_after_window() -> void:
 	d.press_weapon_swap(2)
 	d.step(1)
 	assert_does_not_have(d.techniques, MovementRules.TECH_CANCEL, "tarde demais")
-
-
-func _back_coming_on(height: float) -> void:
-	_world(Vector3(0, 0, -2.45))
-	d.add_block(Vector3(0, height * 0.5, -6.0), Vector3(20, height, 6))  # face em z = -3
-	await d.ready_physics(self)
-	d.step(10, FWD)
-	d.press_jump()
-	d.step(3, FWD)
-	d.press_jump()
-	d.step(1, FWD)
-	assert_eq(d.wall_jumps[0].technique, MovementRules.TECH_BACK_COMING)
-	d.step_until(func() -> bool: return d.player.velocity.y < 1.0, 40, FWD)
-
-
-func test_back_coming_never_carries_over_a_low_wall() -> void:
-	# Sem reverse wall jump: num muro baixo (2,25 m, como os vermelhos da arena) o back-coming sobe colado,
-	# passa do topo e é empurrado para FORA, mesmo segurando W para a parede.
-	await _back_coming_on(2.25)
-	d.step(90, FWD)
-	assert_true(d.player.is_on_floor())
-	assert_almost_eq(d.player.global_position.y, 0.0, 0.05, "voltou ao chão do mesmo lado")
-	assert_gt(d.player.global_position.z, -3.0, "não passou para o outro lado do muro")
-
-
-func test_double_back_coming_does_not_mount_a_4_4_m_wall() -> void:
-	await _back_coming_on(4.4)
-	d.press_jump()
-	d.step(1, FWD)
-	assert_eq(d.wall_jumps[1].technique, MovementRules.TECH_BACK_COMING, "segurando W: sobe mais um lance")
-	d.step(90, FWD)
-	assert_true(d.player.is_on_floor())
-	assert_almost_eq(d.player.global_position.y, 0.0, 0.05, "não sobe em cima da parede (sem reverse)")
-
-
-func test_single_back_coming_does_not_reach_top_of_4_4_m_wall() -> void:
-	await _back_coming_on(4.4)
-	d.step(80, FWD)
-	assert_almost_eq(d.player.global_position.y, 0.0, 0.05, "sem o segundo lance, escorrega de volta")
-
-
-func test_back_coming_chain_is_limited_to_one_extra() -> void:
-	await _back_coming_on(12.0)
-	d.press_jump()
-	d.step(1, FWD)
-	assert_eq(d.wall_jumps[1].technique, MovementRules.TECH_BACK_COMING)
-	d.step_until(func() -> bool: return d.player.velocity.y < 1.0, 40, FWD)
-	d.press_jump()
-	d.step(1, FWD)
-	if d.wall_jumps.size() > 2:
-		assert_ne(d.wall_jumps[2].technique, MovementRules.TECH_BACK_COMING, "terceiro lance não escala")
-	d.step(120, FWD)
-	assert_lt(d.player.global_position.y, 1.0, "não escala parede alta sem fim")
 
 
 func test_wall_jump_starts_strong_and_slows_down() -> void:

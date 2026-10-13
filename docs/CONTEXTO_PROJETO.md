@@ -9,7 +9,7 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
 ## 1. Resumo
 
 - **Jogo**: ação acrobática em terceira pessoa, competitiva, 100% melee. **A movimentação é a habilidade principal**:
-  quem domina wall jump, back-coming, side jump, dash, cancels e bunny hop controla o espaço da arena.
+  quem domina wall jump, side jump, dash e cancels controla o espaço da arena.
 - **Estágio**: protótipo jogável **single-player** (sem rede, sem música, arte ainda em evolução). Tudo é original:
   não usar nomes, assets ou termos de outros jogos.
 - **Stack**: Godot 4.7.2-stable, GDScript **tipado**, física Jolt a 60 ticks fixos, testes GUT 9.7.1 (headless).
@@ -17,7 +17,7 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
 - **Cena principal**: arena flutuante sobre as nuvens (`scenes/arenas/SkyArena.tscn`), com um bot vermelho
   ("caçador") no centro: não ataca, mas reage com as animações do personagem e é **arremessado pelo golpe pesado**.
   **F3** alterna: SkyArena → CombatArena → TrainingCourse → Arena.
-- **Qualidade hoje**: 237 testes passando (20 arquivos: 7 unitários + 13 de integração) e
+- **Qualidade hoje**: 228 testes passando (20 arquivos: 7 unitários + 13 de integração) e
   `godot --headless --quit-after 120` sem erros. ~10 mil linhas de GDScript (com testes) e ~2,8 mil de Python (tools).
 - **Repositório**: `github.com/hugolnieri/Rebellium`, 55 commits (alguns do dono via Codex, como `614b4e2`). **Só existe uma branch no GitHub e ela é a padrão:
   `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
@@ -127,7 +127,7 @@ e `@export_range`) e aparece sozinho no F2:
 
 **Alvos de golpe**: grupo `hittable` com `take_hit(info) -> bool`, `get_hit_center()`, `get_hit_radius()` (Player, `TrainingDummy` e `HunterBot`).
 **Hitstop** pausa a simulação do Player (`hitstop_ticks`); os tempos do golpe contam em ticks próprios do estado Attack.
-**Tempo de gameplay** em ticks (int) quando a janela é justa (bunny hop, cancel); em segundos (float) para durações longas.
+**Tempo de gameplay** em ticks (int) quando a janela é justa (cancel); em segundos (float) para durações longas.
 `physics_interpolation` está ligada: ao teleportar um corpo chame `reset_physics_interpolation()`.
 
 **Apresentação (nunca altera gameplay)**: `character_model.gd` (modelo + animação), `hero_clips.gd`, `hero_puppet.gd` (o mesmo
@@ -140,18 +140,13 @@ esqueleto e os mesmos clipes, para o caçador), `attack_poses.gd`,
 Regras de design registradas (de `ESCOPO.md`, ainda válidas):
 - **Wall jump** só se o jogador entrou no ar por um pulo (ou wall jump) e ainda está em Jump ou dentro da janela pós-pulo
   (1,2 s). Cair de borda nunca habilita. **Dash no ar também bloqueia** até o próximo pulo do chão (`wall_jump_after_air_dash`
-  desligado; F1 mostra "usou dash no ar"): o wall jump só vale com o pulo normal. A mesma parede não vale duas vezes seguidas
-  (exceto após back-coming).
+  desligado; F1 mostra "usou dash no ar"): o wall jump só vale com o pulo normal. A mesma parede não vale duas vezes seguidas.
 - **Reflexão**: `v_out = v_in − 2 (v_in·n) n` no plano horizontal; o impulso vertical é somado à parte; a câmera ajusta a saída
   com peso (0,4) sem apontar para a parede. Saída ×1,25 (mín. 10, máx. 18 m/s) + 2 m/s para frente.
 - **Impulso inicial** do wall jump ×1,6 que decai até a velocidade normal em 0,6 s.
-- **Back-coming**: contato perto da base (pés a ≤ 1,0 m do chão, janela de 6 ticks) → sobe 2,6 m quase na vertical, colado na
-  parede. **Encadeado** uma vez na mesma parede (Space segurando o direcional para a parede, `back_coming_chain_min_dot` 0,5).
-  **Nunca leva por cima da parede**: ao passar do topo subindo, o corpo é empurrado para fora (`back_coming_top_pop_speed` 1,5 m/s)
-  até o ápice e cai do mesmo lado. **O reverse wall jump foi removido do jogo** (esse "passar por cima" era o que sobrava dele).
 - **Side jump**: wall jump com incidência ≥ 30° lança para a frente (faísca azul elétrico).
 - **Cancel** (tecla 1/2 até 4 ticks do wall jump): desfaz o lançamento, mantém 50% da velocidade de entrada; SP não volta.
-- **Bunny hop**: Space até 3 ticks após aterrissar preserva a velocidade horizontal (teto 16 m/s).
+- **Pulo após aterrissar**: usa a velocidade normal do chão; não há janela de preservação de velocidade.
 - **Dodge cancel**: dash interrompe a recuperação do Land e do próprio Dodge; golpe também corta o dash.
 
 | Tema | Valor atual |
@@ -331,7 +326,7 @@ Sem música.
 
 `tools/run_tests.sh` (GUT, config em `.gutconfig.json`: pasta `res://tests/`, prefixo `test_`, sai ao terminar).
 - **Unitários (7)**: áudio, regras de combate, `ConfigIO`, regras de movimento, setup do projeto, SP, matemática do wall jump.
-- **Integração (13)**: bunny hop, modelo do personagem (clipes presentes), **customização** (`test_character_customization.gd`: modelo
+- **Integração (13)**: pulo após pouso, modelo do personagem (clipes presentes), **customização** (`test_character_customization.gd`: modelo
   do VRoid com os clipes do herói, mesma altura, arma na mão nova, cores nos materiais, menu F4), combate (inclui o mergulho e o golpe
   no dash aéreo), arena de combate, menu de debug, dash (inclui "o dash segue a câmera"), chão,
   **arena flutuante** (inclui "W/A/S/D andam relativos à câmera e o personagem encara para onde anda"), **câmera**
@@ -458,3 +453,12 @@ HUD de vida/SP com barras recortadas e valores; cartões de armas no canto super
 painel de combate, mira e atalhos no rodapé. Renderização compartilhada em scenes/ui/hud_canvas.gd,
 com escala proporcional à janela. FeedbackConfig expõe cores de painel, contorno e seleção no F2.
 Alvos mantêm etiquetas e distância de arremesso e agora mostram barra de vida vermelha.
+
+## Revisão: remoção do bunny hop e do back-coming
+
+Bunny hop e back-coming não são mais técnicas jogáveis. O pouso deixa de preservar velocidade
+por uma janela curta; pular em seguida aplica a velocidade normal do chão. Na parede, todo salto
+usa a reflexão; a classificação distingue somente wall jump normal e side jump pelo ângulo de
+entrada. A trava contra repetir a mesma parede permanece. O percurso usa wall jumps em pilares
+para subir a borda e a parede lisa. F1, F2, HUD de treino e VFX não exibem mais as técnicas removidas.
+As menções históricas anteriores neste documento descrevem versões antigas.

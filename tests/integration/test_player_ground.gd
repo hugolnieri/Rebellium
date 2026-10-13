@@ -242,7 +242,7 @@ func test_landing_roll_stays_in_place() -> void:
 	d.step(1, FWD)
 	d.step_until(func() -> bool: return d.player.get_state_name() == &"Land", 90, FWD)
 	assert_true(d.player.state_machine.current.rolling, "cambalhota ao aterrissar")
-	d.step(d.player.config.bunny_hop_window_ticks)
+	d.step(3)
 	var before := d.player.global_position
 	d.step(15)
 	assert_lt(Vector2(d.player.global_position.x - before.x, d.player.global_position.z - before.z).length(), 0.05,

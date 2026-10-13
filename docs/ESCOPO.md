@@ -291,3 +291,13 @@ Silhuetas de lâmina são vetoriais originais. Alvos têm barra vermelha e mant�
 Cores de painel, contorno e seleção ficam em FeedbackConfig, editáveis no F2 (Visual).
 Nenhuma regra de movimento, combate ou persistência foi alterada. Modificações locais anteriores em
 project.godot e arquivos de importação foram preservadas e não fazem parte desta revisão.
+
+## Revisão: remoção do bunny hop e do back-coming
+
+As duas técnicas saíram da lógica, dos eventos, do contador do percurso, dos VFX e das opções F2.
+Pular logo após aterrissar agora é um pulo normal: o estado Land não conserva a velocidade aérea
+por três ticks e usa a recuperação configurada. Um wall jump frontal ou perto da base usa sempre
+a reflexão normal; um segundo salto na mesma parede continua bloqueado. O side jump por incidência
+em diagonal, o cancel e os wall jumps alternados entre paredes permanecem.
+Os pilares existentes no percurso continuam permitindo subir a borda e a parede lisa.
+Seções históricas acima descrevem versões anteriores e foram substituídas por esta revisão.

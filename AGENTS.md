@@ -7,7 +7,7 @@ Claude Code: se mudar uma regra aqui, mude lá também.
 ## O projeto
 
 REBELLIUM é um jogo de ação acrobática em terceira pessoa, competitivo e 100% melee. **A movimentação é a habilidade principal**
-(wall jump, back-coming, side jump, dash, cancels, bunny hop). Hoje é um protótipo single-player (sem rede, sem música).
+(wall jump, side jump, dash, cancels). Hoje é um protótipo single-player (sem rede, sem música).
 Tudo é original: **não use nomes, assets ou termos de outros jogos**.
 
 Stack: Godot 4.7.2-stable, GDScript **tipado** (tipos explícitos em variáveis, parâmetros e retornos), física Jolt, **60 ticks fixos**,
@@ -19,15 +19,15 @@ testes GUT 9.7.1 (headless). Blender (`bpy` 4.2.0, Python 3.11) gera por código
   as animações do personagem e **o golpe pesado o arremessa** (cai, levanta e volta ao spawn; a etiqueta mostra a distância). O modo
   caçador ainda não foi definido. F3 alterna: SkyArena → CombatArena → TrainingCourse → Arena.
 - Player com 10 estados (Idle, Run, Sprint, Jump, Fall, WallJump, Dodge, Land, Attack, Hurt), SP, dash lateral, wall jump por reflexão,
-  back-coming encadeado (o reverse wall jump foi **removido**), cancels, bunny hop, rolamento no pouso.
+  cancels e rolamento no pouso. Back-coming e bunny hop foram removidos.
 - Duas armas: Lâmina de Arco (modelo 3D enviado pelo dono) e Presa de Fase (procedural), com combos leves, pesado (segurar o clique),
   golpes aéreos e de dash, hitstop, rastro, esquiva perfeita.
 - Personagem (base VRoid CC0) e **todas as animações feitas no Blender** (`hero.blend` → `hero.glb`); o jogo as toca direto nos ossos
   (`HeroClips`) com crossfade. Menu F2 edita todas as configs ao vivo.
-- **237 testes passam**; `godot --headless --quit-after 120` abre sem erros.
+- **228 testes passam**; `godot --headless --quit-after 120` abre sem erros.
 - Menu de personagem (**F4**): modelo (herói ou personagens do VRoid em `assets/character/models/`, trazidos por
   `tools/import_vroid.py`) e cores, salvo em `user://personagem.tres`. Golpe no pulo = mergulho; golpe no dash aéreo = combo leve;
-  dash segue a câmera; wall jump só com pulo normal; o back-coming nunca passa por cima da parede (reverse removido de vez).
+  dash segue a câmera; wall jump só com pulo normal e nunca repete na mesma parede.
 - Os commits de arena (`677621f`, `e798e12`) e o do caçador que voa **ainda não foram validados pelo dono dentro do jogo**.
 
 ## Comandos
@@ -63,7 +63,7 @@ normalmente; os `.glb`/`.blend` já estão versionados. Se o ambiente bloquear i
 4. **Regras e matemática puras** em `scripts/core/` (`WallJumpMath`, `MovementRules`, `SPPool`, `CombatRules`, `HealthPool`): sem
    dependência de cena e com testes unitários.
 5. **Feedback por eventos.** A lógica emite sinais no autoload `GameEvents`; VFX, som (`SoundManager`), HUD e modo treino só ouvem.
-6. **Tempo de gameplay em ticks** (int) quando a janela é justa (bunny hop, cancel); em segundos (float) para durações longas.
+6. **Tempo de gameplay em ticks** (int) quando a janela é justa (cancel); em segundos (float) para durações longas.
    Toda física em `_physics_process`. Com `physics_interpolation` ligada, ao teleportar um corpo chame `reset_physics_interpolation()`.
 7. **Salvar config sempre com `ConfigIO.save_full`** (o `ResourceSaver` padrão omite valores iguais ao padrão).
 8. **Alvos de golpe** ficam no grupo `hittable` e implementam `take_hit(info) -> bool`, `get_hit_center()`, `get_hit_radius()`.

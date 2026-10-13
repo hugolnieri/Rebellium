@@ -1,5 +1,5 @@
 extends PlayerState
-## Subindo após um pulo (do chão, coyote, bunny hop ou fim de wall jump).
+## Subindo após um pulo (do chão, coyote ou fim de wall jump).
 
 
 func physics_update(input: PlayerInput, delta: float) -> void:

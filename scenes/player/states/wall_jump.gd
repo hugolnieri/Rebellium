@@ -1,29 +1,18 @@
 extends PlayerState
 ## Wall jump: primeiro o personagem fica colado na parede por `wall_jump_stick_ticks` (pés
 ## plantados, sem cair), depois sai o impulso. Mantém a direção do lançamento sem controle aéreo por
-## `wall_jump_lock_time`. No back-coming o empurrão contra a parede continua enquanto sobe colado
-## nela (senão a colisão comeria a velocidade horizontal). Ao passar do topo ele NÃO leva por cima da
-## parede (o reverse wall jump saiu do jogo): o corpo é empurrado para fora (`back_coming_top_pop_speed`)
-## até o ápice e cai do mesmo lado.
+## `wall_jump_lock_time`.
 ## Cancel: troca de arma (1/2) até `cancel_window_ticks` do wall jump desfaz o lançamento.
 
 var _launch: Vector3 = Vector3.ZERO
 var _launch_horizontal: Vector3 = Vector3.ZERO
 var _wall_normal: Vector3 = Vector3.ZERO
-var _hold_until_clear: bool = false
-## O back-coming passou do topo da parede: daqui até o ápice o corpo se afasta dela.
-var _topped_out: bool = false
-var _climb_contact: bool = false
 
 
 func enter(_from: StringName, data: Dictionary) -> void:
 	_launch = data.get("velocity_out", player.velocity)
 	_launch_horizontal = WallJumpMath.horizontal(_launch)
 	_wall_normal = data.get("normal", Vector3.ZERO)
-	var technique: StringName = data.get("technique", &"")
-	_hold_until_clear = technique == MovementRules.TECH_BACK_COMING
-	_topped_out = false
-	_climb_contact = false
 	if is_sticking():
 		_stick()
 
@@ -60,16 +49,7 @@ func physics_update(input: PlayerInput, delta: float) -> void:
 		return  # o dash pode cortar o mortal; o golpe espera o mortal terminar
 	if can_act and player.try_attack(input):
 		return
-	if _hold_until_clear and t > 0 and player.wall_sensor.has_contact:
-		_climb_contact = true
-	elif _hold_until_clear and _climb_contact and not _topped_out:
-		# Passou do topo subindo colado: nada de seguir por cima da parede; afasta-se dela.
-		_topped_out = true
-		_launch_horizontal = WallJumpMath.horizontal_normal(_wall_normal) * cfg().back_coming_top_pop_speed
-	var climbing := _hold_until_clear and not _topped_out and player.wall_sensor.has_contact \
-		and player.velocity.y > 0.0
-	var popping := _topped_out and player.velocity.y > 0.0
-	if locked or climbing or popping:
+	if locked:
 		var horizontal := _launch_horizontal
 		if player.wall_jump_boost_active():
 			horizontal = horizontal.limit_length(player.wall_jump_speed_cap())

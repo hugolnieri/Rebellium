@@ -7,10 +7,8 @@ enum AirOrigin { NONE, JUMP, FALL }
 
 const TECH_NORMAL: StringName = &"normal"
 const TECH_SIDE_JUMP: StringName = &"side_jump"
-const TECH_BACK_COMING: StringName = &"back_coming"
 const TECH_CANCEL: StringName = &"cancel"
 const TECH_DODGE_CANCEL: StringName = &"dodge_cancel"
-const TECH_BUNNY_HOP: StringName = &"bunny_hop"
 const TECH_SWAP_CANCEL: StringName = &"swap_cancel"
 const TECH_PERFECT_DODGE: StringName = &"perfect_dodge"
 const TECH_DASH_JUMP: StringName = &"dash_jump"
@@ -29,13 +27,6 @@ static func can_wall_jump(air_origin: AirOrigin, in_jump_state: bool, ticks_sinc
 	return in_jump_state or ticks_since_jump <= window_ticks
 
 
-## Bunny hop: aperto de pulo no tick da aterrissagem ou nos `window - 1` seguintes.
-## Apertos ANTES de aterrissar (buffer) não contam.
-static func is_bunny_hop(press_tick: int, land_tick: int, window_ticks: int) -> bool:
-	var delta := press_tick - land_tick
-	return delta >= 0 and delta < window_ticks
-
-
 ## Toque duplo: o segundo toque veio até `window` ticks depois do primeiro.
 static func is_double_tap(press_tick: int, previous_press_tick: int, window_ticks: int) -> bool:
 	if previous_press_tick <= PlayerInput.NEVER:
@@ -49,12 +40,8 @@ static func is_within_window(press_tick: int, event_tick: int, window_ticks: int
 	return absi(press_tick - event_tick) <= window_ticks
 
 
-## Classifica o wall jump. Back-coming: Space na janela justa com os pés perto da base da parede, ou
-## de novo na mesma parede logo depois de um back-coming (`chained`: sobe mais um lance colado nela).
-static func classify_wall_jump(in_technique_window: bool, near_base: bool, chained: bool,
-		incidence_deg: float, side_min_deg: float) -> StringName:
-	if in_technique_window and (near_base or chained):
-		return TECH_BACK_COMING
+## Classifica o wall jump pelo ângulo de entrada na parede.
+static func classify_wall_jump(incidence_deg: float, side_min_deg: float) -> StringName:
 	if incidence_deg >= side_min_deg:
 		return TECH_SIDE_JUMP
 	return TECH_NORMAL

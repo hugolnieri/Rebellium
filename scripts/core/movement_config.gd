@@ -73,8 +73,7 @@ extends Resource
 @export var walk_instant_turn: bool = true
 ## No ar (pulo/queda) a direção vira na hora para onde o input/câmera aponta, mantendo a velocidade.
 @export var air_instant_turn: bool = true
-## Pular do chão (inclusive depois de sprint ou dash) volta à velocidade de andar. O bunny hop
-## (técnica) continua preservando a velocidade.
+## Pular do chão (inclusive depois de sprint ou dash) volta à velocidade de andar.
 @export var jump_resets_to_walk_speed: bool = true
 ## Corrida no ar: toque duplo em W no ar acelera até a velocidade de sprint...
 @export var air_sprint_enabled: bool = true
@@ -165,7 +164,7 @@ extends Resource
 @export_range(0.05, 2.0, 0.01, "suffix:s") var wall_jump_boost_decay_time: float = 0.6
 ## Tempo sem controle aéreo logo após o wall jump (estado WallJump).
 @export_range(0.0, 1.0, 0.01, "suffix:s") var wall_jump_lock_time: float = 0.3
-## Proíbe dois wall jumps seguidos na MESMA parede (exceto após back-coming).
+## Proíbe dois wall jumps seguidos na MESMA parede.
 @export var wall_jump_same_wall_lockout: bool = true
 ## Wall jump só vale com o pulo normal: depois de um dash no ar ele fica bloqueado até tocar o chão.
 ## Ligue para voltar a permitir wall jump depois do dash no ar.
@@ -182,27 +181,10 @@ extends Resource
 @export_range(0.0, 89.0, 1.0, "suffix:°") var side_jump_min_incidence_deg: float = 30.0
 
 @export_group("Técnicas avançadas")
-## Janela justa (back-coming): Space até N ticks do contato com a parede.
-@export_range(0, 30, 1, "suffix:ticks") var technique_window_ticks: int = 6
-## Distância máxima dos pés ao chão para o contato contar como "base da parede".
-@export_range(0.0, 4.0, 0.05, "suffix:m") var back_coming_max_feet_height: float = 1.0
-@export_range(0.0, 10.0, 0.05, "suffix:m") var back_coming_height: float = 2.6
-## Leve empurrão de volta PARA a parede no back-coming: o jogador sobe colado nela e ganha
-## um segundo wall jump na mesma parede (sem precisar de nova janela justa).
-@export_range(0.0, 10.0, 0.1, "suffix:m/s") var back_coming_wall_push_speed: float = 1.0
-## Back-coming encadeado: depois de um back-coming, Space com o direcional apontando para a parede
-## (cosseno mínimo entre o input e a direção da parede) sobe mais um lance em vez de se afastar.
-@export_range(-1.0, 1.0, 0.05) var back_coming_chain_min_dot: float = 0.5
-## Ao passar do topo da parede subindo no back-coming, o corpo é empurrado PARA FORA da parede com esta
-## velocidade até o ápice (sem reverse wall jump: o back-coming nunca leva por cima da parede).
-@export_range(0.0, 10.0, 0.1, "suffix:m/s") var back_coming_top_pop_speed: float = 1.5
 ## Cancel: troca de arma até N ticks do wall jump.
 @export_range(0, 20, 1, "suffix:ticks") var cancel_window_ticks: int = 4
 ## Fração da velocidade de entrada preservada pelo cancel.
 @export_range(0.0, 1.0, 0.01) var cancel_speed_retained: float = 0.5
-## Bunny hop: pulo nos primeiros N ticks após aterrissar preserva a velocidade horizontal.
-@export_range(0, 20, 1, "suffix:ticks") var bunny_hop_window_ticks: int = 3
-@export_range(1.0, 60.0, 0.5, "suffix:m/s") var bunny_hop_speed_cap: float = 16.0
 
 
 ## Gravidade de subida derivada de altura e tempo de ápice: g = 2h / t².

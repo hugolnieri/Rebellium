@@ -26,7 +26,7 @@ Para rodar: `godot --path .` ou abra o projeto no editor e aperte F5. Abre a **a
 - **estado**: estado atual da máquina (Idle, Run, Sprint, Jump, Fall, WallJump, Dodge, Land) e há quantos ticks.
 - **vel horiz / vel vertical / altura pés**: para conferir 6 m/s andando, 10 m/s em sprint e pulo de 2,35 m.
 - **na parede**: normal da parede, há quantos ticks foi a entrada no contato, e se a base está perto
-  ("base: perto" significa que o back-coming está disponível).
+  (a normal e o tick de entrada ajudam a diagnosticar o wall jump).
 - **wall jump**: `LIBERADO` ou o motivo do bloqueio (`sem parede`, `não veio de pulo`, `janela pós-pulo expirou`,
   `mesma parede`, `SP insuficiente`, `SP exausto`).
 - **origem do ar**: `JUMP` (pulou) ou `FALL` (caiu de borda). Wall jump só com `JUMP`.
@@ -83,13 +83,11 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 ### Trecho 3: borda de 3,6 m → **wall jumps no pilar**
 - **Como passar**: vá para o lado **direito**, entre a borda e o pilar escuro de frente para ela. Corra para a borda,
   pule, e aperte Space ao encostar: o wall jump te joga no pilar; Space de novo no pilar te joga por cima da borda.
-- **Teste negativo (sem reverse wall jump)**: o **back-coming** (Space logo ao encostar, pés perto do chão) sobe colado na
-  borda, mas no topo **é empurrado para fora** e cai do mesmo lado, mesmo segurando W e fazendo o segundo lance.
-  O back-coming nunca leva por cima de parede nenhuma.
+- **Teste negativo**: pular duas vezes seguidas na mesma face da borda não gera outro wall jump.
 
 ### Trecho 4: parede lisa de 4,4 m → **wall jumps no pilar**
 - **Como passar**: igual ao trecho 3, agora pelo lado **esquerdo** (pilar à esquerda, em cima da borda).
-- **Teste negativo**: um pulo + wall jump normal só na parede lisa não sobe; o back-coming também não.
+- **Teste negativo**: um pulo + wall jump normal só na parede lisa não sobe.
 
 ### Trecho 5: torre (chaminé) → **wall jumps encadeados**
 - **Como passar**: entre na chaminé (entre a parede de metal baixa à esquerda e a alta à direita). Pule em
@@ -106,9 +104,8 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - O lançamento é desfeito: você mantém 50% da velocidade de entrada e cai junto à parede.
   - A cor é **vermelha** e o banner mostra `CANCEL`. O SP gasto não volta.
   - Apertar 1/2 sem wall jump só gera o evento `troca de arma` no log.
-- **Bunny hop**: pule, faça a corrida no ar (W, W) e aperte Space de novo **até 3 ticks depois de aterrissar**.
-  - A velocidade horizontal com que aterrissou se mantém (ex.: 10 m/s da corrida no ar, mesmo sem segurar W).
-  - Apertar um pouco antes de tocar o chão ou tarde demais dá um pulo normal, limitado à velocidade do chão.
+- **Pulo no pouso**: pule e aperte Space novamente logo depois de aterrissar. Deve sair um pulo normal,
+  limitado à velocidade do chão, sem evento de técnica.
 - **Dash (dodge)**: segure **A ou D** e aperte **Space** → dash só para o lado (não usa mais Shift).
   - Vai longe e **desacelera** até parar (começa a 24 m/s; curva em `dodge_ease_power`).
   - W + D + Space dá pulo normal: o dash só sai com a direção bem lateral (`dodge_side_input_threshold`).
@@ -152,8 +149,7 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
     Golpe, dash ou wall jump no ar interrompem o mortal.
   - Andando e golpeando, as pernas continuam a passada; parado (ou no ar) o corpo todo assume a pose do golpe.
   - Pular do chão volta à velocidade de andar (6 m/s), mesmo vindo de sprint ou dash
-    (`jump_resets_to_walk_speed`). Para ganhar velocidade no ar use a corrida no ar (W, W); o bunny hop
-    preserva a velocidade com que você aterrissa.
+    (`jump_resets_to_walk_speed`). Para ganhar velocidade no ar use a corrida no ar (W, W).
   - O corpo vira **na hora** para a direção do input/câmera, andando ou correndo (`instant_facing`,
     `walk_instant_turn`). No pulo e na cambalhota também: segurando W, ele vai para onde a câmera olha
     (`air_instant_turn`). Depois de um wall jump não: mantém a direção do salto até pousar.
@@ -173,7 +169,6 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
   - Dash: desliza bem mais (0,65 s de deslocamento, saída a 7 m/s e deslize final `dodge_slide_deceleration`).
   - Wall jump: o personagem **cola na parede** por um instante (bem encolhido, de frente para ela, ~0,1 s,
     `wall_jump_stick_ticks`) e depois dá o **mortal para trás**, girando de costas para longe.
-    Back-coming: sem acrobacia (sobe colado na parede).
   - Aterrissagem forte (≥ 7 m/s de queda): **cambalhota no lugar** (0,7 s, `roll_duration`), com as costas no
     chão (`roll_ball_height`): sem input o personagem fica no lugar; segurando uma direção, rola para lá
     (`roll_in_place`, `roll_steer_speed`). Dá para cancelar
@@ -212,12 +207,11 @@ O canto superior direito mostra o melhor tempo da sessão e as técnicas usadas 
 | Sprint por toque duplo | `sprint_double_tap_ticks`, `sprint_forward_threshold` |
 | Força do wall jump (altura 2,6 m; saída ×1,1 + 2 m/s para frente, até 18 m/s) | `wall_jump_forward_boost`, `wall_jump_height`, `wall_jump_horizontal_multiplier`, `wall_jump_min/max_horizontal_speed` |
 | Quanto a câmera influencia o side jump | `wall_jump_camera_weight` |
-| Facilidade das técnicas | `technique_window_ticks`, `cancel_window_ticks`, `bunny_hop_window_ticks` |
-| Back-coming | `back_coming_height`, `back_coming_max_feet_height`, `back_coming_chain_min_dot` |
+| Janela de cancel | `cancel_window_ticks` |
 | Economia de SP | `sp_*`, `dodge_sp_cost`, `wall_jump_sp_cost`, `sprint_sp_cost_per_second` |
 
 ## Checklist do critério de pronto
-- [ ] Completei o percurso usando wall jump (corredor/torre), side jump (vão) e back-coming duplo (borda e parede lisa).
+- [ ] Completei o percurso usando wall jump (corredor/torre), side jump (vão) e wall jumps nos pilares (borda e parede lisa).
 - [ ] Todos os números relevantes aparecem no F2 e no `config/movement_config.tres`.
 - [ ] `tools/run_tests.sh` passa.
 
@@ -363,3 +357,15 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 7. Redimensione a janela (16:9, 4:3 e ultrawide) e confira margens, textos e mira central.
 8. F2 → Visual → HUD: altere cores de painel, contorno, seleção e barras; confirme resposta ao vivo.
 9. Confira F1/F2/F4: menus continuam recebendo mouse normalmente; o HUD não intercepta cliques.
+
+## Revisão: duas técnicas removidas
+
+- Na arena, execute corrida no ar e pule logo ao pousar: deve sair um pulo comum, limitado à
+  velocidade de chão; F1 não deve registrar BUNNY_HOP.
+- Encoste perto da base de uma parede e faça wall jump: o personagem deve se afastar por reflexão,
+  sem subida colada nem BACK_COMING no F1.
+- Tente outro wall jump na mesma face antes de pousar: F1 deve mostrar `mesma parede`.
+- Entre em diagonal numa parede: o side jump ainda deve aparecer. Faça cancel com 1/2 no wall jump.
+- No percurso, confirme que os contadores não mostram bunny hop nem back-coming e que os dois
+  pilares ainda permitem completar a borda e a parede lisa.
+- No F2, confirme que não há janela/velocidade de bunny hop nem parâmetros de back-coming.

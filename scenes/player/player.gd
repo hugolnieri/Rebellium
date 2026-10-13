@@ -28,7 +28,6 @@ var current_input: PlayerInput = PlayerInput.new()
 var air_origin: MovementRules.AirOrigin = MovementRules.AirOrigin.NONE
 var last_jump_tick: int = PlayerInput.NEVER
 var left_floor_tick: int = PlayerInput.NEVER
-var land_tick: int = PlayerInput.NEVER
 ## Velocidade vertical (positiva) no último impacto com o chão.
 var land_impact_speed: float = 0.0
 ## Velocidade antes do move_and_slide deste tick (a colisão "come" a componente contra a parede).
@@ -56,8 +55,6 @@ var is_invulnerable: bool = false
 var spawn_transform: Transform3D
 ## Parede (collider id) do último wall jump, para o bloqueio de mesma parede.
 var last_wall_jump_collider: int = 0
-## Back-coming libera UM wall jump extra nesta parede.
-var back_coming_wall: int = 0
 var last_wall_jump_tick: int = PlayerInput.NEVER
 ## Velocidade antes do último wall jump (usada pelo cancel).
 var wall_jump_entry_velocity: Vector3 = Vector3.ZERO
@@ -162,9 +159,8 @@ func get_wall_debug_text() -> String:
 		return "não"
 	var since_entry := str(ticks_since(wall_sensor.entry_tick)) \
 		if wall_sensor.entry_tick > PlayerInput.NEVER else "-"
-	return "sim  n=(%.2f, %.2f)  entrada há %s ticks  base:%s" % [
-		wall_sensor.normal.x, wall_sensor.normal.z, since_entry,
-		"perto" if wall_sensor.is_near_base() else "longe"]
+	return "sim  n=(%.2f, %.2f)  entrada há %s ticks" % [
+		wall_sensor.normal.x, wall_sensor.normal.z, since_entry]
 
 
 ## "" se um wall jump seria aceito agora (ignorando o botão); senão, o motivo do bloqueio.
@@ -178,8 +174,7 @@ func get_wall_jump_block_reason() -> String:
 	if not MovementRules.can_wall_jump(air_origin, _is_rising_jump_state(), ticks_since(last_jump_tick),
 			MovementRules.seconds_to_ticks(config.wall_jump_window_after_jump)):
 		return "janela pós-pulo expirou"
-	if config.wall_jump_same_wall_lockout and wall_sensor.collider_id == last_wall_jump_collider \
-			and wall_sensor.collider_id != back_coming_wall:
+	if config.wall_jump_same_wall_lockout and wall_sensor.collider_id == last_wall_jump_collider:
 		return "mesma parede"
 	if not sp.can_spend(config.wall_jump_sp_cost):
 		return "SP insuficiente" if not sp.exhausted else "SP exausto"
@@ -539,10 +534,10 @@ func try_ground_actions(input: PlayerInput) -> bool:
 	return false
 
 
-## Pulo do chão (também usado pelo coyote time e bunny hop): entra no ar como PULO.
-func do_jump(reason: String, enter_jump_state: bool = true, keep_speed: bool = false) -> void:
+## Pulo do chão (também usado pelo coyote time): entra no ar como PULO.
+func do_jump(reason: String, enter_jump_state: bool = true) -> void:
 	wall_jump_carry = false
-	if config.jump_resets_to_walk_speed and not keep_speed:
+	if config.jump_resets_to_walk_speed:
 		var horizontal := get_horizontal_velocity().limit_length(get_walk_speed())
 		velocity.x = horizontal.x
 		velocity.z = horizontal.z
@@ -615,35 +610,16 @@ func try_wall_jump(input: PlayerInput) -> bool:
 	var n := sensor.normal
 	var has_entry := sensor.entry_tick > PlayerInput.NEVER
 	var v_in := sensor.entry_velocity if has_entry else WallJumpMath.horizontal(pre_slide_velocity)
-	# O segundo wall jump liberado pelo back-coming dispensa a janela justa (contato contínuo).
-	# Depois de um back-coming, Space segurando na direção da parede sobe mais um lance colado nela;
-	# sem segurar, o segundo salto se afasta da parede (wall jump normal).
-	var chained := sensor.collider_id == back_coming_wall \
-		and input.get_wish_direction().dot(-n) > config.back_coming_chain_min_dot
-	var in_window := (has_entry and MovementRules.is_within_window(
-		input.jump_pressed_tick, sensor.entry_tick, config.technique_window_ticks)) \
-		or sensor.collider_id == back_coming_wall
-	var technique := MovementRules.classify_wall_jump(in_window, sensor.is_near_base(), chained,
+	var technique := MovementRules.classify_wall_jump(
 		WallJumpMath.incidence_angle_deg(v_in, n), config.side_jump_min_incidence_deg)
-	var horizontal: Vector3
-	var height: float
-	match technique:
-		MovementRules.TECH_BACK_COMING:
-			horizontal = -n * config.back_coming_wall_push_speed
-			height = config.back_coming_height
-		_:
-			horizontal = WallJumpMath.compute_exit_horizontal(v_in, n, input.get_camera_forward(), config)
-			height = config.wall_jump_height
+	var horizontal := WallJumpMath.compute_exit_horizontal(v_in, n, input.get_camera_forward(), config)
 	# Impulso inicial forte que vai perdendo força (ver wall_jump_speed_cap).
 	wall_jump_cruise_speed = 0.0
-	if technique != MovementRules.TECH_BACK_COMING:
-		wall_jump_cruise_speed = horizontal.length()
-		horizontal *= config.wall_jump_initial_boost
+	wall_jump_cruise_speed = horizontal.length()
+	horizontal *= config.wall_jump_initial_boost
 	wall_jump_entry_velocity = Vector3(v_in.x, velocity.y, v_in.z)
-	var launch := horizontal + Vector3.UP * config.velocity_for_height(height)
+	var launch := horizontal + Vector3.UP * config.velocity_for_height(config.wall_jump_height)
 	velocity = launch
-	# Só um lance extra por parede: depois do back-coming encadeado, o próximo salto se afasta.
-	back_coming_wall = sensor.collider_id if technique == MovementRules.TECH_BACK_COMING and not chained else 0
 	last_wall_jump_collider = sensor.collider_id
 	last_wall_jump_tick = tick
 	wall_jump_carry = true
@@ -680,7 +656,6 @@ func apply_wall_jump_cancel() -> void:
 ## Tocou o chão no meio de um dash ou golpe aéreo: a ação continua (sem passar pelo Land),
 ## mas o pouso conta (recarrega o dash no ar, limpa paredes) e é "limpo" (sem animação de impacto).
 func touch_down_during_action() -> void:
-	land_tick = tick
 	land_impact_speed = maxf(-pre_slide_velocity.y, 0.0)
 	last_landing_soft = true
 	on_landed()
@@ -696,7 +671,6 @@ func on_landed() -> void:
 	air_dodges_used = 0
 	air_dashed = false
 	last_wall_jump_collider = 0
-	back_coming_wall = 0
 	air_origin = MovementRules.AirOrigin.NONE
 
 
@@ -730,7 +704,6 @@ func respawn(at: Transform3D) -> void:
 	air_dodges_used = 0
 	air_dashed = false
 	last_wall_jump_collider = 0
-	back_coming_wall = 0
 	wall_sensor.clear()
 	sp.refill()
 	reset_physics_interpolation()

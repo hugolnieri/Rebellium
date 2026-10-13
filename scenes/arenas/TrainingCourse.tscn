@@ -139,13 +139,13 @@ script = ExtResource("greybox")
 size = Vector3(3, 7.5, 1)
 surface = 3
 
-[node name="BackComingWall" type="StaticBody3D" parent="Geometry"]
+[node name="SmoothWall" type="StaticBody3D" parent="Geometry"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 5.8, -81)
 script = ExtResource("greybox")
 size = Vector3(8.5, 4.4, 22)
 surface = 1
 
-[node name="BackComingBaseMark" type="StaticBody3D" parent="Geometry"]
+[node name="SmoothWallBaseMark" type="StaticBody3D" parent="Geometry"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 3.61, -69.85)
 script = ExtResource("greybox")
 size = Vector3(8.5, 0.02, 0.3)
@@ -198,12 +198,12 @@ metadata/label = "Borda (pilar)"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.5)
 shape = SubResource("box2")
 
-[node name="CP3_BackComing" type="Area3D" parent="Checkpoints"]
+[node name="CP3_SmoothWall" type="Area3D" parent="Checkpoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 3.6, -62)
 monitorable = false
 metadata/label = "Parede lisa (pilar)"
 
-[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP3_BackComing"]
+[node name="Shape" type="CollisionShape3D" parent="Checkpoints/CP3_SmoothWall"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3)
 shape = SubResource("box3")
 

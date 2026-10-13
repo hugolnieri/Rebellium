@@ -1,5 +1,5 @@
 extends GutTest
-## Regras puras: wall jump só após pulo, janela do bunny hop, classificação e dodge em 8 direções.
+## Regras puras: wall jump só após pulo, classificação e dodge em 8 direções.
 
 const JUMP := MovementRules.AirOrigin.JUMP
 const FALL := MovementRules.AirOrigin.FALL
@@ -25,20 +25,6 @@ func test_wall_jump_never_allowed_after_falling_off_ledge() -> void:
 	assert_false(MovementRules.can_wall_jump(NONE, false, 0, 36))
 
 
-func test_bunny_hop_window_is_three_ticks_after_landing() -> void:
-	var land := 100
-	assert_true(MovementRules.is_bunny_hop(100, land, 3), "mesmo tick")
-	assert_true(MovementRules.is_bunny_hop(101, land, 3))
-	assert_true(MovementRules.is_bunny_hop(102, land, 3))
-	assert_false(MovementRules.is_bunny_hop(103, land, 3), "4º tick já perdeu")
-	assert_false(MovementRules.is_bunny_hop(99, land, 3), "aperto antes de aterrissar não conta")
-
-
-func test_bunny_hop_window_is_configurable() -> void:
-	assert_true(MovementRules.is_bunny_hop(104, 100, 5))
-	assert_false(MovementRules.is_bunny_hop(100, 100, 0))
-
-
 func test_technique_window_is_symmetric() -> void:
 	assert_true(MovementRules.is_within_window(46, 50, 4))
 	assert_true(MovementRules.is_within_window(54, 50, 4))
@@ -47,13 +33,9 @@ func test_technique_window_is_symmetric() -> void:
 
 func test_classification_priorities() -> void:
 	var side := 30.0
-	assert_eq(MovementRules.classify_wall_jump(true, true, false, 0.0, side), MovementRules.TECH_BACK_COMING)
-	assert_eq(MovementRules.classify_wall_jump(true, false, true, 0.0, side), MovementRules.TECH_BACK_COMING,
-		"back-coming encadeado na mesma parede")
-	assert_eq(MovementRules.classify_wall_jump(false, true, false, 0.0, side), MovementRules.TECH_NORMAL,
-		"fora da janela justa não há back-coming")
-	assert_eq(MovementRules.classify_wall_jump(false, false, false, 45.0, side), MovementRules.TECH_SIDE_JUMP)
-	assert_eq(MovementRules.classify_wall_jump(false, false, false, 10.0, side), MovementRules.TECH_NORMAL)
+	assert_eq(MovementRules.classify_wall_jump(0.0, side), MovementRules.TECH_NORMAL)
+	assert_eq(MovementRules.classify_wall_jump(45.0, side), MovementRules.TECH_SIDE_JUMP)
+	assert_eq(MovementRules.classify_wall_jump(10.0, side), MovementRules.TECH_NORMAL)
 
 
 func test_dodge_snaps_to_8_camera_relative_directions() -> void:

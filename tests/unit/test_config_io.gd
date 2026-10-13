@@ -11,7 +11,6 @@ func after_each() -> void:
 func test_save_full_writes_every_property_and_round_trips() -> void:
 	var cfg := MovementConfig.new()
 	cfg.walk_speed = 7.25
-	cfg.bunny_hop_window_ticks = 5
 	cfg.dodge_neutral_backward = false
 	assert_eq(ConfigIO.save_full(cfg, PATH), OK)
 	var text := FileAccess.get_file_as_string(PATH)
@@ -34,7 +33,6 @@ func test_project_tres_files_load_with_expected_defaults() -> void:
 	assert_eq(cfg.dodge_invulnerability, 0.15)
 	assert_eq(cfg.wall_jump_sp_cost, 18.0)
 	assert_eq(cfg.wall_jump_camera_weight, 0.4)
-	assert_eq(cfg.bunny_hop_window_ticks, 3)
 	assert_not_null(load("res://config/camera_config.tres") as CameraConfig)
 	assert_not_null(load("res://config/feedback_config.tres") as FeedbackConfig)
 

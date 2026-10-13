@@ -360,9 +360,6 @@ func _on_wall_jump(who: Node, data: Dictionary) -> void:
 	if who != player:
 		return
 	var technique: StringName = data.get("technique", MovementRules.TECH_NORMAL)
-	match technique:
-		MovementRules.TECH_BACK_COMING:
-			return
 	# Mortal para trás: pisa na parede (de frente para ela) e gira de costas para longe.
 	_trick_axis = Vector3.RIGHT
 	_trick_angle = TAU

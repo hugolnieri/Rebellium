@@ -53,7 +53,7 @@ Roteiro de teste manual: `docs/ROTEIRO_TESTE.md`. Contexto completo e estado atu
    `get_hit_center()` e `get_hit_radius()` (Player e TrainingDummy).
 9. **Hitstop** pausa a simulação do Player (`hitstop_ticks`); tempos de golpe contam em ticks
    próprios do estado Attack, então a pausa não encurta o golpe.
-6. Tempo de gameplay medido em **ticks** (int) quando a janela é justa (bunny hop, cancel);
+6. Tempo de gameplay medido em **ticks** (int) quando a janela é justa (cancel);
    em segundos (float, convertidos com o delta fixo) para durações longas.
 10. **O corpo do Player nunca gira**: movimento, câmera e visual usam o yaw do mundo, que vive em `visual.rotation.y`. Para nascer ou
     teleportar o Player use `Player.respawn`/`_place`, nunca `global_transform = ...` com rotação (o modelo andaria de lado).
