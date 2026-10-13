@@ -16,7 +16,7 @@ bpy.ops.wm.open_mainfile(filepath=BLEND)
 scene = bpy.context.scene
 camera_data = bpy.data.cameras.new("Menu preview camera")
 camera_data.type = "ORTHO"
-camera_data.ortho_scale = 99.0
+camera_data.ortho_scale = 116.0
 camera = bpy.data.objects.new("Menu preview camera", camera_data)
 scene.collection.objects.link(camera)
 camera.location = (52.0, -66.0, 62.0)

@@ -15,9 +15,10 @@ de revisões e têm trechos antigos (ver seção 15). Regras curtas para agentes
   Blender (módulo `bpy` 4.2.0, Python 3.11) gera por código o personagem, as animações, a arena e a espada.
 - **Cena principal**: tela de preparação (`scenes/ui/Loadout.tscn`), com cinco mapas. A SkyArena
   conserva o caçador que reage e é arremessado pelo golpe pesado. O Revezamento é a arena do
-  modo Touch Down, com núcleo central, três rotas e entrega na base adversária.
-- **Qualidade**: 235 testes GUT passando e abertura headless sem erros nesta revisão.
-- **Repositório**: `github.com/hugolnieri/Rebellium`, 55 commits (alguns do dono via Codex, como `614b4e2`). **Só existe uma branch no GitHub e ela é a padrão:
+  modo Touch Down, com estação central baixa, terminais altos, ponte, escadarias, rotas
+  externas em U e entrega na base adversária.
+- **Qualidade**: 236 testes GUT passando e abertura headless sem erros nesta revisão.
+- **Repositório**: `github.com/hugolnieri/Rebellium` (alguns commits do dono via Codex, como `614b4e2`). **Só existe uma branch no GitHub e ela é a padrão:
   `claude/lucid-ramanujan-wy8xe5`** (não há `main`).
 - **Dono do projeto**: GitHub `hugolnieri`; fala português; testa no Windows (`C:\Dev\Rebellium`).
 
@@ -515,3 +516,14 @@ O núcleo fica na estação, não no mesmo piso do spawn. As escadas têm piso c
 sob degraus visuais e paredes laterais com colisão para wall jumps; o patamar final se
 sobrepõe ao piso do gol para não travar o Player. Um teste de integração percorre a rota
 inteira com o Player real e verifica as alturas dos pisos por raycast.
+
+## Revisão: nova seção vertical do Revezamento
+
+A descrição da revisão anterior registra a primeira tentativa; a geometria atual inverte
+essa seção vertical. Os spawns ficam a 8 m e a estação do núcleo a 0 m. Uma ponte alta liga
+os terminais por cima de uma cápsula de trânsito aberta. Duas escadarias longas descem
+dos terminais à estação; saltar da borda corta parte da escada. Duas rampas curvas em U,
+com piso e colisores convexos segmentados, oferecem outro trajeto pelo exterior. Cada gol
+fica a 9,4 m, ligado ao seu terminal por uma escada lateral curta. O lado vermelho gira a
+planta azul 180°; no Godot o gol vermelho fica em (39, 11, -14). O `.blend` continua sendo
+a fonte do GLB e da prévia do menu. Validar no jogo a leitura das distâncias e os saltos.

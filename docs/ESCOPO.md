@@ -353,3 +353,14 @@ larga com paredes laterais usadas para saltos, chegando à estação elevada com
 O lado oposto espelha esse acesso. O ponto de entrega fica em uma plataforma elevada ao lado
 do spawn inimigo, alcançada por outra escadaria lateral. A miniatura do menu foi refeita para
 mostrar os níveis e escadas; a lógica de coleta, entrega e reinício permanece a mesma.
+
+## Revisão: terminais altos e estação baixa do Revezamento
+
+As novas vistas do modelo esclareceram a seção vertical e o contorno do mapa. Os dois
+terminais de spawn agora ficam a 8 m, ligados por uma ponte elevada. A estação aberta com
+o núcleo e a cápsula de trânsito fica no nível 0, sob a ponte. De cada terminal sai uma
+escadaria longa até a estação, com paredes laterais para saltos; também é possível pular
+da borda e cortar parte da descida. Duas rotas curvas em U contornam o vazio, ligando
+os terminais ao piso central. Os gols ficam um pouco acima dos terminais, após escadas
+laterais curtas. O lado vermelho é a rotação de 180° do azul. A fonte Blender, o GLB
+com colisão convexa e a miniatura do menu foram reconstruídos juntos.

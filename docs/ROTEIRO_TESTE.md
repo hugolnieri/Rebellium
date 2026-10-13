@@ -398,3 +398,10 @@ carga ao trocar de arma, sino ao acertar técnica, bipes do poste agressivo.
 1. Entre em REVEZAMENTO: o spawn azul deve estar no nível baixo, com o gol azul acima e ao lado. Corra pela rampa curta e depois pela escadaria azul até a estação central elevada; não deve haver parede invisível ou degrau que prenda o personagem.
 2. Pegue o núcleo no centro. Siga reto pela escadaria vermelha, desça a rampa até o spawn vermelho, vire para a escada lateral e suba ao gol vermelho. A entrega deve pontuar somente dentro da área elevada.
 3. Teste wall jumps nas paredes laterais das escadas e confirme que os dois lados são espelhados. Confira também as rotas curtas ao redor do núcleo e a miniatura atualizada no menu.
+
+## Revisão: percurso elevado e estação baixa do Revezamento
+
+1. Entre em REVEZAMENTO. O spawn azul deve estar no terminal alto, com o gol azul um pouco acima e ao lado. Veja a ponte alta até o terminal vermelho e a estação com o núcleo bem abaixo dela.
+2. Saia pelo lado da escadaria azul e desça até o núcleo. Repita pulando da borda sobre alguns degraus; o salto deve encurtar a descida sem encontrar colisão invisível.
+3. Percorra a rota externa azul em U até a estação. No lado oposto, suba a escadaria vermelha e também experimente a rota em U vermelha. Confira piso contínuo e barreiras externas nas curvas.
+4. Com o núcleo, suba ao terminal vermelho e use a escada lateral curta até o gol. Entre no gol para pontuar. Confira a miniatura no menu e as diferenças de altura vistas de cima e de lado.
